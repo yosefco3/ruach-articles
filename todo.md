@@ -54,3 +54,17 @@
 - [x] Update SiteLayout navigation to include About and Contact links
 - [x] Test About and Contact pages on mobile and desktop
 - [x] Save checkpoint with new pages
+
+## New Features – Phase 3 (Rich Text Editor & Attachments)
+- [x] Update articles table schema to support body as HTML (not markdown)
+- [x] Add attachments table (id, articleId, fileName, fileUrl, fileSize, uploadedAt)
+- [x] Run migration for new schema
+- [x] Install TipTap and dependencies (@tiptap/react, @tiptap/starter-kit, etc.)
+- [x] Create RichTextEditor component with TipTap
+- [x] Update AdminArticleForm to use RTE instead of textarea
+- [x] Add file upload UI to AdminArticleForm
+- [x] Create backend endpoint for file uploads (storagePut)
+- [x] Create tRPC procedure for article attachments (list, upload, delete)
+- [x] Display attachments section on ArticlePage
+- [x] Test RTE and file uploads
+- [x] Save checkpoint with RTE and attachments

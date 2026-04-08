@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Save, ArrowRight } from "lucide-react";
+import { Loader2, Save, ArrowRight, Upload, X, File } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -30,6 +31,13 @@ function slugify(text: string) {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim();
+}
+
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  url: string;
 }
 
 export default function AdminArticleForm() {
@@ -57,6 +65,8 @@ export default function AdminArticleForm() {
   });
 
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (existingArticle) {
@@ -112,6 +122,60 @@ export default function AdminArticleForm() {
     }));
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        // Upload to server (which will use storagePut)
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setUploadedFiles((prev) => [
+          ...prev,
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            size: file.size,
+            url: data.url,
+          },
+        ]);
+      }
+      toast.success("קבצים הועלו בהצלחה");
+    } catch (err) {
+      toast.error("שגיאה בהעלאת קבצים");
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+      // Reset input
+      e.target.value = "";
+    }
+  };
+
+  const removeFile = (id: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim() || !form.slug.trim()) {
@@ -137,7 +201,9 @@ export default function AdminArticleForm() {
     return (
       <div className="container py-24 text-center">
         <p className="text-xl font-display font-bold text-foreground mb-2">גישה מוגבלת</p>
-        <Button variant="outline" onClick={() => navigate("/")}>חזרה לדף הבית</Button>
+        <Button variant="outline" onClick={() => navigate("/")}>
+          חזרה לדף הבית
+        </Button>
       </div>
     );
   }
@@ -145,7 +211,7 @@ export default function AdminArticleForm() {
   const isPending = createArticle.isPending || updateArticle.isPending;
 
   return (
-    <div className="container py-10 max-w-3xl mx-auto">
+    <div className="container py-10 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
@@ -207,7 +273,9 @@ export default function AdminArticleForm() {
           </Label>
           <Select
             value={form.category}
-            onValueChange={(v) => setForm((prev) => ({ ...prev, category: v as typeof form.category }))}
+            onValueChange={(v) =>
+              setForm((prev) => ({ ...prev, category: v as typeof form.category }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="בחרו קטגוריה" />
@@ -224,7 +292,9 @@ export default function AdminArticleForm() {
 
         {/* Excerpt */}
         <div className="space-y-2">
-          <Label htmlFor="excerpt" className="text-sm font-medium">תקציר</Label>
+          <Label htmlFor="excerpt" className="text-sm font-medium">
+            תקציר
+          </Label>
           <Textarea
             id="excerpt"
             value={form.excerpt}
@@ -236,35 +306,23 @@ export default function AdminArticleForm() {
           />
         </div>
 
-        {/* Body */}
+        {/* Body – Rich Text Editor */}
         <div className="space-y-2">
-          <Label htmlFor="body" className="text-sm font-medium">
+          <Label className="text-sm font-medium">
             תוכן המאמר <span className="text-destructive">*</span>
           </Label>
-          <Textarea
-            id="body"
+          <RichTextEditor
             value={form.body}
-            onChange={(e) => setForm((prev) => ({ ...prev, body: e.target.value }))}
-            placeholder="כתבו את תוכן המאמר כאן...
-
-ניתן להשתמש בפורמט פשוט:
-## כותרת משנה
-### כותרת קטנה
-> ציטוט
-
-פסקאות מופרדות בשורה ריקה."
-            className="resize-none text-right min-h-[300px] font-mono text-sm"
-            dir="rtl"
-            required
+            onChange={(html) => setForm((prev) => ({ ...prev, body: html }))}
+            placeholder="כתבו את תוכן המאמר כאן..."
           />
-          <p className="text-xs text-muted-foreground">
-            השתמשו ב-## לכותרת משנה, ### לכותרת קטנה, &gt; לציטוט
-          </p>
         </div>
 
         {/* Cover Image */}
         <div className="space-y-2">
-          <Label htmlFor="coverImage" className="text-sm font-medium">תמונת שער (URL)</Label>
+          <Label htmlFor="coverImage" className="text-sm font-medium">
+            תמונת שער (URL)
+          </Label>
           <Input
             id="coverImage"
             value={form.coverImage}
@@ -287,9 +345,71 @@ export default function AdminArticleForm() {
           )}
         </div>
 
+        {/* File Attachments */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">קבצים מצורפים</Label>
+          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              className="hidden"
+              id="file-input"
+            />
+            <label htmlFor="file-input" className="cursor-pointer block">
+              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground mb-1">
+                {isUploading ? "מעלה..." : "לחצו או גררו קבצים"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PDF, Word, תמונות וקבצים אחרים
+              </p>
+            </label>
+          </div>
+
+          {/* Uploaded Files List */}
+          {uploadedFiles.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <p className="text-sm font-medium text-foreground">קבצים שהועלו:</p>
+              <div className="space-y-2">
+                {uploadedFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between bg-secondary/50 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(file.id)}
+                      className="flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Tags */}
         <div className="space-y-2">
-          <Label htmlFor="tags" className="text-sm font-medium">תגיות</Label>
+          <Label htmlFor="tags" className="text-sm font-medium">
+            תגיות
+          </Label>
           <Input
             id="tags"
             value={form.tags}

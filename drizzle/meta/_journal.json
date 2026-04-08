@@ -15,6 +15,13 @@
       "when": 1775639106634,
       "tag": "0001_romantic_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775656826784,
+      "tag": "0002_curly_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

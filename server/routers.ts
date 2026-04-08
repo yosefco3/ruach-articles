@@ -11,6 +11,7 @@ import {
   getCommentById,
   getCommentsByArticle,
   updateArticle,
+  getAttachmentsByArticle,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -49,7 +50,8 @@ const articlesRouter = router({
       if (!article.published && ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "NOT_FOUND", message: "המאמר לא נמצא" });
       }
-      return article;
+      const attachments = await getAttachmentsByArticle(article.id);
+      return { ...article, attachments };
     }),
 
   create: adminProcedure

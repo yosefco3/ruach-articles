@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { articles, comments, users, type InsertArticle, type InsertComment, type InsertUser } from "../drizzle/schema";
+import { articles, comments, users, attachments, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -180,4 +180,32 @@ export async function getCommentById(id: number) {
   if (!db) return undefined;
   const rows = await db.select().from(comments).where(eq(comments.id, id)).limit(1);
   return rows.length > 0 ? rows[0] : undefined;
+}
+
+// ─── Attachments ──────────────────────────────────────────────────────────────
+
+export async function getAttachmentsByArticle(articleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(attachments).where(eq(attachments.articleId, articleId)).orderBy(desc(attachments.uploadedAt));
+  return rows;
+}
+
+export async function createAttachment(data: InsertAttachment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(attachments).values(data);
+  return result;
+}
+
+export async function deleteAttachment(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(attachments).where(eq(attachments.id, id));
+}
+
+export async function deleteAttachmentsByArticle(articleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(attachments).where(eq(attachments.articleId, articleId));
 }
