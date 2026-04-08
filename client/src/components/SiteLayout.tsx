@@ -124,6 +124,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                             <span>הצעות אורחים</span>
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
+                            <User className="w-4 h-4" />
+                            <span>ניהול משתמשים</span>
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
@@ -218,10 +224,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
                   <span className="text-primary-foreground font-display font-bold text-sm leading-none">ר</span>
                 </div>
-                <span className="font-display font-bold text-lg text-foreground">רוּחַ</span>
+                <span className="font-display font-bold text-lg text-foreground">{siteName}</span>
               </div>
               <p className="text-sm text-muted-foreground text-center md:text-right">
-                מרחב לעומק, לשקט ולחיפוש הפנימי
+                {settings?.heroSubtitle || "רוחניות · פילוסופיה · ריפוי"}
               </p>
             </div>
 
@@ -253,7 +259,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <div className="divider-gold my-6" />
 
           <p className="text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} רוּחַ · כל הזכויות שמורות
+            © {new Date().getFullYear()} {siteName} · כל הזכויות שמורות
           </p>
         </div>
       </footer>

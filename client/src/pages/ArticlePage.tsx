@@ -1,12 +1,9 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { getCategoryBadgeClass, getCategoryLabel } from "@/lib/categories";
-import { Loader2, Calendar, User, MessageCircle, Trash2, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import CommentsSection from "@/components/CommentsSection";
@@ -24,32 +21,23 @@ export default function ArticlePage() {
     { enabled: !!article?.id }
   );
 
-  const [commentBody, setCommentBody] = useState("");
+  const { data: likeCount } = trpc.likes.count.useQuery(
+    { articleId: article?.id ?? 0 },
+    { enabled: !!article?.id }
+  );
 
-  const createComment = trpc.comments.create.useMutation({
+  const { data: userLike } = trpc.likes.userLike.useQuery(
+    { articleId: article?.id ?? 0 },
+    { enabled: !!article?.id && isAuthenticated }
+  );
+
+  const likeMutation = trpc.likes.toggle.useMutation({
     onSuccess: () => {
-      setCommentBody("");
-      utils.comments.list.invalidate({ articleId: article!.id });
-      toast.success("התגובה נוספה בהצלחה");
+      utils.likes.count.invalidate({ articleId: article?.id ?? 0 });
+      utils.likes.userLike.invalidate({ articleId: article?.id ?? 0 });
     },
-    onError: (err) => toast.error(err.message || "שגיאה בהוספת תגובה"),
   });
 
-  const deleteComment = trpc.comments.delete.useMutation({
-    onMutate: async ({ id }) => {
-      await utils.comments.list.cancel({ articleId: article!.id });
-      const prev = utils.comments.list.getData({ articleId: article!.id });
-      utils.comments.list.setData({ articleId: article!.id }, (old) =>
-        old ? old.filter((c) => c.id !== id) : old
-      );
-      return { prev };
-    },
-    onError: (err, _, ctx) => {
-      if (ctx?.prev) utils.comments.list.setData({ articleId: article!.id }, ctx.prev);
-      toast.error(err.message || "שגיאה במחיקת תגובה");
-    },
-    onSettled: () => utils.comments.list.invalidate({ articleId: article!.id }),
-  });
 
   if (isLoading) {
     return (
@@ -141,10 +129,31 @@ export default function ArticlePage() {
           )}
         </header>
 
+        {/* Likes Section */}
+        <div className="flex items-center gap-4 mb-6">
+          <button
+            onClick={() => {
+              if (!isAuthenticated) {
+                toast.error("יש להתחבר כדי לסמן אהבתי");
+                return;
+              }
+              if (article?.id) likeMutation.mutate({ articleId: article.id });
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+              userLike
+                ? "bg-red-50 border-red-200 text-red-600"
+                : "bg-card border-border text-muted-foreground hover:border-red-200 hover:text-red-500"
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${userLike ? "fill-red-500 text-red-500" : ""}`} />
+            <span className="text-sm font-medium">{likeCount ?? 0} אהבו</span>
+          </button>
+        </div>
+
         <div className="divider-gold mb-8" />
 
         {/* Article Body */}
-        <div className="prose prose-invert max-w-none mb-12" dir="rtl" style={{ textAlign: "right" }}>
+        <div className="prose-rtl max-w-none mb-12">
           <div dangerouslySetInnerHTML={{ __html: article.body }} />
         </div>
 

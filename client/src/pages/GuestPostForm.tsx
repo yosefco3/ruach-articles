@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { CATEGORY_MAP } from "@/lib/categories";
+import RichTextEditor from "@/components/RichTextEditor";
 
 export default function GuestPostForm() {
   const [title, setTitle] = useState("");
@@ -38,7 +38,7 @@ export default function GuestPostForm() {
   };
 
   return (
-    <div className="container max-w-2xl py-12">
+    <div className="container max-w-3xl py-12">
       <div className="mb-8">
         <h1 className="font-display font-bold text-3xl text-foreground mb-3">שתף את הכתיבה שלך</h1>
         <p className="text-muted-foreground">אנו מחפשים כותבים אורחים עם דעות מעניינות בנושאי רוחניות, פילוסופיה וריפוי. שלח את ההצעה שלך להמתנה לאישור המנהל.</p>
@@ -98,14 +98,7 @@ export default function GuestPostForm() {
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">תוכן המאמר</label>
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="כתוב את המאמר שלך כאן..."
-            dir="rtl"
-            className="text-right resize-none min-h-[300px]"
-          />
-          <p className="text-xs text-muted-foreground mt-2">כתוב בטקסט רגיל. המנהל יוכל לעצב את המאמר לאחר אישורו.</p>
+          <RichTextEditor value={body} onChange={setBody} />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">

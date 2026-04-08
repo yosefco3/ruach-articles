@@ -1,13 +1,19 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, Trash2, Check, X } from "lucide-react";
+import { Loader2, Save, X, ArrowRight, Users } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import RichTextEditor from "@/components/RichTextEditor";
 
 export default function AdminSettings() {
+  const { user, isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
+  const utils = trpc.useUtils();
+
   const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery();
   const { data: aboutContent, isLoading: aboutLoading } = trpc.about.get.useQuery();
   const { data: guestWriters, isLoading: writersLoading } = trpc.guestWriters.list.useQuery();
@@ -34,33 +40,32 @@ export default function AdminSettings() {
 
   const updateSettings = trpc.settings.update.useMutation({
     onSuccess: () => {
+      utils.settings.get.invalidate();
       toast.success("הגדרות האתר עודכנו בהצלחה");
     },
-    onError: (err: any) => {
+    onError: (err) => {
       toast.error(err.message || "שגיאה בעדכון הגדרות");
     },
   });
 
   const updateAbout = trpc.about.update.useMutation({
     onSuccess: () => {
+      utils.about.get.invalidate();
       toast.success("עמוד האודות עודכן בהצלחה");
     },
-    onError: (err: any) => {
+    onError: (err) => {
       toast.error(err.message || "שגיאה בעדכון עמוד האודות");
-    },
-  });
-
-  const approveWriter = trpc.guestWriters.approve.useMutation({
-    onSuccess: () => {
-      toast.success("המשתמש אושר כסופר אורח");
-      trpc.useUtils().guestWriters.list.invalidate();
     },
   });
 
   const revokeWriter = trpc.guestWriters.revoke.useMutation({
     onSuccess: () => {
+      utils.guestWriters.list.invalidate();
+      utils.users.list.invalidate();
       toast.success("הרשאת הסופר האורח בוטלה");
-      trpc.useUtils().guestWriters.list.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message || "שגיאה בביטול ההרשאה");
     },
   });
 
@@ -72,6 +77,24 @@ export default function AdminSettings() {
     updateAbout.mutate({ title: aboutTitle, content: aboutContent_ });
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== "admin") {
+    return (
+      <div className="container py-24 text-center">
+        <p className="text-xl font-display font-bold text-foreground mb-2">גישה מוגבלת</p>
+        <p className="text-muted-foreground mb-6">עמוד זה זמין למנהלים בלבד</p>
+        <Button variant="outline" onClick={() => navigate("/")}>חזרה לדף הבית</Button>
+      </div>
+    );
+  }
+
   if (settingsLoading || aboutLoading || writersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -82,7 +105,15 @@ export default function AdminSettings() {
 
   return (
     <div className="container max-w-4xl py-12">
-      <h1 className="font-display font-bold text-3xl text-foreground mb-8">הגדרות מנהל</h1>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/admin">
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </Button>
+        <h1 className="font-display font-bold text-3xl text-foreground">הגדרות מנהל</h1>
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-8 border-b border-border">
@@ -196,14 +227,23 @@ export default function AdminSettings() {
       {/* Guest Writers Tab */}
       {activeTab === "writers" && (
         <div className="bg-card border border-border rounded-xl p-6">
-          <h3 className="font-medium text-foreground mb-4">סופרים אורחים מאושרים</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-medium text-foreground">סופרים אורחים מאושרים</h3>
+            <Button variant="outline" size="sm" asChild className="gap-2">
+              <Link href="/admin/users">
+                <Users className="w-4 h-4" />
+                ניהול משתמשים
+              </Link>
+            </Button>
+          </div>
+
           {guestWriters && guestWriters.length > 0 ? (
             <div className="space-y-3">
               {guestWriters.map((writer) => (
                 <div key={writer.id} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
                   <div>
-                    <p className="font-medium text-foreground">{writer.name}</p>
-                    <p className="text-sm text-muted-foreground">{writer.email}</p>
+                    <p className="font-medium text-foreground">{writer.name || "ללא שם"}</p>
+                    <p className="text-sm text-muted-foreground">{writer.email || "—"}</p>
                   </div>
                   <Button
                     size="sm"
@@ -223,7 +263,9 @@ export default function AdminSettings() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">אין סופרים אורחים מאושרים עדיין</p>
+            <p className="text-muted-foreground text-center py-6">
+              אין סופרים אורחים מאושרים עדיין. <Link href="/admin/users" className="text-primary hover:underline">לחצו כאן</Link> כדי לאשר משתמשים.
+            </p>
           )}
         </div>
       )}

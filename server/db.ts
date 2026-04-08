@@ -1,6 +1,12 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { articles, comments, users, attachments, siteSettings, guestPosts, likes, userProfiles, aboutPage, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment, type InsertSiteSettings, type InsertGuestPost, type InsertLike, type InsertUserProfile, type InsertAboutPage } from "../drizzle/schema";
+import {
+  articles, comments, users, attachments, siteSettings, guestPosts,
+  likes, userProfiles, aboutPage,
+  type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment,
+  type InsertSiteSettings, type InsertGuestPost, type InsertLike,
+  type InsertUserProfile, type InsertAboutPage,
+} from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -52,6 +58,22 @@ export async function getUserByOpenId(openId: string) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      guestPostApproved: users.guestPostApproved,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(desc(users.createdAt));
 }
 
 // ─── Articles ─────────────────────────────────────────────────────────────────
@@ -123,7 +145,13 @@ export async function createArticle(data: InsertArticle) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(articles).values(data);
-  return result;
+  // Return the created article by fetching it with the insertId
+  const insertId = (result as any)[0]?.insertId;
+  if (insertId) {
+    const created = await db.select().from(articles).where(eq(articles.id, insertId)).limit(1);
+    if (created.length > 0) return created[0];
+  }
+  return { success: true };
 }
 
 export async function updateArticle(id: number, data: Partial<InsertArticle>) {
@@ -135,8 +163,9 @@ export async function updateArticle(id: number, data: Partial<InsertArticle>) {
 export async function deleteArticle(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Delete comments first
+  await db.delete(attachments).where(eq(attachments.articleId, id));
   await db.delete(comments).where(eq(comments.articleId, id));
+  await db.delete(likes).where(eq(likes.articleId, id));
   await db.delete(articles).where(eq(articles.id, id));
 }
 
@@ -151,6 +180,7 @@ export async function getCommentsByArticle(articleId: number) {
       articleId: comments.articleId,
       userId: comments.userId,
       body: comments.body,
+      parentCommentId: comments.parentCommentId,
       createdAt: comments.createdAt,
       userName: users.name,
     })
@@ -165,14 +195,19 @@ export async function createComment(data: InsertComment) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(comments).values(data);
-  return result;
+  const insertId = (result as any)[0]?.insertId;
+  if (insertId) {
+    const created = await db.select().from(comments).where(eq(comments.id, insertId)).limit(1);
+    if (created.length > 0) return created[0];
+  }
+  return { id: insertId, ...data, createdAt: new Date() };
 }
 
-export async function deleteComment(id: number, userId: number) {
+export async function deleteComment(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  // Only delete if owned by the user
-  await db.delete(comments).where(and(eq(comments.id, id), eq(comments.userId, userId)));
+  // Delete by ID only — permission check is done in the router
+  await db.delete(comments).where(eq(comments.id, id));
 }
 
 export async function getCommentById(id: number) {
@@ -187,8 +222,7 @@ export async function getCommentById(id: number) {
 export async function getAttachmentsByArticle(articleId: number) {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select().from(attachments).where(eq(attachments.articleId, articleId)).orderBy(desc(attachments.uploadedAt));
-  return rows;
+  return await db.select().from(attachments).where(eq(attachments.articleId, articleId)).orderBy(desc(attachments.uploadedAt));
 }
 
 export async function createAttachment(data: InsertAttachment) {
@@ -242,13 +276,21 @@ export async function getGuestPosts(status?: "pending" | "approved" | "rejected"
 export async function createGuestPost(data: InsertGuestPost) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return await db.insert(guestPosts).values(data);
+  const result = await db.insert(guestPosts).values(data);
+  const insertId = (result as any)[0]?.insertId;
+  if (insertId) {
+    const created = await db.select().from(guestPosts).where(eq(guestPosts.id, insertId)).limit(1);
+    if (created.length > 0) return created[0];
+  }
+  return { id: insertId, ...data, status: "pending" as const, createdAt: new Date(), updatedAt: new Date() };
 }
 
 export async function updateGuestPostStatus(id: number, status: "pending" | "approved" | "rejected") {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(guestPosts).set({ status }).where(eq(guestPosts.id, id));
+  const updated = await db.select().from(guestPosts).where(eq(guestPosts.id, id)).limit(1);
+  return updated.length > 0 ? updated[0] : null;
 }
 
 export async function deleteGuestPost(id: number) {
@@ -265,8 +307,11 @@ export async function getLikeCount(articleId?: number, commentId?: number) {
   const conditions = [];
   if (articleId) conditions.push(eq(likes.articleId, articleId));
   if (commentId) conditions.push(eq(likes.commentId, commentId));
-  const result = await db.select().from(likes).where(conditions.length > 0 ? and(...conditions) : undefined);
-  return result.length;
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(likes)
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  return Number(result[0]?.count ?? 0);
 }
 
 export async function getUserLike(userId: number, articleId?: number, commentId?: number) {
@@ -315,9 +360,14 @@ export async function updateUserProfile(userId: number, data: Partial<InsertUser
 export async function getUserCommentCount(userId: number) {
   const db = await getDb();
   if (!db) return 0;
-  const result = await db.select().from(comments).where(eq(comments.userId, userId));
-  return result.length;
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(comments)
+    .where(eq(comments.userId, userId));
+  return Number(result[0]?.count ?? 0);
 }
+
+// ─── About Page ───────────────────────────────────────────────────────────────
 
 export async function getAboutPage() {
   const db = await getDb();
@@ -336,6 +386,8 @@ export async function updateAboutPage(data: Partial<InsertAboutPage>) {
     await db.insert(aboutPage).values(data as InsertAboutPage);
   }
 }
+
+// ─── Guest Writers ────────────────────────────────────────────────────────────
 
 export async function approveGuestWriter(userId: number) {
   const db = await getDb();

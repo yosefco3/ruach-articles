@@ -2,7 +2,6 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Streamdown } from "streamdown";
 
 export default function About() {
   const { data: aboutContent, isLoading } = trpc.about.get.useQuery();
@@ -41,9 +40,9 @@ export default function About() {
       {/* Main Content */}
       <div className="container max-w-3xl py-16">
         <div className="divider-gold mb-8" />
-        <div className="prose prose-invert max-w-none text-right" dir="rtl">
+        <div className="prose max-w-none text-right" dir="rtl">
           {aboutContent?.content ? (
-            <Streamdown>{aboutContent.content}</Streamdown>
+            <div dangerouslySetInnerHTML={{ __html: aboutContent.content }} />
           ) : (
             <p className="text-lg text-muted-foreground leading-relaxed">
               תוכן זה עדיין לא הוגדר. בואו נחזור לדף הבית ונתחיל לקרוא מאמרים!

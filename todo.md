@@ -58,3 +58,24 @@
 - [x] Add "Write Article" button for approved guest writers
 - [x] Test all fixes
 - [x] Save checkpoint with all fixes
+
+
+## Audit Fixes – Phase 6 (Completed)
+- [x] Fix AdminArticleForm.tsx parse error (line 193 two statements on same line)
+- [x] Fix SiteLayout.tsx footer hardcoded site name → use dynamic settings
+- [x] Fix articles.list to filter by published=true for public users
+- [x] Fix createComment/createArticle to return created entity (not raw MySQL result)
+- [x] Fix deleteComment admin bypass (don't filter by userId when admin deletes)
+- [x] Fix About.tsx to render HTML content (not Markdown via Streamdown)
+- [x] Build complete AdminUsers page with full user list API
+- [x] Add /api/upload endpoint for file attachments
+- [x] Fix all vitest tests (33 passing)
+- [x] Add admin link to /admin/users in SiteLayout navigation
+- [x] Convert seed articles from Markdown to HTML
+- [x] Clean up test comments from database
+- [x] Enhance prose-rtl CSS with comprehensive typography (h1-h4, blockquote, ul, ol, code, pre, hr, img, table)
+- [x] Update GuestPostForm to use RichTextEditor instead of textarea
+- [x] Add writerProcedure for admin OR approved guest writers
+- [x] Rewrite routers.ts to remove Unicode parse errors
+- [x] Add article likes button to ArticlePage
+- [x] Add likes.userLike tRPC procedure for tracking user like state

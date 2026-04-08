@@ -31,6 +31,7 @@ import {
   approveGuestWriter,
   revokeGuestWriter,
   getApprovedGuestWriters,
+  getAllUsers,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -38,27 +39,45 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { contactRouter } from "./contact";
 
-// ─── Admin guard middleware ───────────────────────────────────────────────────
+// Admin guard middleware
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "נדרשות הרשאות מנהל" });
+    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
   }
   return next({ ctx });
 });
 
-// ─── Articles router ──────────────────────────────────────────────────────────
+// Writer guard: admin OR approved guest writer
+const writerProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const isAdmin = ctx.user.role === "admin";
+  const isApprovedWriter = (ctx.user as any).guestPostApproved === true;
+  if (!isAdmin && !isApprovedWriter) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+  }
+  return next({ ctx });
+});
+
+// Articles router
 const articlesRouter = router({
   list: publicProcedure
     .input(
-      z.object({
-        category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
-        all: z.boolean().optional(),
-      }).optional()
+      z
+        .object({
+          category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
+          all: z.boolean().optional(),
+        })
+        .optional()
     )
-    .query(async ({ input }) => {
-      const articles = await getArticles({ category: input?.category });
+    .query(async ({ input, ctx }) => {
+      const isAdmin = ctx.user?.role === "admin";
+      const all = isAdmin && input?.all;
+      const articles = await getArticles({
+        category: input?.category,
+        published: all ? undefined : true,
+      });
       return articles;
     }),
+
   bySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
@@ -67,7 +86,8 @@ const articlesRouter = router({
       const attachments = await getAttachmentsByArticle(article.id);
       return { ...article, attachments };
     }),
-  create: adminProcedure
+
+  create: writerProcedure
     .input(
       z.object({
         title: z.string(),
@@ -86,7 +106,8 @@ const articlesRouter = router({
         published: false,
       });
     }),
-  update: adminProcedure
+
+  update: writerProcedure
     .input(
       z.object({
         id: z.number(),
@@ -103,6 +124,7 @@ const articlesRouter = router({
       const { id, ...data } = input;
       return await updateArticle(id, data);
     }),
+
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
@@ -111,15 +133,22 @@ const articlesRouter = router({
     }),
 });
 
-// ─── Comments router ──────────────────────────────────────────────────────────
+// Comments router
 const commentsRouter = router({
   list: publicProcedure
     .input(z.object({ articleId: z.number() }))
     .query(async ({ input }) => {
       return await getCommentsByArticle(input.articleId);
     }),
+
   create: protectedProcedure
-    .input(z.object({ articleId: z.number(), body: z.string(), parentCommentId: z.number().optional() }))
+    .input(
+      z.object({
+        articleId: z.number(),
+        body: z.string(),
+        parentCommentId: z.number().optional(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       return await createComment({
         articleId: input.articleId,
@@ -128,39 +157,48 @@ const commentsRouter = router({
         parentCommentId: input.parentCommentId,
       });
     }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const comment = await getCommentById(input.id);
       if (!comment) throw new TRPCError({ code: "NOT_FOUND" });
+      // Allow deletion by comment owner OR admin
       if (comment.userId !== ctx.user!.id && ctx.user!.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      await deleteComment(input.id, ctx.user!.id);
+      await deleteComment(input.id);
       return { success: true };
-    })
+    }),
 });
 
-// ─── Settings router ──────────────────────────────────────────────────────────
+// Settings router
 const settingsRouter = router({
   get: publicProcedure.query(async () => {
     return await getSiteSettings();
   }),
+
   update: adminProcedure
-    .input(z.object({ siteTitle: z.string().optional(), heroSubtitle: z.string().optional() }))
+    .input(
+      z.object({
+        siteTitle: z.string().optional(),
+        heroSubtitle: z.string().optional(),
+      })
+    )
     .mutation(async ({ input }) => {
       await updateSiteSettings(input);
       return await getSiteSettings();
     }),
 });
 
-// ─── Guest Posts router ────────────────────────────────────────────────────────
+// Guest Posts router
 const guestPostsRouter = router({
   list: adminProcedure
     .input(z.object({ status: z.enum(["pending", "approved", "rejected"]).optional() }))
     .query(async ({ input }) => {
       return await getGuestPosts(input.status);
     }),
+
   submit: protectedProcedure
     .input(
       z.object({
@@ -174,18 +212,21 @@ const guestPostsRouter = router({
     .mutation(async ({ input }) => {
       return await createGuestPost(input);
     }),
+
   approve: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await updateGuestPostStatus(input.id, "approved");
       return { success: true };
     }),
+
   reject: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await updateGuestPostStatus(input.id, "rejected");
       return { success: true };
     }),
+
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
@@ -194,10 +235,15 @@ const guestPostsRouter = router({
     }),
 });
 
-// ─── Likes router ──────────────────────────────────────────────────────────────
+// Likes router
 const likesRouter = router({
   toggle: protectedProcedure
-    .input(z.object({ articleId: z.number().optional(), commentId: z.number().optional() }))
+    .input(
+      z.object({
+        articleId: z.number().optional(),
+        commentId: z.number().optional(),
+      })
+    )
     .mutation(async ({ input, ctx }) => {
       const existing = await getUserLike(ctx.user!.id, input.articleId, input.commentId);
       if (existing) {
@@ -212,14 +258,31 @@ const likesRouter = router({
         return { liked: true };
       }
     }),
+
   count: publicProcedure
-    .input(z.object({ articleId: z.number().optional(), commentId: z.number().optional() }))
+    .input(
+      z.object({
+        articleId: z.number().optional(),
+        commentId: z.number().optional(),
+      })
+    )
     .query(async ({ input }) => {
       return await getLikeCount(input.articleId, input.commentId);
     }),
+
+  userLike: protectedProcedure
+    .input(
+      z.object({
+        articleId: z.number().optional(),
+        commentId: z.number().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      return await getUserLike(ctx.user!.id, input.articleId, input.commentId);
+    }),
 });
 
-// ─── Profiles router ───────────────────────────────────────────────────────────
+// Profiles router
 const profilesRouter = router({
   get: publicProcedure
     .input(z.object({ userId: z.number() }))
@@ -228,6 +291,7 @@ const profilesRouter = router({
       const commentCount = await getUserCommentCount(input.userId);
       return { profile, commentCount };
     }),
+
   update: protectedProcedure
     .input(z.object({ bio: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
@@ -241,11 +305,12 @@ const profilesRouter = router({
     }),
 });
 
-// ─── About Page router ─────────────────────────────────────────────────────────
+// About Page router
 const aboutRouter = router({
   get: publicProcedure.query(async () => {
     return await getAboutPage();
   }),
+
   update: adminProcedure
     .input(z.object({ title: z.string(), content: z.string() }))
     .mutation(async ({ input }) => {
@@ -254,17 +319,26 @@ const aboutRouter = router({
     }),
 });
 
-// ─── Guest Writers router ──────────────────────────────────────────────────────
+// Users router (admin)
+const usersRouter = router({
+  list: adminProcedure.query(async () => {
+    return await getAllUsers();
+  }),
+});
+
+// Guest Writers router
 const guestWritersRouter = router({
   list: adminProcedure.query(async () => {
     return await getApprovedGuestWriters();
   }),
+
   approve: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ input }) => {
       await approveGuestWriter(input.userId);
       return { success: true };
     }),
+
   revoke: adminProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ input }) => {
@@ -273,7 +347,7 @@ const guestWritersRouter = router({
     }),
 });
 
-// ─── App router ────────────────────────────────────────────────────────────────
+// App router
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -293,6 +367,7 @@ export const appRouter = router({
   guestWriters: guestWritersRouter,
   likes: likesRouter,
   profiles: profilesRouter,
+  users: usersRouter,
 });
 
 export type AppRouter = typeof appRouter;

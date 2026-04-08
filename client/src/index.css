@@ -164,16 +164,26 @@
   .prose-rtl {
     direction: rtl;
     text-align: right;
-  }
-  .prose-rtl p {
-    margin-bottom: 1.5rem;
     font-size: 1.0625rem;
     line-height: 1.9;
     color: oklch(0.28 0.025 55);
   }
+  .prose-rtl p {
+    margin-bottom: 1.5rem;
+  }
+  .prose-rtl h1 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 2.5rem;
+    margin-bottom: 1.25rem;
+    color: oklch(0.18 0.03 55);
+    border-bottom: 2px solid oklch(0.72 0.12 75);
+    padding-bottom: 0.5rem;
+  }
   .prose-rtl h2 {
     font-family: 'Frank Ruhl Libre', serif;
-    font-size: 1.5rem;
+    font-size: 1.625rem;
     font-weight: 700;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
@@ -183,11 +193,19 @@
   }
   .prose-rtl h3 {
     font-family: 'Frank Ruhl Libre', serif;
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
     color: oklch(0.25 0.03 55);
+  }
+  .prose-rtl h4 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: oklch(0.28 0.03 55);
   }
   .prose-rtl blockquote {
     border-right: 4px solid oklch(0.72 0.12 75);
@@ -198,6 +216,92 @@
     font-style: italic;
     color: oklch(0.42 0.04 60);
     font-size: 1.1rem;
+    background: oklch(0.96 0.015 80);
+    padding: 1.25rem 1.5rem 1.25rem 1rem;
+    border-radius: 0.25rem;
+  }
+  .prose-rtl blockquote p {
+    margin-bottom: 0;
+  }
+  .prose-rtl ul, .prose-rtl ol {
+    margin: 1.25rem 0;
+    padding-right: 1.5rem;
+    padding-left: 0;
+  }
+  .prose-rtl ul {
+    list-style-type: disc;
+  }
+  .prose-rtl ol {
+    list-style-type: decimal;
+  }
+  .prose-rtl li {
+    margin-bottom: 0.5rem;
+    padding-right: 0.25rem;
+  }
+  .prose-rtl a {
+    color: oklch(0.42 0.09 55);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+  .prose-rtl a:hover {
+    color: oklch(0.55 0.12 65);
+  }
+  .prose-rtl strong {
+    font-weight: 700;
+    color: oklch(0.22 0.03 55);
+  }
+  .prose-rtl em {
+    font-style: italic;
+  }
+  .prose-rtl code {
+    background: oklch(0.94 0.015 80);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+    color: oklch(0.35 0.08 55);
+  }
+  .prose-rtl pre {
+    background: oklch(0.18 0.02 55);
+    color: oklch(0.90 0.01 80);
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    direction: ltr;
+    text-align: left;
+  }
+  .prose-rtl pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.875rem;
+  }
+  .prose-rtl hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to left, transparent, oklch(0.72 0.12 75), transparent);
+    margin: 2.5rem 0;
+  }
+  .prose-rtl img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+  }
+  .prose-rtl table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+  .prose-rtl th, .prose-rtl td {
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+  }
+  .prose-rtl th {
+    background: oklch(0.94 0.015 80);
+    font-weight: 600;
   }
   .badge-spirituality {
     background-color: oklch(0.92 0.04 290);
