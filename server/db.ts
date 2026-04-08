@@ -1,6 +1,6 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { articles, comments, users, attachments, siteSettings, guestPosts, likes, userProfiles, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment, type InsertSiteSettings, type InsertGuestPost, type InsertLike, type InsertUserProfile } from "../drizzle/schema";
+import { articles, comments, users, attachments, siteSettings, guestPosts, likes, userProfiles, aboutPage, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment, type InsertSiteSettings, type InsertGuestPost, type InsertLike, type InsertUserProfile, type InsertAboutPage } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -317,4 +317,40 @@ export async function getUserCommentCount(userId: number) {
   if (!db) return 0;
   const result = await db.select().from(comments).where(eq(comments.userId, userId));
   return result.length;
+}
+
+export async function getAboutPage() {
+  const db = await getDb();
+  if (!db) return { id: 1, title: "אודות", content: "" };
+  const rows = await db.select().from(aboutPage).limit(1);
+  return rows.length > 0 ? rows[0] : { id: 1, title: "אודות", content: "" };
+}
+
+export async function updateAboutPage(data: Partial<InsertAboutPage>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(aboutPage).limit(1);
+  if (rows.length > 0) {
+    await db.update(aboutPage).set(data).where(eq(aboutPage.id, rows[0].id));
+  } else {
+    await db.insert(aboutPage).values(data as InsertAboutPage);
+  }
+}
+
+export async function approveGuestWriter(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ guestPostApproved: true }).where(eq(users.id, userId));
+}
+
+export async function revokeGuestWriter(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set({ guestPostApproved: false }).where(eq(users.id, userId));
+}
+
+export async function getApprovedGuestWriters() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users).where(eq(users.guestPostApproved, true));
 }

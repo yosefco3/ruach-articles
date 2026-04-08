@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,10 +21,12 @@ const CATEGORIES = [
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
+  const { data: settings } = trpc.settings.get.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
 
   const isAdmin = user?.role === "admin";
+  const siteName = settings?.siteTitle || "רוּחַ";
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -37,9 +40,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <span className="text-primary-foreground font-display font-bold text-lg leading-none">ר</span>
               </div>
               <div className="flex flex-col leading-none">
-                <span className="font-display font-bold text-xl text-foreground tracking-tight">רוּחַ</span>
+                <span className="font-display font-bold text-xl text-foreground tracking-tight">{siteName}</span>
                 <span className="text-[10px] text-muted-foreground font-sans tracking-wide hidden sm:block">
-                  רוחניות · פילוסופיה · ריפוי
+                  {settings?.heroSubtitle?.split(" — ")?.[0] || "רוחניות · פילוסופיה · ריפוי"}
                 </span>
               </div>
             </Link>

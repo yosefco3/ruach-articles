@@ -15,6 +15,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  guestPostApproved: boolean("guestPostApproved").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -111,3 +112,13 @@ export const userProfiles = mysqlTable("userProfiles", {
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = typeof userProfiles.$inferInsert;
+
+export const aboutPage = mysqlTable("aboutPage", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 256 }).default("אודות").notNull(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AboutPage = typeof aboutPage.$inferSelect;
+export type InsertAboutPage = typeof aboutPage.$inferInsert;

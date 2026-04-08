@@ -44,3 +44,17 @@
 - [x] Add "popular articles" section based on comment count
 - [x] Test all features thoroughly
 - [x] Save checkpoint with all features
+
+
+## Bug Fixes & Enhancements – Phase 5 (Completed)
+- [x] Add aboutPage table to schema for editable About content
+- [x] Add guestPostApproved field to users table
+- [x] Create migrations for new schema changes
+- [x] Build admin About page editor in AdminSettings
+- [x] Implement guest writer approval system (admin can approve/revoke)
+- [x] Update Home.tsx to use dynamic site name from settings
+- [x] Update SiteLayout to use dynamic site name
+- [x] Update About page to display dynamic content from database
+- [x] Add "Write Article" button for approved guest writers
+- [x] Test all fixes
+- [x] Save checkpoint with all fixes

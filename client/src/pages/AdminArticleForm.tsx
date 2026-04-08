@@ -49,6 +49,9 @@ export default function AdminArticleForm() {
   const isEdit = !!params.id;
   const articleId = params.id ? parseInt(params.id) : undefined;
 
+  // Check if user is admin or approved guest writer
+  const canWrite = user?.role === "admin" || user?.guestPostApproved;
+
   // Load existing article for edit
   const { data: articles } = trpc.articles.list.useQuery({ all: true }, { enabled: isEdit });
   const existingArticle = articles?.find((a) => a.id === articleId);
@@ -187,9 +190,7 @@ export default function AdminArticleForm() {
     } else {
       createArticle.mutate(form);
     }
-  };
-
-  if (loading) {
+  };  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -197,7 +198,24 @@ export default function AdminArticleForm() {
     );
   }
 
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!canWrite) {
+    return (
+      <div className="container max-w-2xl py-12">
+        <div className="bg-card border border-border rounded-xl p-8 text-center">
+          <h1 className="font-display font-bold text-2xl text-foreground mb-4">אין לך הרשאה לכתוב מאמרים</h1>
+          <p className="text-muted-foreground mb-6">
+            רק אדמין וסופרים אורחים מאושרים יכולים לכתוב מאמרים. אם אתה סופר אורח, בקש מהאדמין להעניק לך הרשאה.
+          </p>
+          <Button onClick={() => navigate("/")} className="gap-2">
+            <ArrowRight className="w-4 h-4" />
+            חזרה לדף הבית
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className="container py-24 text-center">
         <p className="text-xl font-display font-bold text-foreground mb-2">גישה מוגבלת</p>
