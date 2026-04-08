@@ -43,82 +43,99 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  /* Warm parchment & gold palette for a spiritual publication */
+  --primary: oklch(0.42 0.09 55);
+  --primary-foreground: oklch(0.98 0.008 80);
+  --sidebar-primary: oklch(0.42 0.09 55);
+  --sidebar-primary-foreground: oklch(0.98 0.008 80);
+  --chart-1: oklch(0.60 0.12 290);
+  --chart-2: oklch(0.48 0.10 230);
+  --chart-3: oklch(0.55 0.13 155);
+  --chart-4: oklch(0.72 0.12 75);
+  --chart-5: oklch(0.42 0.09 55);
+  --radius: 0.5rem;
+  --background: oklch(0.98 0.012 85);
+  --foreground: oklch(0.18 0.025 55);
+  --card: oklch(0.99 0.008 80);
+  --card-foreground: oklch(0.18 0.025 55);
+  --popover: oklch(0.99 0.008 80);
+  --popover-foreground: oklch(0.18 0.025 55);
+  --secondary: oklch(0.93 0.025 80);
+  --secondary-foreground: oklch(0.30 0.04 55);
+  --muted: oklch(0.94 0.018 80);
+  --muted-foreground: oklch(0.52 0.03 60);
+  --accent: oklch(0.88 0.06 75);
+  --accent-foreground: oklch(0.25 0.05 55);
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.98 0.005 80);
+  --border: oklch(0.88 0.022 75);
+  --input: oklch(0.88 0.022 75);
+  --ring: oklch(0.42 0.09 55);
+  --sidebar: oklch(0.97 0.015 82);
+  --sidebar-foreground: oklch(0.18 0.025 55);
+  --sidebar-accent: oklch(0.93 0.025 80);
+  --sidebar-accent-foreground: oklch(0.25 0.05 55);
+  --sidebar-border: oklch(0.88 0.022 75);
+  --sidebar-ring: oklch(0.42 0.09 55);
 }
 
+/* Dark mode kept minimal – site is light-first */
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
+  --primary: oklch(0.72 0.12 75);
+  --primary-foreground: oklch(0.15 0.02 55);
+  --sidebar-primary: oklch(0.72 0.12 75);
+  --sidebar-primary-foreground: oklch(0.15 0.02 55);
+  --background: oklch(0.14 0.018 55);
+  --foreground: oklch(0.92 0.012 80);
+  --card: oklch(0.18 0.020 55);
+  --card-foreground: oklch(0.92 0.012 80);
+  --popover: oklch(0.18 0.020 55);
+  --popover-foreground: oklch(0.92 0.012 80);
+  --secondary: oklch(0.22 0.025 55);
+  --secondary-foreground: oklch(0.80 0.015 80);
+  --muted: oklch(0.22 0.020 55);
+  --muted-foreground: oklch(0.62 0.025 70);
+  --accent: oklch(0.28 0.035 60);
+  --accent-foreground: oklch(0.90 0.015 80);
+  --destructive: oklch(0.65 0.18 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
+  --ring: oklch(0.72 0.12 75);
+  --chart-1: oklch(0.65 0.12 290);
+  --chart-2: oklch(0.55 0.10 230);
+  --chart-3: oklch(0.60 0.13 155);
+  --chart-4: oklch(0.72 0.12 75);
+  --chart-5: oklch(0.55 0.09 55);
+  --sidebar: oklch(0.16 0.018 55);
+  --sidebar-foreground: oklch(0.92 0.012 80);
+  --sidebar-accent: oklch(0.22 0.025 55);
+  --sidebar-accent-foreground: oklch(0.90 0.015 80);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --sidebar-ring: oklch(0.72 0.12 75);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Heebo', 'Frank Ruhl Libre', sans-serif;
+    line-height: 1.8;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Frank Ruhl Libre', 'Heebo', serif;
+    font-weight: 700;
+    line-height: 1.3;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -130,6 +147,93 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Frank Ruhl Libre', serif;
+  }
+  .font-serif {
+    font-family: 'Frank Ruhl Libre', 'Heebo', serif;
+  }
+  .divider-gold {
+    height: 2px;
+    background: linear-gradient(to left, transparent, oklch(0.72 0.12 75), transparent);
+  }
+  .prose-rtl {
+    direction: rtl;
+    text-align: right;
+  }
+  .prose-rtl p {
+    margin-bottom: 1.5rem;
+    font-size: 1.0625rem;
+    line-height: 1.9;
+    color: oklch(0.28 0.025 55);
+  }
+  .prose-rtl h2 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: oklch(0.22 0.03 55);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+  .prose-rtl h3 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    color: oklch(0.25 0.03 55);
+  }
+  .prose-rtl blockquote {
+    border-right: 4px solid oklch(0.72 0.12 75);
+    border-left: none;
+    padding-right: 1.5rem;
+    padding-left: 0;
+    margin: 2rem 0;
+    font-style: italic;
+    color: oklch(0.42 0.04 60);
+    font-size: 1.1rem;
+  }
+  .badge-spirituality {
+    background-color: oklch(0.92 0.04 290);
+    color: oklch(0.35 0.12 290);
+    border: 1px solid oklch(0.82 0.07 290);
+  }
+  .badge-philosophy {
+    background-color: oklch(0.92 0.04 230);
+    color: oklch(0.30 0.10 230);
+    border: 1px solid oklch(0.80 0.07 230);
+  }
+  .badge-healing {
+    background-color: oklch(0.92 0.04 155);
+    color: oklch(0.32 0.12 155);
+    border: 1px solid oklch(0.80 0.08 155);
+  }
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px -8px oklch(0.18 0.03 55 / 0.15);
+  }
+  .hero-gradient {
+    background: linear-gradient(
+      160deg,
+      oklch(0.96 0.025 85) 0%,
+      oklch(0.93 0.04 75) 50%,
+      oklch(0.90 0.055 70) 100%
+    );
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, oklch(0.55 0.12 65), oklch(0.42 0.09 55));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
