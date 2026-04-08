@@ -46,3 +46,11 @@
 - [x] Seed 6 sample articles (2 per category)
 - [x] Responsive design verification (mobile/desktop)
 - [x] Final checkpoint
+
+## New Features – Phase 2
+- [x] About page: mission statement, values, team info
+- [x] Contact page: contact form with email backend integration
+- [x] Update App.tsx routes for /about and /contact
+- [x] Update SiteLayout navigation to include About and Contact links
+- [x] Test About and Contact pages on mobile and desktop
+- [x] Save checkpoint with new pages

@@ -59,6 +59,22 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.label}
                 </Link>
               ))}
+              <Link
+                href="/about"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/about" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                אודות
+              </Link>
+              <Link
+                href="/contact"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/contact" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                יצירת קשר
+              </Link>
             </nav>
 
             {/* Auth Actions */}
@@ -133,6 +149,20 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 {cat.label}
               </Link>
             ))}
+            <Link
+              href="/about"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              אודות
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              יצירת קשר
+            </Link>
             {isAdmin && (
               <Link
                 href="/admin"
@@ -175,6 +205,18 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.label}
                 </Link>
               ))}
+              <Link
+                href="/about"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                אודות
+              </Link>
+              <Link
+                href="/contact"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                יצירת קשר
+              </Link>
             </nav>
           </div>
 

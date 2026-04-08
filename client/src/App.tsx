@@ -9,6 +9,8 @@ import ArticlePage from "./pages/ArticlePage";
 import CategoryPage from "./pages/CategoryPage";
 import AdminPage from "./pages/AdminPage";
 import AdminArticleForm from "./pages/AdminArticleForm";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import SiteLayout from "./components/SiteLayout";
 
 function Router() {
@@ -16,6 +18,8 @@ function Router() {
     <SiteLayout>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/about" component={About} />
+        <Route path="/contact" component={Contact} />
         <Route path="/category/:category" component={CategoryPage} />
         <Route path="/article/:slug" component={ArticlePage} />
         <Route path="/admin" component={AdminPage} />

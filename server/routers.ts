@@ -16,6 +16,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { contactRouter } from "./contact";
 
 // ─── Admin guard middleware ───────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -157,6 +158,7 @@ export const appRouter = router({
   }),
   articles: articlesRouter,
   comments: commentsRouter,
+  contact: contactRouter,
 });
 
 export type AppRouter = typeof appRouter;
