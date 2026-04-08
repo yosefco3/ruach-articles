@@ -9,10 +9,18 @@ const CATEGORIES = Object.entries(CATEGORY_MAP).map(([key, val]) => ({ key, ...v
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: settings } = trpc.settings.get.useQuery();
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery(
     activeCategory ? { category: activeCategory as "spirituality" | "philosophy" | "healing" } : undefined
   );
+
+  const filteredArticles = articles?.filter(article =>
+    searchQuery === "" ||
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.tags?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) ?? [];
 
   const featured = articles?.[0];
   const rest = articles?.slice(1) ?? [];
@@ -28,12 +36,22 @@ export default function Home() {
             </div>
           </div>
           <h1 className="font-display font-bold text-5xl md:text-6xl text-foreground mb-4 leading-tight">
-            רוּחַ
+            {settings?.siteTitle || "רוּחַ"}
           </h1>
           <div className="divider-gold max-w-xs mx-auto mb-6" />
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light">
-            מרחב לעומק, לשקט ולחיפוש הפנימי — מאמרים ברוחניות, פילוסופיה וריפוי
+            {settings?.heroSubtitle || "מרחב לעומק, לשקט ולחיפוש הפנימי — מאמרים ברוחניות, פילוסופיה וריפוי"}
           </p>
+          <div className="mt-8 max-w-md mx-auto">
+            <input
+              type="text"
+              placeholder="חיפוש מאמרים..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              dir="rtl"
+            />
+          </div>
         </div>
       </section>
 
@@ -74,10 +92,10 @@ export default function Home() {
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-        ) : !articles || articles.length === 0 ? (
+        ) : !filteredArticles || filteredArticles.length === 0 ? (
           <div className="text-center py-24">
             <Feather className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground text-lg">אין מאמרים עדיין</p>
+            <p className="text-muted-foreground text-lg">{searchQuery ? "לא נמצאו מאמרים תואמים" : "אין מאמרים עדיין"}</p>
             <p className="text-muted-foreground/60 text-sm mt-1">חזרו בקרוב לתכנים חדשים</p>
           </div>
         ) : (
@@ -94,7 +112,7 @@ export default function Home() {
             )}
 
             {/* Grid */}
-            {(activeCategory ? articles : rest).length > 0 && (
+            {(activeCategory ? articles?.length ?? 0 : rest.length) > 0 && (
               <>
                 {!activeCategory && (
                   <div className="flex items-center gap-3 mb-6">
@@ -103,7 +121,7 @@ export default function Home() {
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(activeCategory ? articles : rest).map((article) => (
+                  {(activeCategory ? articles : rest)?.map((article) => (
                     <ArticleCard key={article.id} {...article} />
                   ))}
                 </div>

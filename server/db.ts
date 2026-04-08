@@ -1,6 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { articles, comments, users, attachments, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment } from "../drizzle/schema";
+import { articles, comments, users, attachments, siteSettings, guestPosts, likes, userProfiles, type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment, type InsertSiteSettings, type InsertGuestPost, type InsertLike, type InsertUserProfile } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -208,4 +208,113 @@ export async function deleteAttachmentsByArticle(articleId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(attachments).where(eq(attachments.articleId, articleId));
+}
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
+
+export async function getSiteSettings() {
+  const db = await getDb();
+  if (!db) return { siteTitle: "רוּחַ", heroSubtitle: "רוחניות · פילוסופיה · ריפוי" };
+  const rows = await db.select().from(siteSettings).limit(1);
+  return rows.length > 0 ? rows[0] : { siteTitle: "רוּחַ", heroSubtitle: "רוחניות · פילוסופיה · ריפוי" };
+}
+
+export async function updateSiteSettings(data: Partial<InsertSiteSettings>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(siteSettings).limit(1);
+  if (rows.length > 0) {
+    await db.update(siteSettings).set(data).where(eq(siteSettings.id, rows[0].id));
+  } else {
+    await db.insert(siteSettings).values(data as InsertSiteSettings);
+  }
+}
+
+// ─── Guest Posts ──────────────────────────────────────────────────────────────
+
+export async function getGuestPosts(status?: "pending" | "approved" | "rejected") {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = status ? [eq(guestPosts.status, status)] : [];
+  return await db.select().from(guestPosts).where(conditions.length > 0 ? and(...conditions) : undefined).orderBy(desc(guestPosts.createdAt));
+}
+
+export async function createGuestPost(data: InsertGuestPost) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(guestPosts).values(data);
+}
+
+export async function updateGuestPostStatus(id: number, status: "pending" | "approved" | "rejected") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(guestPosts).set({ status }).where(eq(guestPosts.id, id));
+}
+
+export async function deleteGuestPost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(guestPosts).where(eq(guestPosts.id, id));
+}
+
+// ─── Likes ────────────────────────────────────────────────────────────────────
+
+export async function getLikeCount(articleId?: number, commentId?: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const conditions = [];
+  if (articleId) conditions.push(eq(likes.articleId, articleId));
+  if (commentId) conditions.push(eq(likes.commentId, commentId));
+  const result = await db.select().from(likes).where(conditions.length > 0 ? and(...conditions) : undefined);
+  return result.length;
+}
+
+export async function getUserLike(userId: number, articleId?: number, commentId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const conditions = [eq(likes.userId, userId)];
+  if (articleId) conditions.push(eq(likes.articleId, articleId));
+  if (commentId) conditions.push(eq(likes.commentId, commentId));
+  const rows = await db.select().from(likes).where(and(...conditions)).limit(1);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function createLike(data: InsertLike) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(likes).values(data);
+}
+
+export async function deleteLike(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(likes).where(eq(likes.id, id));
+}
+
+// ─── User Profiles ────────────────────────────────────────────────────────────
+
+export async function getUserProfile(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
+  return rows.length > 0 ? rows[0] : null;
+}
+
+export async function createUserProfile(data: InsertUserProfile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db.insert(userProfiles).values(data);
+}
+
+export async function updateUserProfile(userId: number, data: Partial<InsertUserProfile>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(userProfiles).set(data).where(eq(userProfiles.userId, userId));
+}
+
+export async function getUserCommentCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(comments).where(eq(comments.userId, userId));
+  return result.length;
 }

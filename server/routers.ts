@@ -12,6 +12,20 @@ import {
   getCommentsByArticle,
   updateArticle,
   getAttachmentsByArticle,
+  getSiteSettings,
+  updateSiteSettings,
+  getGuestPosts,
+  createGuestPost,
+  updateGuestPostStatus,
+  deleteGuestPost,
+  getLikeCount,
+  getUserLike,
+  createLike,
+  deleteLike,
+  getUserProfile,
+  createUserProfile,
+  updateUserProfile,
+  getUserCommentCount,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -33,7 +47,7 @@ const articlesRouter = router({
     .input(
       z.object({
         category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
-        all: z.boolean().optional(), // admin: include unpublished
+        all: z.boolean().optional(),
       }).optional()
     )
     .query(async ({ input, ctx }) => {
@@ -82,11 +96,10 @@ const articlesRouter = router({
     .input(
       z.object({
         id: z.number(),
-        title: z.string().min(1).optional(),
-        slug: z.string().min(1).optional(),
+        title: z.string().optional(),
+        body: z.string().optional(),
         excerpt: z.string().optional(),
-        body: z.string().min(1).optional(),
-        coverImage: z.string().optional().nullable(),
+        coverImage: z.string().optional(),
         category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
         tags: z.string().optional(),
         published: z.boolean().optional(),
@@ -94,8 +107,6 @@ const articlesRouter = router({
     )
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      const existing = await getArticleById(id);
-      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "המאמר לא נמצא" });
       await updateArticle(id, data);
       return { success: true };
     }),
@@ -103,8 +114,6 @@ const articlesRouter = router({
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      const existing = await getArticleById(input.id);
-      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "המאמר לא נמצא" });
       await deleteArticle(input.id);
       return { success: true };
     }),
@@ -114,15 +123,14 @@ const articlesRouter = router({
 const commentsRouter = router({
   list: publicProcedure
     .input(z.object({ articleId: z.number() }))
-    .query(async ({ input }) => {
-      return getCommentsByArticle(input.articleId);
-    }),
+    .query(async ({ input }) => getCommentsByArticle(input.articleId)),
 
   create: protectedProcedure
     .input(
       z.object({
         articleId: z.number(),
-        body: z.string().min(1).max(2000),
+        body: z.string().min(1),
+        parentCommentId: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -130,6 +138,7 @@ const commentsRouter = router({
         articleId: input.articleId,
         userId: ctx.user.id,
         body: input.body,
+        parentCommentId: input.parentCommentId ?? null,
       });
       return { success: true };
     }),
@@ -147,7 +156,112 @@ const commentsRouter = router({
     }),
 });
 
-// ─── App router ───────────────────────────────────────────────────────────────
+// ─── Settings router ──────────────────────────────────────────────────────────
+const settingsRouter = router({
+  get: publicProcedure.query(async () => getSiteSettings()),
+  
+  update: adminProcedure
+    .input(z.object({
+      siteTitle: z.string().min(1).optional(),
+      heroSubtitle: z.string().min(1).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await updateSiteSettings(input);
+      return { success: true };
+    }),
+});
+
+// ─── Guest Posts router ────────────────────────────────────────────────────────
+const guestPostsRouter = router({
+  list: adminProcedure
+    .input(z.object({ status: z.enum(["pending", "approved", "rejected"]).optional() }).optional())
+    .query(async ({ input }) => getGuestPosts(input?.status)),
+
+  submit: publicProcedure
+    .input(z.object({
+      title: z.string().min(1),
+      authorName: z.string().min(1),
+      authorEmail: z.string().email(),
+      body: z.string().min(1),
+      category: z.enum(["spirituality", "philosophy", "healing"]),
+    }))
+    .mutation(async ({ input }) => {
+      await createGuestPost(input);
+      return { success: true };
+    }),
+
+  approve: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await updateGuestPostStatus(input.id, "approved");
+      return { success: true };
+    }),
+
+  reject: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await updateGuestPostStatus(input.id, "rejected");
+      return { success: true };
+    }),
+
+  delete: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteGuestPost(input.id);
+      return { success: true };
+    }),
+});
+
+// ─── Likes router ──────────────────────────────────────────────────────────────
+const likesRouter = router({
+  count: publicProcedure
+    .input(z.object({
+      articleId: z.number().optional(),
+      commentId: z.number().optional(),
+    }))
+    .query(async ({ input }) => getLikeCount(input.articleId, input.commentId)),
+
+  toggle: protectedProcedure
+    .input(z.object({
+      articleId: z.number().optional(),
+      commentId: z.number().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const existing = await getUserLike(ctx.user.id, input.articleId, input.commentId);
+      if (existing) {
+        await deleteLike(existing.id);
+        return { liked: false };
+      } else {
+        await createLike({ userId: ctx.user.id, articleId: input.articleId, commentId: input.commentId });
+        return { liked: true };
+      }
+    }),
+});
+
+// ─── User Profiles router ──────────────────────────────────────────────────────
+const profilesRouter = router({
+  get: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      const profile = await getUserProfile(input.userId);
+      const commentCount = await getUserCommentCount(input.userId);
+      return { profile, commentCount };
+    }),
+
+  update: protectedProcedure
+    .input(z.object({ bio: z.string().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const existing = await getUserProfile(ctx.user.id);
+      if (!existing) {
+        await createUserProfile({ userId: ctx.user.id, bio: input.bio });
+      } else {
+        await updateUserProfile(ctx.user.id, { bio: input.bio });
+      }
+      return { success: true };
+    }),
+});
+
+// ─── App router ────────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -161,6 +275,10 @@ export const appRouter = router({
   articles: articlesRouter,
   comments: commentsRouter,
   contact: contactRouter,
+  settings: settingsRouter,
+  guestPosts: guestPostsRouter,
+  likes: likesRouter,
+  profiles: profilesRouter,
 });
 
 export type AppRouter = typeof appRouter;

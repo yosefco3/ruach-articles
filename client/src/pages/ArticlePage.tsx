@@ -9,6 +9,7 @@ import { Loader2, Calendar, User, MessageCircle, Trash2, ArrowRight } from "luci
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import CommentsSection from "@/components/CommentsSection";
 
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
@@ -186,99 +187,7 @@ export default function ArticlePage() {
         <div className="divider-gold mb-10" />
 
         {/* Comments Section */}
-        <section>
-          <h2 className="font-display font-bold text-2xl text-foreground mb-6 flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-primary" />
-            תגובות
-            {comments && comments.length > 0 && (
-              <span className="text-sm font-normal text-muted-foreground">({comments.length})</span>
-            )}
-          </h2>
-
-          {/* Add Comment */}
-          {isAuthenticated ? (
-            <div className="bg-card border border-border rounded-xl p-5 mb-8">
-              <p className="text-sm font-medium text-foreground mb-3">
-                מגיב/ה בתור <span className="text-primary">{user?.name}</span>
-              </p>
-              <Textarea
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                placeholder="כתבו את תגובתכם כאן..."
-                className="mb-3 resize-none min-h-[100px] text-right"
-                dir="rtl"
-              />
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => {
-                    if (!commentBody.trim()) return;
-                    createComment.mutate({ articleId: article.id, body: commentBody.trim() });
-                  }}
-                  disabled={createComment.isPending || !commentBody.trim()}
-                  size="sm"
-                >
-                  {createComment.isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-                  פרסום תגובה
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-secondary/50 border border-border rounded-xl p-6 mb-8 text-center">
-              <p className="text-muted-foreground mb-3">כדי להגיב, יש להתחבר תחילה</p>
-              <Button size="sm" onClick={() => (window.location.href = getLoginUrl())}>
-                כניסה לאתר
-              </Button>
-            </div>
-          )}
-
-          {/* Comments List */}
-          {commentsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : !comments || comments.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
-              <p>אין תגובות עדיין. היו הראשונים להגיב!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {comments.map((comment) => {
-                const isOwner = user?.id === comment.userId;
-                const commentDate = new Date(comment.createdAt).toLocaleDateString("he-IL", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                });
-                return (
-                  <div key={comment.id} className="bg-card border border-border rounded-xl p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <User className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{comment.userName || "משתמש"}</p>
-                          <p className="text-xs text-muted-foreground">{commentDate}</p>
-                        </div>
-                      </div>
-                      {isOwner && (
-                        <button
-                          onClick={() => deleteComment.mutate({ id: comment.id })}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
-                          title="מחיקת תגובה"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    <p className="mt-3 text-sm text-foreground leading-relaxed">{comment.body}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {article.id && <CommentsSection articleId={article.id} />}
       </div>
     </div>
   );

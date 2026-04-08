@@ -1,70 +1,46 @@
 # רוּחַ – Project TODO
 
-## Database & Backend
-- [x] Add articles table (id, title, slug, body, excerpt, coverImage, category, tags, authorId, published, createdAt, updatedAt)
-- [x] Add comments table (id, articleId, userId, body, createdAt)
-- [x] Run schema migration via webdev_execute_sql
-- [x] DB helpers: getArticles, getArticleBySlug, createArticle, updateArticle, deleteArticle
-- [x] DB helpers: getCommentsByArticle, createComment, deleteComment
-- [x] tRPC router: articles.list (public, with category/tag filter)
-- [x] tRPC router: articles.bySlug (public)
-- [x] tRPC router: articles.create (admin only)
-- [x] tRPC router: articles.update (admin only)
-- [x] tRPC router: articles.delete (admin only)
-- [x] tRPC router: comments.list (public)
-- [x] tRPC router: comments.create (protected)
-- [x] tRPC router: comments.delete (protected, own comments only)
+## Phase 1: Core Features (Completed)
+- [x] Database schema (users, articles, comments, attachments)
+- [x] Authentication via Manus OAuth
+- [x] Article CRUD operations
+- [x] Basic comments system
+- [x] Rich Text Editor (TipTap)
+- [x] File attachments for articles
+- [x] RTL Hebrew interface
+- [x] Responsive design
 
-## Frontend – Global
-- [x] RTL Hebrew layout with proper font (Frank Ruhl Libre / Heebo)
-- [x] Global CSS variables and design tokens (warm cream/gold palette)
-- [x] Responsive top navigation with logo, category links, login/logout
-- [x] Footer with site description
+## Phase 2: Additional Pages (Completed)
+- [x] About page with mission and team
+- [x] Contact page with form submission
+- [x] Navigation links in header and footer
 
-## Frontend – Pages
-- [x] Homepage: hero section with featured article
-- [x] Homepage: articles grid organized by category
-- [x] Homepage: category filter tabs
-- [x] Article detail page: full content, cover image, metadata
-- [x] Article detail page: comments section (list + add comment form)
-- [x] Category/tag browse page
-- [x] Admin panel: article list with edit/delete actions
-- [x] Admin panel: create/edit article form (title, slug, body, excerpt, cover image, category, tags, published toggle)
-- [x] 404 page in Hebrew
+## Phase 3: Rich Text & Attachments (Completed)
+- [x] TipTap Rich Text Editor with formatting toolbar
+- [x] Attachments table and file upload UI
+- [x] HTML rendering for article body
+- [x] Display attachments on article detail page
 
-## Auth & Access Control
-- [x] Login via Manus OAuth only
-- [x] Admin role check on all admin procedures
-- [x] Users can only delete their own comments
-- [x] Admin nav link visible only to admins
-
-## Tests
-- [x] Vitest: articles CRUD procedures
-- [x] Vitest: comments create/delete with ownership check
-
-## Polish & Content
-- [x] Seed 6 sample articles (2 per category)
-- [x] Responsive design verification (mobile/desktop)
-- [x] Final checkpoint
-
-## New Features – Phase 2
-- [x] About page: mission statement, values, team info
-- [x] Contact page: contact form with email backend integration
-- [x] Update App.tsx routes for /about and /contact
-- [x] Update SiteLayout navigation to include About and Contact links
-- [x] Test About and Contact pages on mobile and desktop
-- [x] Save checkpoint with new pages
-
-## New Features – Phase 3 (Rich Text Editor & Attachments)
-- [x] Update articles table schema to support body as HTML (not markdown)
-- [x] Add attachments table (id, articleId, fileName, fileUrl, fileSize, uploadedAt)
-- [x] Run migration for new schema
-- [x] Install TipTap and dependencies (@tiptap/react, @tiptap/starter-kit, etc.)
-- [x] Create RichTextEditor component with TipTap
-- [x] Update AdminArticleForm to use RTE instead of textarea
-- [x] Add file upload UI to AdminArticleForm
-- [x] Create backend endpoint for file uploads (storagePut)
-- [x] Create tRPC procedure for article attachments (list, upload, delete)
-- [x] Display attachments section on ArticlePage
-- [x] Test RTE and file uploads
-- [x] Save checkpoint with RTE and attachments
+## Phase 4: Admin Customization & Advanced Comments (Completed)
+- [x] Add siteSettings table to schema (siteTitle, heroSubtitle)
+- [x] Add guestPosts table (title, authorName, authorEmail, body, status, category)
+- [x] Update comments table with parentCommentId for nested replies
+- [x] Add likes table (userId, articleId/commentId, type)
+- [x] Add userProfiles table (bio, joinDate, commentCount)
+- [x] Run migrations for all new tables
+- [x] Build admin settings panel to edit site name and hero subtitle
+- [x] Update Home page to display dynamic site name and subtitle
+- [x] Implement nested comment replies (show replies under parent)
+- [x] Add reply button and reply form to each comment
+- [x] Build guest post submission form (public page)
+- [x] Create admin panel to approve/reject/delete guest posts
+- [x] Add admin comment moderation (delete button for admin)
+- [x] Add user comment deletion (users can only delete their own)
+- [x] Implement likes system for articles and comments
+- [x] Build user profile page showing user's comments and stats
+- [x] Add email notifications for new replies and guest post approvals
+- [x] Implement article search by title, tags, and content
+- [x] Build tags/categories browsing page
+- [x] Add "popular articles" section based on comment count
+- [x] Test all features thoroughly
+- [x] Save checkpoint with all features

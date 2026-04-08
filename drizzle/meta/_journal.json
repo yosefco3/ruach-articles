@@ -22,6 +22,20 @@
       "when": 1775656826784,
       "tag": "0002_curly_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1775657484248,
+      "tag": "0003_adorable_skreet",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1775657920729,
+      "tag": "0004_green_alice",
+      "breakpoints": true
     }
   ]
 }

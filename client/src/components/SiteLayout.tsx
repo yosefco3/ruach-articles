@@ -75,6 +75,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               >
                 יצירת קשר
               </Link>
+              <Link
+                href="/guest-post"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/guest-post" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                כתוב אתנו
+              </Link>
             </nav>
 
             {/* Auth Actions */}
@@ -98,7 +106,19 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                         <DropdownMenuItem asChild>
                           <Link href="/admin" className="flex items-center gap-2 cursor-pointer">
                             <Settings className="w-4 h-4" />
-                            <span>לוח ניהול</span>
+                            <span>מאמרים</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/settings" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="w-4 h-4" />
+                            <span>הגדרות</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/guest-posts" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="w-4 h-4" />
+                            <span>הצעות אורחים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -162,6 +182,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               יצירת קשר
+            </Link>
+            <Link
+              href="/guest-post"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              כתוב אתנו
             </Link>
             {isAdmin && (
               <Link
