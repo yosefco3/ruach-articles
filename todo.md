@@ -117,3 +117,4 @@
 - [x] Fix oversized/cropped cover image on article page
 - [x] Fix oversized/cropped image on about page
 - [x] Fix article edit/update not working
+- [x] Fix article edit form: RichTextEditor shows empty body when editing existing article

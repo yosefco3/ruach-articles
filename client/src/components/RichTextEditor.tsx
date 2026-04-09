@@ -1,4 +1,5 @@
 import { useEditor, EditorContent } from "@tiptap/react";
+import { useEffect } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -60,6 +61,18 @@ export default function RichTextEditor({
       onChange(editor.getHTML());
     },
   });
+
+  // When value changes externally (e.g. async load of article body in edit mode),
+  // update the editor content without losing cursor position if the editor is empty.
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    // Only update if editor is empty/blank and new value has content
+    const isEmpty = current === "" || current === "<p></p>";
+    if (isEmpty && value && value !== "<p></p>") {
+      editor.commands.setContent(value, false as any);
+    }
+  }, [editor, value]);
 
   if (!editor) {
     return null;
