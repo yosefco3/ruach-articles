@@ -2,10 +2,10 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   articles, comments, users, attachments, siteSettings, guestPosts,
-  likes, userProfiles, aboutPage,
+  likes, userProfiles, aboutPage, categories, newsletterSubscribers,
   type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment,
   type InsertSiteSettings, type InsertGuestPost, type InsertLike,
-  type InsertUserProfile, type InsertAboutPage,
+  type InsertUserProfile, type InsertAboutPage, type InsertCategory, type InsertNewsletterSubscriber,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -83,8 +83,8 @@ export async function getArticles(opts?: { category?: string; published?: boolea
   if (!db) return [];
   const conditions = [];
   if (opts?.published !== undefined) conditions.push(eq(articles.published, opts.published));
-  if (opts?.category && ["spirituality", "philosophy", "healing"].includes(opts.category)) {
-    conditions.push(eq(articles.category, opts.category as "spirituality" | "philosophy" | "healing"));
+  if (opts?.category) {
+    conditions.push(eq(articles.category, opts.category));
   }
   const rows = await db
     .select({
@@ -405,4 +405,69 @@ export async function getApprovedGuestWriters() {
   const db = await getDb();
   if (!db) return [];
   return await db.select().from(users).where(eq(users.guestPostApproved, true));
+}
+
+// --- Categories ---
+
+export async function getCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(categories).orderBy(categories.sortOrder);
+}
+
+export async function getCategoryBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
+  return rows.length > 0 ? rows[0] : undefined;
+}
+
+export async function createCategory(data: InsertCategory) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(categories).values(data);
+  const created = await db.select().from(categories).where(eq(categories.slug, data.slug)).limit(1);
+  return created.length > 0 ? created[0] : data;
+}
+
+export async function updateCategory(id: number, data: Partial<InsertCategory>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(categories).set(data).where(eq(categories.id, id));
+}
+
+export async function deleteCategory(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(categories).where(eq(categories.id, id));
+}
+
+// --- Newsletter ---
+
+export async function subscribeToNewsletter(data: InsertNewsletterSubscriber) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Upsert: if email exists, reactivate
+  const existing = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, data.email)).limit(1);
+  if (existing.length > 0) {
+    if (!existing[0].active) {
+      await db.update(newsletterSubscribers).set({ active: true, name: data.name }).where(eq(newsletterSubscribers.id, existing[0].id));
+    }
+    return existing[0];
+  }
+  await db.insert(newsletterSubscribers).values(data);
+  const created = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, data.email)).limit(1);
+  return created.length > 0 ? created[0] : data;
+}
+
+export async function unsubscribeFromNewsletter(email: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(newsletterSubscribers).set({ active: false }).where(eq(newsletterSubscribers.email, email));
+}
+
+export async function getNewsletterSubscribers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.subscribedAt));
 }

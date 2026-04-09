@@ -1,0 +1,6 @@
+Screenshot review - Apr 9 2026:
+- Homepage loads correctly with dynamic categories (רוחניות, פילוסופיה, ריפוי) in nav tabs
+- Hero section shows dynamic site title and subtitle
+- Category filter tabs show correctly
+- No TypeScript errors, LSP clean
+- Need to verify: newsletter form at bottom, admin categories page, article page badges

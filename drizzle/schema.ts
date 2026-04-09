@@ -31,7 +31,7 @@ export const articles = mysqlTable("articles", {
   excerpt: text("excerpt"),
   body: text("body").notNull(),
   coverImage: varchar("coverImage", { length: 1024 }),
-  category: mysqlEnum("category", ["spirituality", "philosophy", "healing"]).notNull(),
+  category: varchar("category", { length: 128 }).notNull(),
   tags: varchar("tags", { length: 512 }).default(""),
   authorId: int("authorId").notNull(),
   published: boolean("published").default(false).notNull(),
@@ -82,7 +82,7 @@ export const guestPosts = mysqlTable("guestPosts", {
   authorName: varchar("authorName", { length: 256 }).notNull(),
   authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
   body: text("body").notNull(),
-  category: mysqlEnum("category", ["spirituality", "philosophy", "healing"]).notNull(),
+  category: varchar("category", { length: 128 }).notNull(),
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -122,3 +122,27 @@ export const aboutPage = mysqlTable("aboutPage", {
 
 export type AboutPage = typeof aboutPage.$inferSelect;
 export type InsertAboutPage = typeof aboutPage.$inferInsert;
+
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull().unique(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  description: varchar("description", { length: 512 }),
+  color: varchar("color", { length: 32 }).default("#8B6914"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
+
+export const newsletterSubscribers = mysqlTable("newsletterSubscribers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  name: varchar("name", { length: 256 }),
+  active: boolean("active").default(true).notNull(),
+  subscribedAt: timestamp("subscribedAt").defaultNow().notNull(),
+});
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;

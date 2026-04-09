@@ -3,10 +3,11 @@ import { Loader2, Check, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { CATEGORY_MAP } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 
 export default function AdminGuestPosts() {
   const [activeTab, setActiveTab] = useState<"pending" | "approved" | "rejected">("pending");
+  const { getCategoryLabel } = useDynamicCategories();
 
   const { data: guestPosts, isLoading, refetch } = trpc.guestPosts.list.useQuery({ status: activeTab });
 
@@ -87,7 +88,7 @@ export default function AdminGuestPosts() {
                     מאת: {post.authorName} ({post.authorEmail})
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    קטגוריה: {CATEGORY_MAP[post.category as keyof typeof CATEGORY_MAP]?.label}
+                    קטגוריה: {getCategoryLabel(post.category)}
                   </p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${

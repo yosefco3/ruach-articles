@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { CATEGORY_MAP } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import RichTextEditor from "@/components/RichTextEditor";
 
 export default function GuestPostForm() {
@@ -13,7 +13,15 @@ export default function GuestPostForm() {
   const [authorName, setAuthorName] = useState("");
   const [authorEmail, setAuthorEmail] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState<"spirituality" | "philosophy" | "healing">("spirituality");
+  const [category, setCategory] = useState("");
+  const { categories } = useDynamicCategories();
+
+  // Set default category when categories load
+  useEffect(() => {
+    if (categories.length > 0 && !category) {
+      setCategory(categories[0].slug);
+    }
+  }, [categories]);
 
   const submitMutation = trpc.guestPosts.submit.useMutation({
     onSuccess: () => {
@@ -22,7 +30,7 @@ export default function GuestPostForm() {
       setAuthorName("");
       setAuthorEmail("");
       setBody("");
-      setCategory("spirituality");
+      if (categories.length > 0) setCategory(categories[0].slug);
     },
     onError: (err) => {
       toast.error(err.message || "שגיאה בשליחת ההצעה");
@@ -82,14 +90,14 @@ export default function GuestPostForm() {
 
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">קטגוריה</label>
-          <Select value={category} onValueChange={(val) => setCategory(val as any)}>
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger dir="rtl">
-              <SelectValue />
+              <SelectValue placeholder="בחרו קטגוריה" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(CATEGORY_MAP).map(([key, val]) => (
-                <SelectItem key={key} value={key}>
-                  {val.label}
+              {categories.map((cat) => (
+                <SelectItem key={cat.slug} value={cat.slug}>
+                  {cat.name}
                 </SelectItem>
               ))}
             </SelectContent>

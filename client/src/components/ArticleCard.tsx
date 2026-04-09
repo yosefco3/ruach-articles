@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { getCategoryLabel, getCategoryBadgeClass } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Calendar, User } from "lucide-react";
 
 interface ArticleCardProps {
@@ -25,11 +25,14 @@ export default function ArticleCard({
   createdAt,
   featured = false,
 }: ArticleCardProps) {
+  const { getCategoryLabel, getCategoryBadgeStyle } = useDynamicCategories();
   const dateStr = new Date(createdAt).toLocaleDateString("he-IL", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  const badgeStyle = getCategoryBadgeStyle(category);
 
   if (featured) {
     return (
@@ -44,7 +47,10 @@ export default function ArticleCard({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               <div className="absolute bottom-0 right-0 left-0 p-6">
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 ${getCategoryBadgeClass(category)}`}>
+                <span
+                  className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 border"
+                  style={badgeStyle}
+                >
                   {getCategoryLabel(category)}
                 </span>
                 <h2 className="font-display font-bold text-2xl text-white leading-tight line-clamp-2">
@@ -55,7 +61,10 @@ export default function ArticleCard({
           )}
           {!coverImage && (
             <div className="p-8">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${getCategoryBadgeClass(category)}`}>
+              <span
+                className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border"
+                style={badgeStyle}
+              >
                 {getCategoryLabel(category)}
               </span>
               <h2 className="font-display font-bold text-2xl text-foreground leading-tight mb-3">
@@ -102,7 +111,10 @@ export default function ArticleCard({
           </div>
         )}
         <div className="p-5 flex flex-col flex-1">
-          <span className={`inline-block self-start px-2.5 py-0.5 rounded-full text-xs font-medium mb-3 ${getCategoryBadgeClass(category)}`}>
+          <span
+            className="inline-block self-start px-2.5 py-0.5 rounded-full text-xs font-medium mb-3 border"
+            style={badgeStyle}
+          >
             {getCategoryLabel(category)}
           </span>
           <h3 className="font-display font-bold text-lg text-foreground leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">

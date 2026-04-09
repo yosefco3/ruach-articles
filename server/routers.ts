@@ -32,6 +32,14 @@ import {
   revokeGuestWriter,
   getApprovedGuestWriters,
   getAllUsers,
+  getCategories,
+  getCategoryBySlug,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  subscribeToNewsletter,
+  unsubscribeFromNewsletter,
+  getNewsletterSubscribers,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -63,7 +71,7 @@ const articlesRouter = router({
     .input(
       z
         .object({
-          category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
+          category: z.string().optional(),
           all: z.boolean().optional(),
         })
         .optional()
@@ -95,7 +103,7 @@ const articlesRouter = router({
         excerpt: z.string().optional(),
         body: z.string(),
         coverImage: z.string().optional(),
-        category: z.enum(["spirituality", "philosophy", "healing"]),
+        category: z.string().min(1),
         tags: z.string().optional(),
       })
     )
@@ -115,7 +123,7 @@ const articlesRouter = router({
         body: z.string().optional(),
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),
-        category: z.enum(["spirituality", "philosophy", "healing"]).optional(),
+        category: z.string().optional(),
         tags: z.string().optional(),
         published: z.boolean().optional(),
       })
@@ -206,7 +214,7 @@ const guestPostsRouter = router({
         authorName: z.string(),
         authorEmail: z.string(),
         body: z.string(),
-        category: z.enum(["spirituality", "philosophy", "healing"]),
+        category: z.string().min(1),
       })
     )
     .mutation(async ({ input }) => {
@@ -347,6 +355,83 @@ const guestWritersRouter = router({
     }),
 });
 
+// Categories router
+const categoriesRouter = router({
+  list: publicProcedure.query(async () => {
+    return await getCategories();
+  }),
+
+  bySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      return await getCategoryBySlug(input.slug);
+    }),
+
+  create: adminProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        slug: z.string().min(1),
+        description: z.string().optional(),
+        color: z.string().optional(),
+        sortOrder: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await createCategory(input);
+    }),
+
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        slug: z.string().optional(),
+        description: z.string().optional(),
+        color: z.string().optional(),
+        sortOrder: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { id, ...data } = input;
+      await updateCategory(id, data);
+      return { success: true };
+    }),
+
+  delete: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteCategory(input.id);
+      return { success: true };
+    }),
+});
+
+// Newsletter router
+const newsletterRouter = router({
+  subscribe: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        name: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await subscribeToNewsletter(input);
+      return { success: true };
+    }),
+
+  unsubscribe: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      await unsubscribeFromNewsletter(input.email);
+      return { success: true };
+    }),
+
+  list: adminProcedure.query(async () => {
+    return await getNewsletterSubscribers();
+  }),
+});
+
 // App router
 export const appRouter = router({
   system: systemRouter,
@@ -368,6 +453,8 @@ export const appRouter = router({
   likes: likesRouter,
   profiles: profilesRouter,
   users: usersRouter,
+  categories: categoriesRouter,
+  newsletter: newsletterRouter,
 });
 
 export type AppRouter = typeof appRouter;

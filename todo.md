@@ -79,3 +79,26 @@
 - [x] Rewrite routers.ts to remove Unicode parse errors
 - [x] Add article likes button to ArticlePage
 - [x] Add likes.userLike tRPC procedure for tracking user like state
+
+## New Features – Phase 7 (Dynamic Categories & Newsletter)
+- [x] Add categories table to schema (id, name, slug, description, color, sortOrder)
+- [x] Add newsletterSubscribers table to schema (id, email, name, subscribedAt, active)
+- [x] Run migrations for new tables
+- [x] Create tRPC procedures for categories CRUD (admin only for create/update/delete)
+- [x] Create tRPC procedure for newsletter subscription (public)
+- [x] Build admin categories management page (add/edit/delete categories)
+- [x] Update article creation form to use dynamic categories from DB
+- [x] Update homepage category filter to use dynamic categories
+- [x] Update category page to use dynamic categories
+- [x] Build newsletter signup form on homepage
+- [x] Verify RTE link support works correctly (already built-in)
+- [x] Seed default categories (רוחניות, פילוסופיה, ריפוי)
+- [x] Test all new features (45 tests passing)
+- [x] Save checkpoint
+- [x] Add inline edit functionality to AdminCategories page
+- [x] Update GuestPostForm to use dynamic categories
+- [x] Update AdminGuestPosts to use dynamic category labels
+- [x] Update AdminPage stats to show dynamic category count
+- [x] Update ArticlePage and ArticleCard to use dynamic category labels
+- [x] Update CategoryPage to use dynamic categories
+- [x] Remove/replace static CATEGORY_MAP usage across all files

@@ -10,18 +10,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail } from "lucide-react";
 import { useState } from "react";
-
-const CATEGORIES = [
-  { key: "spirituality", label: "רוחניות" },
-  { key: "philosophy", label: "פילוסופיה" },
-  { key: "healing", label: "ריפוי" },
-];
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { data: settings } = trpc.settings.get.useQuery();
+  const { data: categories } = trpc.categories.list.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
 
@@ -49,17 +44,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
-              {CATEGORIES.map((cat) => (
+              {(categories ?? []).map((cat) => (
                 <Link
-                  key={cat.key}
-                  href={`/category/${cat.key}`}
+                  key={cat.slug}
+                  href={`/category/${cat.slug}`}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                    location === `/category/${cat.key}`
+                    location === `/category/${cat.slug}`
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground"
                   }`}
                 >
-                  {cat.label}
+                  {cat.name}
                 </Link>
               ))}
               <Link
@@ -119,6 +114,18 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
+                          <Link href="/admin/categories" className="flex items-center gap-2 cursor-pointer">
+                            <Tag className="w-4 h-4" />
+                            <span>קטגוריות</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/newsletter" className="flex items-center gap-2 cursor-pointer">
+                            <Mail className="w-4 h-4" />
+                            <span>ניוזלטר</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link href="/admin/guest-posts" className="flex items-center gap-2 cursor-pointer">
                             <Settings className="w-4 h-4" />
                             <span>הצעות אורחים</span>
@@ -168,14 +175,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {/* Mobile Nav */}
         {mobileOpen && (
           <div className="md:hidden border-t border-border bg-card px-4 py-3 flex flex-col gap-1">
-            {CATEGORIES.map((cat) => (
+            {(categories ?? []).map((cat) => (
               <Link
-                key={cat.key}
-                href={`/category/${cat.key}`}
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
                 onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
               >
-                {cat.label}
+                {cat.name}
               </Link>
             ))}
             <Link
@@ -232,13 +239,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-              {CATEGORIES.map((cat) => (
+              {(categories ?? []).map((cat) => (
                 <Link
-                  key={cat.key}
-                  href={`/category/${cat.key}`}
+                  key={cat.slug}
+                  href={`/category/${cat.slug}`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {cat.label}
+                  {cat.name}
                 </Link>
               ))}
               <Link

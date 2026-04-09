@@ -2,26 +2,30 @@ import { trpc } from "@/lib/trpc";
 import ArticleCard from "@/components/ArticleCard";
 import { useParams } from "wouter";
 import { Loader2, Feather } from "lucide-react";
-import { CATEGORY_MAP, getCategoryBadgeClass, getCategoryLabel } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 
 export default function CategoryPage() {
   const params = useParams<{ category: string }>();
-  const category = params.category as "spirituality" | "philosophy" | "healing";
+  const category = params.category;
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ category });
+  const { getCategoryLabel, getCategoryBadgeStyle, categoryMap } = useDynamicCategories();
 
-  const meta = CATEGORY_MAP[category];
+  const meta = categoryMap[category];
 
   return (
     <div>
       {/* Header */}
       <section className="hero-gradient py-16 px-4">
         <div className="container text-center">
-          <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4 ${getCategoryBadgeClass(category)}`}>
+          <span
+            className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4 border"
+            style={getCategoryBadgeStyle(category)}
+          >
             {getCategoryLabel(category)}
           </span>
           <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground mb-3">
-            {meta?.label ?? category}
+            {meta?.name ?? category}
           </h1>
           <div className="divider-gold max-w-xs mx-auto mb-4" />
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">

@@ -1,7 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +12,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getCategoryLabel, getCategoryBadgeClass } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -22,6 +21,7 @@ export default function AdminPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const { getCategoryLabel, getCategoryBadgeStyle, categories } = useDynamicCategories();
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ all: true });
 
@@ -86,7 +86,7 @@ export default function AdminPage() {
           { label: "סה\"כ מאמרים", value: articles?.length ?? 0 },
           { label: "מפורסמים", value: articles?.filter((a) => a.published).length ?? 0 },
           { label: "טיוטות", value: articles?.filter((a) => !a.published).length ?? 0 },
-          { label: "קטגוריות", value: 3 },
+          { label: "קטגוריות", value: categories.length },
         ].map((stat) => (
           <div key={stat.label} className="bg-card border border-border rounded-xl p-4 text-center">
             <p className="text-2xl font-display font-bold text-primary">{stat.value}</p>
@@ -137,7 +137,10 @@ export default function AdminPage() {
                       </Link>
                     </td>
                     <td className="py-3 px-4 hidden md:table-cell">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeClass(article.category)}`}>
+                      <span
+                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                        style={getCategoryBadgeStyle(article.category)}
+                      >
                         {getCategoryLabel(article.category)}
                       </span>
                     </td>

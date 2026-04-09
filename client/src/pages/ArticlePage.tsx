@@ -2,7 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { getCategoryBadgeClass, getCategoryLabel } from "@/lib/categories";
+import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -14,6 +14,7 @@ export default function ArticlePage() {
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
+  const { getCategoryLabel, getCategoryBadgeStyle } = useDynamicCategories();
   const { data: article, isLoading, error } = trpc.articles.bySlug.useQuery({ slug: params.slug });
 
   const { data: comments, isLoading: commentsLoading } = trpc.comments.list.useQuery(
@@ -91,7 +92,10 @@ export default function ArticlePage() {
 
         {/* Article Header */}
         <header className="mb-8">
-          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 ${getCategoryBadgeClass(article.category)}`}>
+          <span
+            className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border"
+            style={getCategoryBadgeStyle(article.category)}
+          >
             {getCategoryLabel(article.category)}
           </span>
           <h1 className="font-display font-bold text-3xl md:text-4xl text-foreground leading-tight mb-4">

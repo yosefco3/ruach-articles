@@ -1,3 +1,4 @@
+// Legacy static map kept as fallback only
 export const CATEGORY_MAP: Record<string, { label: string; description: string; color: string }> = {
   spirituality: {
     label: "רוחניות",

@@ -18,11 +18,7 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 
-const CATEGORIES = [
-  { value: "spirituality", label: "רוחניות" },
-  { value: "philosophy", label: "פילוסופיה" },
-  { value: "healing", label: "ריפוי" },
-];
+
 
 function slugify(text: string) {
   return text
@@ -56,16 +52,26 @@ export default function AdminArticleForm() {
   const { data: articles } = trpc.articles.list.useQuery({ all: true }, { enabled: isEdit });
   const existingArticle = articles?.find((a) => a.id === articleId);
 
+  // Load dynamic categories
+  const { data: dynamicCategories } = trpc.categories.list.useQuery();
+
   const [form, setForm] = useState({
     title: "",
     slug: "",
     excerpt: "",
     body: "",
     coverImage: "",
-    category: "spirituality" as "spirituality" | "philosophy" | "healing",
+    category: "",
     tags: "",
     published: false,
   });
+
+  // Set default category when categories load
+  useEffect(() => {
+    if (dynamicCategories && dynamicCategories.length > 0 && !form.category && !isEdit) {
+      setForm((prev) => ({ ...prev, category: dynamicCategories[0].slug }));
+    }
+  }, [dynamicCategories]);
 
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -294,16 +300,16 @@ export default function AdminArticleForm() {
           <Select
             value={form.category}
             onValueChange={(v) =>
-              setForm((prev) => ({ ...prev, category: v as typeof form.category }))
+              setForm((prev) => ({ ...prev, category: v }))
             }
           >
             <SelectTrigger>
               <SelectValue placeholder="בחרו קטגוריה" />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORIES.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
+              {(dynamicCategories ?? []).map((cat) => (
+                <SelectItem key={cat.slug} value={cat.slug}>
+                  {cat.name}
                 </SelectItem>
               ))}
             </SelectContent>
