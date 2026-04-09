@@ -19,27 +19,38 @@ export default function About() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero — with or without image */}
-      {imageUrl ? (
-        <div className="relative h-72 md:h-96 overflow-hidden">
-          <img
-            src={imageUrl}
-            alt={aboutContent?.title || "אודות"}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute bottom-0 right-0 left-0 container max-w-3xl pb-10">
-            <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground drop-shadow-sm">
-              {aboutContent?.title || "אודות"}
-            </h1>
-            {settings?.heroSubtitle && (
-              <p className="text-lg text-muted-foreground mt-2">
-                {settings.heroSubtitle}
-              </p>
-            )}
+      {/* Image section (shown only when imageUrl exists) */}
+      {imageUrl && (
+        <div className="w-full bg-secondary/30">
+          <div className="container max-w-3xl mx-auto">
+            <img
+              src={imageUrl}
+              alt={aboutContent?.title || "אודות"}
+              className="w-full max-h-[480px] object-contain rounded-b-xl"
+            />
           </div>
         </div>
+      )}
+
+      {/* Title / Hero */}
+      {imageUrl ? (
+        /* Title below image */
+        <div className="container max-w-3xl pt-8 pb-2">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <Link href="/" className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              חזרה לדף הבית
+            </Link>
+          </Button>
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground">
+            {aboutContent?.title || "אודות"}
+          </h1>
+          {settings?.heroSubtitle && (
+            <p className="text-lg text-muted-foreground mt-2">{settings.heroSubtitle}</p>
+          )}
+        </div>
       ) : (
+        /* Gradient hero when no image */
         <div className="bg-gradient-to-b from-amber-50 to-transparent pt-12 pb-16">
           <div className="container max-w-3xl">
             <Button variant="ghost" size="sm" className="mb-8" asChild>
@@ -57,18 +68,6 @@ export default function About() {
               </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Back link when image hero is shown */}
-      {imageUrl && (
-        <div className="container max-w-3xl pt-8">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              חזרה לדף הבית
-            </Link>
-          </Button>
         </div>
       )}
 

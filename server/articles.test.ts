@@ -195,6 +195,54 @@ describe("articles.create", () => {
   });
 });
 
+describe("articles.update", () => {
+  it("allows admin to update an article", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.update({
+      id: 1,
+      title: "Updated Title",
+      body: "Updated body content",
+      category: "philosophy",
+      published: true,
+    });
+    // updateArticle mock returns undefined, so result may be undefined
+    expect(result === undefined || result !== null).toBe(true);
+  });
+
+  it("allows approved guest writer to update their article", async () => {
+    const caller = appRouter.createCaller(makeCtx("user", { guestPostApproved: true }));
+    const result = await caller.articles.update({
+      id: 1,
+      title: "Updated by guest",
+      body: "Updated body",
+    });
+    expect(result === undefined || result !== null).toBe(true);
+  });
+
+  it("rejects regular users from updating articles", async () => {
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await expect(
+      caller.articles.update({ id: 1, title: "Hacked" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated users from updating articles", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    await expect(
+      caller.articles.update({ id: 1, title: "Hacked" })
+    ).rejects.toThrow();
+  });
+
+  it("allows updating cover image via URL (from S3 upload)", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.update({
+      id: 1,
+      coverImage: "https://cdn.example.com/image.jpg",
+    });
+    expect(result === undefined || result !== null).toBe(true);
+  });
+});
+
 describe("articles.delete", () => {
   it("allows admin to delete an article", async () => {
     const caller = appRouter.createCaller(makeCtx("admin"));

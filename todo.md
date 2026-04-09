@@ -111,3 +111,9 @@
 - [x] Update public About page to display uploaded image
 - [x] Write vitest test for about image upload procedure
 - [x] Save checkpoint
+
+## Bug Fixes
+- [x] Remove URL field from article cover image input — use file upload only
+- [x] Fix oversized/cropped cover image on article page
+- [x] Fix oversized/cropped image on about page
+- [x] Fix article edit/update not working

@@ -73,13 +73,14 @@ export default function ArticlePage() {
     <div>
       {/* Cover Image */}
       {article.coverImage && (
-        <div className="relative h-72 md:h-96 overflow-hidden">
-          <img
-            src={article.coverImage}
-            alt={article.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="w-full bg-secondary/30">
+          <div className="container max-w-3xl mx-auto">
+            <img
+              src={article.coverImage}
+              alt={article.title}
+              className="w-full max-h-[480px] object-contain rounded-b-xl"
+            />
+          </div>
         </div>
       )}
 

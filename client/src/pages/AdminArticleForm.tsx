@@ -13,12 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Save, ArrowRight, Upload, X, File } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Loader2, Save, ArrowRight, Upload, X, File, ImageIcon, Trash2,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
-
-
 
 function slugify(text: string) {
   return text
@@ -41,12 +41,12 @@ export default function AdminArticleForm() {
   const [, navigate] = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
   const utils = trpc.useUtils();
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!params.id;
   const articleId = params.id ? parseInt(params.id) : undefined;
 
-  // Check if user is admin or approved guest writer
-  const canWrite = user?.role === "admin" || user?.guestPostApproved;
+  const canWrite = user?.role === "admin" || (user as any)?.guestPostApproved;
 
   // Load existing article for edit
   const { data: articles } = trpc.articles.list.useQuery({ all: true }, { enabled: isEdit });
@@ -66,29 +66,31 @@ export default function AdminArticleForm() {
     published: false,
   });
 
-  // Set default category when categories load
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+
+  // Set default category when categories load (only for new articles)
   useEffect(() => {
     if (dynamicCategories && dynamicCategories.length > 0 && !form.category && !isEdit) {
       setForm((prev) => ({ ...prev, category: dynamicCategories[0].slug }));
     }
-  }, [dynamicCategories]);
+  }, [dynamicCategories, isEdit]);
 
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-
+  // Populate form when editing
   useEffect(() => {
     if (existingArticle) {
-      setForm({
+      setForm((prev) => ({
+        ...prev,
         title: existingArticle.title,
         slug: existingArticle.slug,
         excerpt: existingArticle.excerpt ?? "",
-        body: "",
         coverImage: existingArticle.coverImage ?? "",
         category: existingArticle.category,
         tags: existingArticle.tags ?? "",
         published: existingArticle.published,
-      });
+      }));
       setSlugManuallyEdited(true);
     }
   }, [existingArticle]);
@@ -117,6 +119,7 @@ export default function AdminArticleForm() {
   const updateArticle = trpc.articles.update.useMutation({
     onSuccess: () => {
       utils.articles.list.invalidate();
+      utils.articles.bySlug.invalidate();
       toast.success("המאמר עודכן בהצלחה");
       navigate("/admin");
     },
@@ -131,6 +134,37 @@ export default function AdminArticleForm() {
     }));
   };
 
+  // Upload cover image from file
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("ניתן להעלות קבצי תמונה בלבד");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("הקובץ גדול מדי — מקסימום 10MB");
+      return;
+    }
+
+    setCoverUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!response.ok) throw new Error("Upload failed");
+      const data = await response.json();
+      setForm((prev) => ({ ...prev, coverImage: data.url }));
+      toast.success("תמונת השער הועלתה בהצלחה");
+    } catch {
+      toast.error("שגיאה בהעלאת תמונת השער");
+    } finally {
+      setCoverUploading(false);
+      if (coverImageInputRef.current) coverImageInputRef.current.value = "";
+    }
+  };
+
+  // Upload general file attachments
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -140,42 +174,24 @@ export default function AdminArticleForm() {
       for (const file of Array.from(files)) {
         const formData = new FormData();
         formData.append("file", file);
-
-        // Upload to server (which will use storagePut)
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
-        }
-
+        const response = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
         const data = await response.json();
         setUploadedFiles((prev) => [
           ...prev,
-          {
-            id: Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            size: file.size,
-            url: data.url,
-          },
+          { id: Math.random().toString(36).substr(2, 9), name: file.name, size: file.size, url: data.url },
         ]);
       }
       toast.success("קבצים הועלו בהצלחה");
-    } catch (err) {
+    } catch {
       toast.error("שגיאה בהעלאת קבצים");
-      console.error(err);
     } finally {
       setIsUploading(false);
-      // Reset input
       e.target.value = "";
     }
   };
 
-  const removeFile = (id: string) => {
-    setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
-  };
+  const removeFile = (id: string) => setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -188,11 +204,24 @@ export default function AdminArticleForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim() || !form.slug.trim()) {
-      toast.error("יש למלא את כל השדות החובה");
+      toast.error("יש למלא כותרת, תוכן וכתובת URL");
+      return;
+    }
+    if (!form.category) {
+      toast.error("יש לבחור קטגוריה");
       return;
     }
     if (isEdit && articleId) {
-      updateArticle.mutate({ id: articleId, ...form });
+      updateArticle.mutate({
+        id: articleId,
+        title: form.title,
+        body: form.body,
+        excerpt: form.excerpt || undefined,
+        coverImage: form.coverImage || undefined,
+        category: form.category,
+        tags: form.tags || undefined,
+        published: form.published,
+      });
     } else {
       createArticle.mutate(form);
     }
@@ -212,7 +241,7 @@ export default function AdminArticleForm() {
         <div className="bg-card border border-border rounded-xl p-8 text-center">
           <h1 className="font-display font-bold text-2xl text-foreground mb-4">אין לך הרשאה לכתוב מאמרים</h1>
           <p className="text-muted-foreground mb-6">
-            רק אדמין וסופרים אורחים מאושרים יכולים לכתוב מאמרים. אם אתה סופר אורח, בקש מהאדמין להעניק לך הרשאה.
+            רק אדמין וסופרים אורחים מאושרים יכולים לכתוב מאמרים.
           </p>
           <Button onClick={() => navigate("/")} className="gap-2">
             <ArrowRight className="w-4 h-4" />
@@ -227,9 +256,7 @@ export default function AdminArticleForm() {
     return (
       <div className="container py-24 text-center">
         <p className="text-xl font-display font-bold text-foreground mb-2">גישה מוגבלת</p>
-        <Button variant="outline" onClick={() => navigate("/")}>
-          חזרה לדף הבית
-        </Button>
+        <Button variant="outline" onClick={() => navigate("/")}>חזרה לדף הבית</Button>
       </div>
     );
   }
@@ -299,9 +326,7 @@ export default function AdminArticleForm() {
           </Label>
           <Select
             value={form.category}
-            onValueChange={(v) =>
-              setForm((prev) => ({ ...prev, category: v }))
-            }
+            onValueChange={(v) => setForm((prev) => ({ ...prev, category: v }))}
           >
             <SelectTrigger>
               <SelectValue placeholder="בחרו קטגוריה" />
@@ -318,9 +343,7 @@ export default function AdminArticleForm() {
 
         {/* Excerpt */}
         <div className="space-y-2">
-          <Label htmlFor="excerpt" className="text-sm font-medium">
-            תקציר
-          </Label>
+          <Label htmlFor="excerpt" className="text-sm font-medium">תקציר</Label>
           <Textarea
             id="excerpt"
             value={form.excerpt}
@@ -332,7 +355,7 @@ export default function AdminArticleForm() {
           />
         </div>
 
-        {/* Body – Rich Text Editor */}
+        {/* Body */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             תוכן המאמר <span className="text-destructive">*</span>
@@ -344,31 +367,78 @@ export default function AdminArticleForm() {
           />
         </div>
 
-        {/* Cover Image */}
+        {/* Cover Image — file upload */}
         <div className="space-y-2">
-          <Label htmlFor="coverImage" className="text-sm font-medium">
-            תמונת שער (URL)
-          </Label>
-          <Input
-            id="coverImage"
-            value={form.coverImage}
-            onChange={(e) => setForm((prev) => ({ ...prev, coverImage: e.target.value }))}
-            placeholder="https://example.com/image.jpg"
-            className="text-left"
-            dir="ltr"
-          />
-          {form.coverImage && (
-            <div className="mt-2 rounded-lg overflow-hidden h-32 bg-secondary">
+          <Label className="text-sm font-medium">תמונת שער</Label>
+
+          {form.coverImage ? (
+            /* Preview with replace/remove */
+            <div className="relative group rounded-xl overflow-hidden border border-border bg-secondary/30">
               <img
                 src={form.coverImage}
-                alt="תצוגה מקדימה"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
+                alt="תמונת שער"
+                className="w-full max-h-64 object-contain"
               />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => coverImageInputRef.current?.click()}
+                  className="gap-2 bg-white/90 hover:bg-white text-foreground border-0"
+                  disabled={coverUploading}
+                >
+                  {coverUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  החלף תמונה
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setForm((prev) => ({ ...prev, coverImage: "" }))}
+                  className="gap-2 bg-white/90 hover:bg-white text-destructive border-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  הסר
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Upload dropzone */
+            <div
+              onClick={() => coverImageInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+            >
+              {coverUploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">מעלה תמונה...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">לחצו להעלאת תמונת שער</p>
+                    <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP — עד 10MB</p>
+                  </div>
+                  <Button type="button" size="sm" variant="outline" className="gap-2 pointer-events-none">
+                    <Upload className="w-4 h-4" />
+                    בחרו קובץ
+                  </Button>
+                </div>
+              )}
             </div>
           )}
+
+          <input
+            ref={coverImageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCoverImageUpload}
+          />
         </div>
 
         {/* File Attachments */}
@@ -388,40 +458,24 @@ export default function AdminArticleForm() {
               <p className="text-sm font-medium text-foreground mb-1">
                 {isUploading ? "מעלה..." : "לחצו או גררו קבצים"}
               </p>
-              <p className="text-xs text-muted-foreground">
-                PDF, Word, תמונות וקבצים אחרים
-              </p>
+              <p className="text-xs text-muted-foreground">PDF, Word, תמונות וקבצים אחרים</p>
             </label>
           </div>
 
-          {/* Uploaded Files List */}
           {uploadedFiles.length > 0 && (
             <div className="space-y-2 mt-4">
               <p className="text-sm font-medium text-foreground">קבצים שהועלו:</p>
               <div className="space-y-2">
                 {uploadedFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between bg-secondary/50 rounded-lg p-3"
-                  >
+                  <div key={file.id} className="flex items-center justify-between bg-secondary/50 rounded-lg p-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatFileSize(file.size)}
-                        </p>
+                        <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(file.id)}
-                      className="flex-shrink-0"
-                    >
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(file.id)} className="flex-shrink-0">
                       <X className="w-4 h-4" />
                     </Button>
                   </div>
@@ -433,9 +487,7 @@ export default function AdminArticleForm() {
 
         {/* Tags */}
         <div className="space-y-2">
-          <Label htmlFor="tags" className="text-sm font-medium">
-            תגיות
-          </Label>
+          <Label htmlFor="tags" className="text-sm font-medium">תגיות</Label>
           <Input
             id="tags"
             value={form.tags}
@@ -462,12 +514,8 @@ export default function AdminArticleForm() {
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={isPending} className="flex-1 sm:flex-none">
-            {isPending ? (
-              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 ml-2" />
-            )}
+          <Button type="submit" disabled={isPending} className="flex-1 sm:flex-none gap-2">
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isEdit ? "שמירת שינויים" : "יצירת מאמר"}
           </Button>
           <Button type="button" variant="outline" onClick={() => navigate("/admin")}>
