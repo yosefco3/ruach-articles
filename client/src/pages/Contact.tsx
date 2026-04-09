@@ -18,6 +18,10 @@ export default function Contact() {
 
   const [submitted, setSubmitted] = useState(false);
 
+  // Fetch dynamic contact email from settings
+  const { data: contactEmailData } = trpc.contact.getEmail.useQuery();
+  const displayEmail = contactEmailData?.email;
+
   const submitContact = trpc.contact.submit.useMutation({
     onSuccess: () => {
       toast.success("ההודעה נשלחה בהצלחה!");
@@ -83,9 +87,16 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">דוא״ל</h3>
-                  <p className="text-muted-foreground text-sm">
-                    contact@ruach.local
-                  </p>
+                  {displayEmail ? (
+                    <a
+                      href={`mailto:${displayEmail}`}
+                      className="text-muted-foreground text-sm hover:text-primary transition-colors"
+                    >
+                      {displayEmail}
+                    </a>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">הגדר בהגדרות האדמין</p>
+                  )}
                 </div>
               </div>
 

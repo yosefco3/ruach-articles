@@ -21,6 +21,7 @@ export default function AdminSettings() {
 
   const [siteTitle, setSiteTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutContent_, setAboutContent] = useState("");
   const [aboutImageUrl, setAboutImageUrl] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function AdminSettings() {
     if (settings) {
       setSiteTitle(settings.siteTitle || "");
       setHeroSubtitle(settings.heroSubtitle || "");
+      setContactEmail((settings as any).contactEmail || "");
     }
   }, [settings]);
 
@@ -68,7 +70,7 @@ export default function AdminSettings() {
   });
 
   const handleSaveSettings = () => {
-    updateSettings.mutate({ siteTitle, heroSubtitle });
+    updateSettings.mutate({ siteTitle, heroSubtitle, contactEmail: contactEmail || undefined });
   };
 
   const handleSaveAbout = () => {
@@ -221,6 +223,19 @@ export default function AdminSettings() {
               className="text-right resize-none min-h-[100px]"
             />
             <p className="text-xs text-muted-foreground mt-1">השורה מתחת לשם האתר בעמוד הבית</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">דוא"ל ליצירת קשר</label>
+            <Input
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="contact@example.com"
+              type="email"
+              dir="ltr"
+              className="text-left"
+            />
+            <p className="text-xs text-muted-foreground mt-1">כל פנייה דרך טופס יצירת הקשר תשלח לכתובת זו בנוסף להתראה בדף יצירת הקשר</p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

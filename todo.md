@@ -133,3 +133,14 @@
 - [x] Write vitest tests for featured article procedures (3 tests passing)
 - [x] Save checkpoint
 - [x] Fix featured article star UI — show filled star only for current featured, outline for others
+
+## Feature – Contact Email
+- [x] Add contactEmail field to siteSettings table in schema
+- [x] Run migration to add contactEmail column
+- [x] Add contactEmail to AdminSettings editor (site settings tab)
+- [x] Add contact.getEmail public procedure to expose email to frontend
+- [x] Update contact.submit tRPC procedure to include contactEmail in notification
+- [x] Update Contact page to display dynamic contactEmail from DB
+- [x] Write vitest tests (59 passing)
+- [x] Save checkpoint
+- [x] Add dedicated vitest tests for contact.getEmail and settings.update with contactEmail (64 tests passing)

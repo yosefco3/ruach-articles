@@ -193,6 +193,7 @@ const settingsRouter = router({
       z.object({
         siteTitle: z.string().optional(),
         heroSubtitle: z.string().optional(),
+        contactEmail: z.string().email().optional().or(z.literal("")),
       })
     )
     .mutation(async ({ input }) => {
