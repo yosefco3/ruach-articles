@@ -102,3 +102,12 @@
 - [x] Update ArticlePage and ArticleCard to use dynamic category labels
 - [x] Update CategoryPage to use dynamic categories
 - [x] Remove/replace static CATEGORY_MAP usage across all files
+
+## Feature – About Page Image Upload
+- [x] Add imageUrl field to aboutPage table in schema
+- [x] Run migration to add imageUrl column
+- [x] Add tRPC mutation for uploading about image (admin only, via S3)
+- [x] Update AdminSettings About editor with file upload button
+- [x] Update public About page to display uploaded image
+- [x] Write vitest test for about image upload procedure
+- [x] Save checkpoint

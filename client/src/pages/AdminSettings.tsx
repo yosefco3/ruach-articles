@@ -2,10 +2,10 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Save, X, ArrowRight, Users } from "lucide-react";
+import { Loader2, Save, X, ArrowRight, Users, Upload, ImageIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import RichTextEditor from "@/components/RichTextEditor";
 
@@ -13,6 +13,7 @@ export default function AdminSettings() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery();
   const { data: aboutContent, isLoading: aboutLoading } = trpc.about.get.useQuery();
@@ -22,6 +23,8 @@ export default function AdminSettings() {
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutContent_, setAboutContent] = useState("");
+  const [aboutImageUrl, setAboutImageUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<"site" | "about" | "writers">("site");
 
   useEffect(() => {
@@ -35,6 +38,7 @@ export default function AdminSettings() {
     if (aboutContent) {
       setAboutTitle(aboutContent.title || "");
       setAboutContent(aboutContent.content || "");
+      setAboutImageUrl((aboutContent as any).imageUrl ?? null);
     }
   }, [aboutContent]);
 
@@ -43,9 +47,7 @@ export default function AdminSettings() {
       utils.settings.get.invalidate();
       toast.success("הגדרות האתר עודכנו בהצלחה");
     },
-    onError: (err) => {
-      toast.error(err.message || "שגיאה בעדכון הגדרות");
-    },
+    onError: (err) => toast.error(err.message || "שגיאה בעדכון הגדרות"),
   });
 
   const updateAbout = trpc.about.update.useMutation({
@@ -53,9 +55,7 @@ export default function AdminSettings() {
       utils.about.get.invalidate();
       toast.success("עמוד האודות עודכן בהצלחה");
     },
-    onError: (err) => {
-      toast.error(err.message || "שגיאה בעדכון עמוד האודות");
-    },
+    onError: (err) => toast.error(err.message || "שגיאה בעדכון עמוד האודות"),
   });
 
   const revokeWriter = trpc.guestWriters.revoke.useMutation({
@@ -64,9 +64,7 @@ export default function AdminSettings() {
       utils.users.list.invalidate();
       toast.success("הרשאת הסופר האורח בוטלה");
     },
-    onError: (err) => {
-      toast.error(err.message || "שגיאה בביטול ההרשאה");
-    },
+    onError: (err) => toast.error(err.message || "שגיאה בביטול ההרשאה"),
   });
 
   const handleSaveSettings = () => {
@@ -74,7 +72,56 @@ export default function AdminSettings() {
   };
 
   const handleSaveAbout = () => {
-    updateAbout.mutate({ title: aboutTitle, content: aboutContent_ });
+    updateAbout.mutate({
+      title: aboutTitle,
+      content: aboutContent_,
+      imageUrl: aboutImageUrl ?? undefined,
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      toast.error("הקובץ גדול מדי — מקסימום 10MB");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("ניתן להעלות קבצי תמונה בלבד");
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "שגיאה בהעלאת התמונה");
+      }
+
+      const data = await response.json();
+      setAboutImageUrl(data.url);
+      toast.success("התמונה הועלתה בהצלחה");
+    } catch (err: any) {
+      toast.error(err.message || "שגיאה בהעלאת התמונה");
+    } finally {
+      setImageUploading(false);
+      // Reset input so same file can be re-selected
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setAboutImageUrl(null);
   };
 
   if (loading) {
@@ -204,10 +251,94 @@ export default function AdminSettings() {
             />
           </div>
 
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">תמונה ראשית</label>
+
+            {aboutImageUrl ? (
+              /* Image preview with remove button */
+              <div className="relative group rounded-xl overflow-hidden border border-border bg-secondary/30">
+                <img
+                  src={aboutImageUrl}
+                  alt="תמונת עמוד אודות"
+                  className="w-full max-h-64 object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="gap-2 bg-white/90 hover:bg-white text-foreground border-0"
+                    disabled={imageUploading}
+                  >
+                    {imageUploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                    החלף תמונה
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRemoveImage}
+                    className="gap-2 bg-white/90 hover:bg-white text-destructive border-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    הסר
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Upload dropzone */
+              <div
+                onClick={() => imageInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                {imageUploading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">מעלה תמונה...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">לחצו להעלאת תמונה</p>
+                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP — עד 10MB</p>
+                    </div>
+                    <Button type="button" size="sm" variant="outline" className="gap-2 pointer-events-none">
+                      <Upload className="w-4 h-4" />
+                      בחרו קובץ
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hidden file input */}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              התמונה תוצג בראש עמוד האודות. ניתן גם להוסיף תמונות ישירות בתוך התוכן.
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">תוכן עמוד אודות</label>
             <RichTextEditor value={aboutContent_} onChange={setAboutContent} />
-            <p className="text-xs text-muted-foreground mt-2">אתה יכול להשתמש בעיצוב, תמונות וקישורים</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              ניתן להשתמש בעיצוב, תמונות וקישורים. להוספת קישור — סמנו טקסט ולחצו על כפתור הקישור בסרגל.
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -264,7 +395,9 @@ export default function AdminSettings() {
             </div>
           ) : (
             <p className="text-muted-foreground text-center py-6">
-              אין סופרים אורחים מאושרים עדיין. <Link href="/admin/users" className="text-primary hover:underline">לחצו כאן</Link> כדי לאשר משתמשים.
+              אין סופרים אורחים מאושרים עדיין.{" "}
+              <Link href="/admin/users" className="text-primary hover:underline">לחצו כאן</Link>{" "}
+              כדי לאשר משתמשים.
             </p>
           )}
         </div>

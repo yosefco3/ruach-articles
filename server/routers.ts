@@ -320,9 +320,9 @@ const aboutRouter = router({
   }),
 
   update: adminProcedure
-    .input(z.object({ title: z.string(), content: z.string() }))
+    .input(z.object({ title: z.string(), content: z.string(), imageUrl: z.string().optional() }))
     .mutation(async ({ input }) => {
-      await updateAboutPage({ title: input.title, content: input.content });
+      await updateAboutPage({ title: input.title, content: input.content, imageUrl: input.imageUrl ?? null });
       return await getAboutPage();
     }),
 });

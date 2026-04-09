@@ -117,6 +117,7 @@ export const aboutPage = mysqlTable("aboutPage", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 256 }).default("אודות").notNull(),
   content: text("content").notNull(),
+  imageUrl: varchar("imageUrl", { length: 1024 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
