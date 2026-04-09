@@ -97,6 +97,7 @@ export default function RichTextEditor({
       {/* Toolbar */}
       <div className="border-b border-border bg-card p-2 flex flex-wrap gap-1">
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -106,6 +107,7 @@ export default function RichTextEditor({
           <Bold className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -115,6 +117,7 @@ export default function RichTextEditor({
           <Italic className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -127,6 +130,7 @@ export default function RichTextEditor({
         <div className="w-px bg-border mx-1" />
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -136,6 +140,7 @@ export default function RichTextEditor({
           <Heading2 className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
@@ -148,6 +153,7 @@ export default function RichTextEditor({
         <div className="w-px bg-border mx-1" />
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -157,6 +163,7 @@ export default function RichTextEditor({
           <List className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -169,6 +176,7 @@ export default function RichTextEditor({
         <div className="w-px bg-border mx-1" />
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
@@ -181,6 +189,7 @@ export default function RichTextEditor({
         <div className="w-px bg-border mx-1" />
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={addLink}
@@ -190,6 +199,7 @@ export default function RichTextEditor({
           <Link2 className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={addImage}
@@ -201,6 +211,7 @@ export default function RichTextEditor({
         <div className="w-px bg-border mx-1" />
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().undo().run()}
@@ -209,6 +220,7 @@ export default function RichTextEditor({
           <Undo2 className="w-4 h-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().redo().run()}

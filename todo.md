@@ -120,3 +120,4 @@
 - [x] Fix article edit form: RichTextEditor shows empty body when editing existing article
 - [x] Improve image styling: rounded corners, correct proportions, shadow, elegant framing (article page, about page, article cards, form preview)
 - [x] Fix featured article card on homepage — oversized/full-bleed, needs proper container sizing
+- [x] Fix RichTextEditor toolbar buttons submitting the form — add type="button" to all toolbar buttons
