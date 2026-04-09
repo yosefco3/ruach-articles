@@ -166,7 +166,7 @@
     text-align: right;
     font-size: 1.0625rem;
     line-height: 1.9;
-    color: oklch(0.28 0.025 55);
+    color: var(--foreground);
   }
   .prose-rtl p {
     margin-bottom: 1.5rem;
@@ -177,7 +177,7 @@
     font-weight: 700;
     margin-top: 2.5rem;
     margin-bottom: 1.25rem;
-    color: oklch(0.18 0.03 55);
+    color: var(--foreground);
     border-bottom: 2px solid oklch(0.72 0.12 75);
     padding-bottom: 0.5rem;
   }
@@ -187,7 +187,7 @@
     font-weight: 700;
     margin-top: 2.5rem;
     margin-bottom: 1rem;
-    color: oklch(0.22 0.03 55);
+    color: var(--foreground);
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.5rem;
   }
@@ -197,7 +197,7 @@
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 0.75rem;
-    color: oklch(0.25 0.03 55);
+    color: var(--foreground);
   }
   .prose-rtl h4 {
     font-family: 'Frank Ruhl Libre', serif;
@@ -205,7 +205,7 @@
     font-weight: 600;
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
-    color: oklch(0.28 0.03 55);
+    color: var(--foreground);
   }
   .prose-rtl blockquote {
     border-right: 4px solid oklch(0.72 0.12 75);
@@ -214,9 +214,9 @@
     padding-left: 0;
     margin: 2rem 0;
     font-style: italic;
-    color: oklch(0.42 0.04 60);
+    color: var(--muted-foreground);
     font-size: 1.1rem;
-    background: oklch(0.96 0.015 80);
+    background: var(--muted);
     padding: 1.25rem 1.5rem 1.25rem 1rem;
     border-radius: 0.25rem;
   }
@@ -239,27 +239,27 @@
     padding-right: 0.25rem;
   }
   .prose-rtl a {
-    color: oklch(0.42 0.09 55);
+    color: var(--primary);
     text-decoration: underline;
     text-underline-offset: 3px;
     transition: color 0.2s;
   }
   .prose-rtl a:hover {
-    color: oklch(0.55 0.12 65);
+    color: oklch(0.82 0.14 75);
   }
   .prose-rtl strong {
     font-weight: 700;
-    color: oklch(0.22 0.03 55);
+    color: var(--foreground);
   }
   .prose-rtl em {
     font-style: italic;
   }
   .prose-rtl code {
-    background: oklch(0.94 0.015 80);
+    background: var(--muted);
     padding: 0.15rem 0.4rem;
     border-radius: 0.25rem;
     font-size: 0.9em;
-    color: oklch(0.35 0.08 55);
+    color: var(--primary);
   }
   .prose-rtl pre {
     background: oklch(0.18 0.02 55);
@@ -300,7 +300,7 @@
     text-align: right;
   }
   .prose-rtl th {
-    background: oklch(0.94 0.015 80);
+    background: var(--muted);
     font-weight: 600;
   }
   .badge-spirituality {
@@ -323,14 +323,14 @@
   }
   .card-hover:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 40px -8px oklch(0.18 0.03 55 / 0.15);
+    box-shadow: 0 12px 40px -8px oklch(0 0 0 / 0.5);
   }
   .hero-gradient {
     background: linear-gradient(
       160deg,
-      oklch(0.96 0.025 85) 0%,
-      oklch(0.93 0.04 75) 50%,
-      oklch(0.90 0.055 70) 100%
+      oklch(0.16 0.025 55) 0%,
+      oklch(0.19 0.035 58) 50%,
+      oklch(0.22 0.045 62) 100%
     );
   }
   .text-gradient-gold {

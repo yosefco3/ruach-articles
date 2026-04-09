@@ -130,8 +130,8 @@ export default function Contact() {
           <div className="md:col-span-2">
             {submitted ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
-                  <Check className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 rounded-full bg-green-900/40 flex items-center justify-center mb-4">
+                  <Check className="w-8 h-8 text-green-400" />
                 </div>
                 <h3 className="font-display font-bold text-2xl text-foreground mb-2">
                   תודה!

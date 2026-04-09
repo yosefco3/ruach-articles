@@ -148,8 +148,8 @@ export default function ArticlePage() {
             }}
             className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
               userLike
-                ? "bg-red-50 border-red-200 text-red-600"
-                : "bg-card border-border text-muted-foreground hover:border-red-200 hover:text-red-500"
+                ? "bg-red-900/30 border-red-800 text-red-400"
+                : "bg-card border-border text-muted-foreground hover:border-red-800 hover:text-red-400"
             }`}
           >
             <Heart className={`w-5 h-5 ${userLike ? "fill-red-500 text-red-500" : ""}`} />

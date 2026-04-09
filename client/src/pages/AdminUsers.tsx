@@ -132,7 +132,7 @@ export default function AdminUsers() {
                       {u.role === "admin" ? (
                         <span className="text-xs text-muted-foreground">—</span>
                       ) : u.guestPostApproved ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-400">
                           <UserCheck className="w-3 h-3" />
                           מאושר
                         </span>
@@ -161,7 +161,7 @@ export default function AdminUsers() {
                             size="sm"
                             onClick={() => approveMutation.mutate({ userId: u.id })}
                             disabled={approveMutation.isPending}
-                            className="gap-1 text-green-600 hover:bg-green-50"
+                            className="gap-1 text-green-400 hover:bg-green-900/30"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             אשר כסופר

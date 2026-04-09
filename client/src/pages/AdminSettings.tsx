@@ -269,7 +269,7 @@ export default function AdminSettings() {
                     size="sm"
                     variant="outline"
                     onClick={() => imageInputRef.current?.click()}
-                    className="gap-2 bg-white/90 hover:bg-white text-foreground border-0"
+                    className="gap-2 bg-background/90 hover:bg-background text-foreground border-border"
                     disabled={imageUploading}
                   >
                     {imageUploading ? (
@@ -284,7 +284,7 @@ export default function AdminSettings() {
                     size="sm"
                     variant="outline"
                     onClick={handleRemoveImage}
-                    className="gap-2 bg-white/90 hover:bg-white text-destructive border-0"
+                    className="gap-2 bg-background/90 hover:bg-background text-destructive border-border"
                   >
                     <Trash2 className="w-4 h-4" />
                     הסר

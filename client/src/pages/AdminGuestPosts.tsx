@@ -92,9 +92,9 @@ export default function AdminGuestPosts() {
                   </p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                  post.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                  post.status === "approved" ? "bg-green-100 text-green-800" :
-                  "bg-red-100 text-red-800"
+                  post.status === "pending" ? "bg-yellow-900/40 text-yellow-400" :
+                  post.status === "approved" ? "bg-green-900/40 text-green-400" :
+                  "bg-red-900/40 text-red-400"
                 }`}>
                   {post.status === "pending" ? "בהמתנה" : post.status === "approved" ? "אושר" : "נדחה"}
                 </span>

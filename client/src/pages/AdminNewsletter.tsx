@@ -61,7 +61,7 @@ export default function AdminNewsletter() {
           <p className="text-xs text-muted-foreground">סה״כ מנויים</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4 text-center">
-          <UserCheck className="w-5 h-5 mx-auto mb-2 text-green-600" />
+          <UserCheck className="w-5 h-5 mx-auto mb-2 text-green-400" />
           <p className="text-2xl font-display font-bold text-foreground">{activeCount}</p>
           <p className="text-xs text-muted-foreground">פעילים</p>
         </div>
@@ -113,8 +113,8 @@ export default function AdminNewsletter() {
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                           sub.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-600"
+                            ? "bg-green-900/40 text-green-400"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {sub.active ? "פעיל" : "לא פעיל"}

@@ -154,8 +154,8 @@ export default function AdminPage() {
                         }
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                           article.published
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                            ? "bg-green-900/40 text-green-400 hover:bg-green-900/60"
+                            : "bg-yellow-900/40 text-yellow-400 hover:bg-yellow-900/60"
                         }`}
                       >
                         {article.published ? (
