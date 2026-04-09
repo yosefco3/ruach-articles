@@ -118,3 +118,4 @@
 - [x] Fix oversized/cropped image on about page
 - [x] Fix article edit/update not working
 - [x] Fix article edit form: RichTextEditor shows empty body when editing existing article
+- [x] Improve image styling: rounded corners, correct proportions, shadow, elegant framing (article page, about page, article cards, form preview)

@@ -373,11 +373,12 @@ export default function AdminArticleForm() {
 
           {form.coverImage ? (
             /* Preview with replace/remove */
-            <div className="relative group rounded-xl overflow-hidden border border-border bg-secondary/30">
+            <div className="relative group rounded-2xl overflow-hidden border border-border/50 bg-secondary/20 shadow-md">
               <img
                 src={form.coverImage}
                 alt="תמונת שער"
-                className="w-full max-h-64 object-contain"
+                className="w-full object-contain"
+                style={{ aspectRatio: "16/9", objectFit: "contain" }}
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                 <Button

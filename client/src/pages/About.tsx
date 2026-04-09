@@ -21,13 +21,15 @@ export default function About() {
     <div className="min-h-screen">
       {/* Image section (shown only when imageUrl exists) */}
       {imageUrl && (
-        <div className="w-full bg-secondary/30">
-          <div className="container max-w-3xl mx-auto">
-            <img
-              src={imageUrl}
-              alt={aboutContent?.title || "אודות"}
-              className="w-full max-h-[480px] object-contain rounded-b-xl"
-            />
+        <div className="w-full pt-8 pb-2">
+          <div className="container max-w-3xl mx-auto px-4">
+            <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-border/40 bg-secondary/20">
+              <img
+                src={imageUrl}
+                alt={aboutContent?.title || "אודות"}
+                className="w-full max-h-[520px] object-contain"
+              />
+            </div>
           </div>
         </div>
       )}
