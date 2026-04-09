@@ -24,6 +24,7 @@ export default function AdminPage() {
   const { getCategoryLabel, getCategoryBadgeStyle, categories } = useDynamicCategories();
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ all: true });
+  const { data: featuredArticle } = trpc.featured.get.useQuery();
 
   const deleteArticle = trpc.articles.delete.useMutation({
     onSuccess: () => {
@@ -184,11 +185,16 @@ export default function AdminPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-amber-500 hover:bg-amber-900/30"
+                          className={`h-8 w-8 transition-colors ${
+                            featuredArticle?.id === article.id
+                              ? "text-amber-400 hover:bg-amber-900/30"
+                              : "text-muted-foreground hover:text-amber-400 hover:bg-amber-900/20"
+                          }`}
                           onClick={() => setFeatured.mutate({ articleId: article.id })}
                           disabled={setFeatured.isPending}
+                          title={featuredArticle?.id === article.id ? "מאמר מומלץ" : "הגדר כמומלץ"}
                         >
-                          ⭐
+                          {featuredArticle?.id === article.id ? "⭐" : "☆"}
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                           <Link href={`/admin/edit/${article.id}`}>

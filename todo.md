@@ -132,3 +132,4 @@
 - [x] Create test articles and verify display
 - [x] Write vitest tests for featured article procedures (3 tests passing)
 - [x] Save checkpoint
+- [x] Fix featured article star UI — show filled star only for current featured, outline for others
