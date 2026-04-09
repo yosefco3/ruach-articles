@@ -40,6 +40,8 @@ import {
   subscribeToNewsletter,
   unsubscribeFromNewsletter,
   getNewsletterSubscribers,
+  getFeaturedArticle,
+  setFeaturedArticle,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -432,6 +434,20 @@ const newsletterRouter = router({
   }),
 });
 
+// Featured Article router
+const featuredArticleRouter = router({
+  get: publicProcedure.query(async () => {
+    return await getFeaturedArticle();
+  }),
+
+  set: adminProcedure
+    .input(z.object({ articleId: z.number() }))
+    .mutation(async ({ input }) => {
+      await setFeaturedArticle(input.articleId);
+      return { success: true };
+    }),
+});
+
 // App router
 export const appRouter = router({
   system: systemRouter,
@@ -455,6 +471,7 @@ export const appRouter = router({
   users: usersRouter,
   categories: categoriesRouter,
   newsletter: newsletterRouter,
+  featured: featuredArticleRouter,
 });
 
 export type AppRouter = typeof appRouter;

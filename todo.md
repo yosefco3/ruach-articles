@@ -122,3 +122,13 @@
 - [x] Fix featured article card on homepage — oversized/full-bleed, needs proper container sizing
 - [x] Fix RichTextEditor toolbar buttons submitting the form — add type="button" to all toolbar buttons
 - [x] Convert site to dark theme — update CSS variables, ThemeProvider, and all hardcoded light colors
+
+## Feature – Featured Article Selection
+- [x] Add featuredArticle table to schema (articleId FK, updatedAt)
+- [x] Run migration to create table
+- [x] Add tRPC procedures: getFeaturedArticle, setFeaturedArticle (admin only)
+- [x] Add featured article selector button to AdminPage
+- [x] Update Home.tsx to display selected featured article
+- [x] Create test articles and verify display
+- [x] Write vitest tests for featured article procedures (3 tests passing)
+- [x] Save checkpoint

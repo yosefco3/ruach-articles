@@ -2,10 +2,10 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   articles, comments, users, attachments, siteSettings, guestPosts,
-  likes, userProfiles, aboutPage, categories, newsletterSubscribers,
+  likes, userProfiles, aboutPage, categories, newsletterSubscribers, featuredArticle,
   type InsertArticle, type InsertComment, type InsertUser, type InsertAttachment,
   type InsertSiteSettings, type InsertGuestPost, type InsertLike,
-  type InsertUserProfile, type InsertAboutPage, type InsertCategory, type InsertNewsletterSubscriber,
+  type InsertUserProfile, type InsertAboutPage, type InsertCategory, type InsertNewsletterSubscriber, type InsertFeaturedArticle,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -470,4 +470,27 @@ export async function getNewsletterSubscribers() {
   const db = await getDb();
   if (!db) return [];
   return await db.select().from(newsletterSubscribers).orderBy(desc(newsletterSubscribers.subscribedAt));
+}
+
+// --- Featured Article ---
+
+export async function getFeaturedArticle() {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(featuredArticle).limit(1);
+  if (rows.length === 0) return undefined;
+  const featured = rows[0];
+  const article = await db.select().from(articles).where(eq(articles.id, featured.articleId)).limit(1);
+  return article.length > 0 ? article[0] : undefined;
+}
+
+export async function setFeaturedArticle(articleId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.select().from(featuredArticle).limit(1);
+  if (rows.length > 0) {
+    await db.update(featuredArticle).set({ articleId }).where(eq(featuredArticle.id, rows[0].id));
+  } else {
+    await db.insert(featuredArticle).values({ articleId });
+  }
 }

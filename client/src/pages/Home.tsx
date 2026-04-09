@@ -17,6 +17,7 @@ export default function Home() {
   const { data: articles, isLoading } = trpc.articles.list.useQuery(
     activeCategory ? { category: activeCategory } : undefined
   );
+  const { data: featuredArticle } = trpc.featured.get.useQuery();
 
   // Newsletter state
   const [nlEmail, setNlEmail] = useState("");
@@ -39,14 +40,19 @@ export default function Home() {
     subscribeMutation.mutate({ email: nlEmail, name: nlName || undefined });
   };
 
-  const filteredArticles = articles?.filter(article =>
+  const featured = featuredArticle || articles?.[0];
+  const displayFeatured = activeCategory ? null : featured;
+  const rest = articles?.filter(a => !featured || a.id !== featured.id) ?? [];
+
+  const filteredRest = activeCategory
+    ? rest.filter(a => a.category === activeCategory)
+    : rest;
+
+  const filteredArticles = filteredRest.filter(article =>
     searchQuery === "" ||
     article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     article.tags?.toLowerCase().includes(searchQuery.toLowerCase())
   ) ?? [];
-
-  const featured = articles?.[0];
-  const rest = articles?.slice(1) ?? [];
 
   return (
     <div>
@@ -124,18 +130,18 @@ export default function Home() {
         ) : (
           <>
             {/* Featured article */}
-            {featured && !activeCategory && (
+            {displayFeatured && (
               <div className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <span className="text-xs font-semibold uppercase tracking-widest text-primary">מאמר מומלץ</span>
                   <div className="flex-1 h-px bg-border" />
                 </div>
-                <ArticleCard {...featured} featured />
+                <ArticleCard {...displayFeatured} featured />
               </div>
             )}
 
             {/* Grid */}
-            {(activeCategory ? articles?.length ?? 0 : rest.length) > 0 && (
+            {filteredArticles.length > 0 && (
               <>
                 {!activeCategory && (
                   <div className="flex items-center gap-3 mb-6">
@@ -144,7 +150,7 @@ export default function Home() {
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(activeCategory ? articles : rest)?.map((article) => (
+                  {filteredArticles.map((article) => (
                     <ArticleCard key={article.id} {...article} />
                   ))}
                 </div>

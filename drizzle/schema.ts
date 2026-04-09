@@ -147,3 +147,12 @@ export const newsletterSubscribers = mysqlTable("newsletterSubscribers", {
 
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
 export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
+
+export const featuredArticle = mysqlTable("featuredArticle", {
+  id: int("id").autoincrement().primaryKey(),
+  articleId: int("articleId").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FeaturedArticle = typeof featuredArticle.$inferSelect;
+export type InsertFeaturedArticle = typeof featuredArticle.$inferInsert;

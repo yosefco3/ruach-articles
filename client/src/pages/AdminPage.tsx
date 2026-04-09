@@ -41,6 +41,14 @@ export default function AdminPage() {
     onError: (err) => toast.error(err.message || "שגיאה בעדכון המאמר"),
   });
 
+  const setFeatured = trpc.featured.set.useMutation({
+    onSuccess: () => {
+      utils.featured.get.invalidate();
+      toast.success("המאמר הוגדר כמומלץ");
+    },
+    onError: (err) => toast.error(err.message || "שגיאה בהגדרת מאמר מומלץ"),
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -173,6 +181,15 @@ export default function AdminPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-amber-500 hover:bg-amber-900/30"
+                          onClick={() => setFeatured.mutate({ articleId: article.id })}
+                          disabled={setFeatured.isPending}
+                        >
+                          ⭐
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                           <Link href={`/admin/edit/${article.id}`}>
                             <Pencil className="w-3.5 h-3.5" />
