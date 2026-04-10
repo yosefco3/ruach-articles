@@ -169,3 +169,6 @@
 - [x] Organize toolbar into logical groups with separators
 - [x] Update RichTextEditor.css for new elements (table, color marks, etc.)
 - [x] Run all tests to confirm nothing broken
+
+## Bug – Text Selection in Editor
+- [x] Fix: cannot select text inside the rich text editor (click/drag does not highlight text)

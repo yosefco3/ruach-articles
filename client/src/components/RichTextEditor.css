@@ -264,5 +264,6 @@
    ══════════════════════════════════════════════════════════════ */
 
 .ProseMirror ::selection {
-  background: rgba(var(--primary), 0.3);
+  background: oklch(0.72 0.12 75 / 0.4);
+  color: inherit;
 }
