@@ -27,7 +27,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
-        <Route path="/guest-post" component={GuestPostForm} />
+        {/* guest-post route hidden — will be re-enabled when ready */}
         <Route path="/profile/:userId" component={UserProfile} />
         <Route path="/category/:category" component={CategoryPage} />
         <Route path="/article/:slug" component={ArticlePage} />

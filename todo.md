@@ -144,3 +144,4 @@
 - [x] Write vitest tests (59 passing)
 - [x] Save checkpoint
 - [x] Add dedicated vitest tests for contact.getEmail and settings.update with contactEmail (64 tests passing)
+- [x] Hide "כתוב אתנו" (guest post) from public nav and route
