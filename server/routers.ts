@@ -122,6 +122,7 @@ const articlesRouter = router({
       z.object({
         id: z.number(),
         title: z.string().optional(),
+        slug: z.string().optional(),
         body: z.string().optional(),
         excerpt: z.string().optional(),
         coverImage: z.string().optional(),

@@ -215,6 +215,7 @@ export default function AdminArticleForm() {
       updateArticle.mutate({
         id: articleId,
         title: form.title,
+        slug: form.slug || undefined,
         body: form.body,
         excerpt: form.excerpt || undefined,
         coverImage: form.coverImage || undefined,
