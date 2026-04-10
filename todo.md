@@ -148,6 +148,24 @@
 - [x] Fix slug field not saved when editing article — added slug to update procedure input schema and mutate call
 
 ## Bug – Hardcoded Site Name
-- [ ] Fix browser tab title to use dynamic site name from settings
-- [ ] Fix email notification content to use dynamic site name (contact form, notifications)
-- [ ] Audit and fix any other hardcoded "רוח" site name occurrences
+- [x] Fix browser tab title to use dynamic site name from settings
+- [x] Fix email notification content to use dynamic site name (contact form, notifications)
+- [x] Audit and fix any other hardcoded "רוח" site name occurrences
+
+## Feature – Enhanced Rich Text Editor
+- [x] Install TipTap extension packages: Color, Highlight, TextAlign, Underline, Superscript, Subscript, Typography, TextStyle, FontFamily, Table
+- [x] Add text color picker to toolbar (full color palette)
+- [x] Add text highlight/background color picker to toolbar
+- [x] Add text alignment buttons (right, center, left, justify)
+- [x] Add RTL/LTR direction toggle buttons
+- [x] Add underline button
+- [x] Add superscript and subscript buttons
+- [x] Add blockquote button (already in StarterKit, expose in toolbar)
+- [x] Add horizontal rule button
+- [x] Add heading H1 button (in addition to H2, H3)
+- [x] Add font size selector
+- [x] Add table insertion and management
+- [x] Add clear formatting button
+- [x] Organize toolbar into logical groups with separators
+- [x] Update RichTextEditor.css for new elements (table, color marks, etc.)
+- [x] Run all tests to confirm nothing broken
