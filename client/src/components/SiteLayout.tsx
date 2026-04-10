@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
 import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
@@ -22,6 +22,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
   const isAdmin = user?.role === "admin";
   const siteName = settings?.siteTitle || "רוּחַ";
+
+  // Dynamically update browser tab title from site settings
+  useEffect(() => {
+    if (settings?.siteTitle) {
+      document.title = `${settings.siteTitle} – מאמרים ברוחניות, פילוסופיה וריפוי`;
+    }
+  }, [settings?.siteTitle]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

@@ -28,6 +28,8 @@ export const contactRouter = router({
           ? `\n\n📧 לתשובה ישירה: ${contactEmail}`
           : "";
 
+        const siteName = (settings as any).siteTitle || "רוּחַ";
+
         // Send notification to owner via Manus notification service
         const success = await notifyOwner({
           title: `📬 הודעה חדשה מא-${input.name} — יצירת קשר באתר`,
@@ -41,7 +43,7 @@ export const contactRouter = router({
             emailLine,
             ``,
             `---`,
-            `הודעה זו נשלחה דרך טופס יצירת הקשר באתר רוּחַ`,
+            `הודעה זו נשלחה דרך טופס יצירת הקשר באתר ${siteName}`,
           ].join("\n"),
         });
 

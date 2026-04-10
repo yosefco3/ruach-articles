@@ -146,3 +146,8 @@
 - [x] Add dedicated vitest tests for contact.getEmail and settings.update with contactEmail (64 tests passing)
 - [x] Hide "כתוב אתנו" (guest post) from public nav and route
 - [x] Fix slug field not saved when editing article — added slug to update procedure input schema and mutate call
+
+## Bug – Hardcoded Site Name
+- [ ] Fix browser tab title to use dynamic site name from settings
+- [ ] Fix email notification content to use dynamic site name (contact form, notifications)
+- [ ] Audit and fix any other hardcoded "רוח" site name occurrences
