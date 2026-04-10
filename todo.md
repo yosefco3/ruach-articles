@@ -172,3 +172,6 @@
 
 ## Bug – Text Selection in Editor
 - [x] Fix: cannot select text inside the rich text editor (click/drag does not highlight text)
+
+## Bug – Category Page Missing Featured Article
+- [x] Fix: category page does not show the article that is set as the featured article (it is excluded from the list)

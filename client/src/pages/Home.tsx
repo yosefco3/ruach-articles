@@ -40,10 +40,13 @@ export default function Home() {
     subscribeMutation.mutate({ email: nlEmail, name: nlName || undefined });
   };
 
-  const featured = featuredArticle || articles?.[0];
+   const featured = featuredArticle || articles?.[0];
+  // Only hide the featured article from the list when viewing ALL articles (no category filter).
+  // When a category is active, include all articles in that category — even the featured one.
   const displayFeatured = activeCategory ? null : featured;
-  const rest = articles?.filter(a => !featured || a.id !== featured.id) ?? [];
-
+  const rest = activeCategory
+    ? (articles ?? [])
+    : (articles?.filter(a => !featured || a.id !== featured.id) ?? []);
   const filteredRest = activeCategory
     ? rest.filter(a => a.category === activeCategory)
     : rest;
