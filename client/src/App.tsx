@@ -19,10 +19,12 @@ import AdminNewsletter from "./pages/AdminNewsletter";
 import GuestPostForm from "./pages/GuestPostForm";
 import UserProfile from "./pages/UserProfile";
 import SiteLayout from "./components/SiteLayout";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 function Router() {
   return (
     <SiteLayout>
+      <ScrollToTop />
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />

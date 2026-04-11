@@ -191,3 +191,6 @@
 ## Bug – Tests Pollute Production Database
 - [x] Fix: running tests creates real data (articles, categories, newsletter subscribers) in the production database — all tests now use vi.mock for db module
 - [x] Clean up test data already created in production DB — removed 17 fake newsletter subscribers
+
+## Bug – Article Page Starts at Wrong Scroll Position
+- [x] Fix: when opening an article, the page starts scrolled to the body instead of the title — added ScrollToTop component
