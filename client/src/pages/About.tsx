@@ -1,12 +1,10 @@
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { ArrowLeft, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2, Feather } from "lucide-react";
 
 export default function About() {
   const { data: aboutContent, isLoading } = trpc.about.get.useQuery();
   const { data: settings } = trpc.settings.get.useQuery();
-
   const imageUrl = (aboutContent as any)?.imageUrl as string | null | undefined;
 
   if (isLoading) {
@@ -17,73 +15,117 @@ export default function About() {
     );
   }
 
-  return (
-    <div className="min-h-screen">
-      {/* Image section (shown only when imageUrl exists) */}
-      {imageUrl && (
-        <div className="w-full pt-8 pb-2">
-          <div className="container max-w-3xl mx-auto px-4">
-            <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-border/40 bg-secondary/20">
-              <img
-                src={imageUrl}
-                alt={aboutContent?.title || "אודות"}
-                className="w-full max-h-[520px] object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+  const title = aboutContent?.title || "אודות";
+  const subtitle = settings?.heroSubtitle || "";
+  const siteTitle = settings?.siteTitle || "רוּחַ חָכְמָה";
 
-      {/* Title / Hero */}
-      {imageUrl ? (
-        /* Title below image */
-        <div className="container max-w-3xl pt-8 pb-2">
-          <Button variant="ghost" size="sm" className="mb-4" asChild>
-            <Link href="/" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              חזרה לדף הבית
-            </Link>
-          </Button>
-          <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground">
-            {aboutContent?.title || "אודות"}
-          </h1>
-          {settings?.heroSubtitle && (
-            <p className="text-lg text-muted-foreground mt-2">{settings.heroSubtitle}</p>
-          )}
-        </div>
-      ) : (
-        /* Gradient hero when no image */
-        <div className="bg-gradient-to-b from-amber-50 to-transparent pt-12 pb-16">
-          <div className="container max-w-3xl">
-            <Button variant="ghost" size="sm" className="mb-8" asChild>
-              <Link href="/" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                חזרה לדף הבית
-              </Link>
-            </Button>
-            <div className="text-center">
-              <h1 className="font-display font-bold text-4xl md:text-5xl text-foreground mb-4">
-                {aboutContent?.title || "אודות"}
+  return (
+    <div className="min-h-screen" dir="rtl">
+
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden">
+        {/* Subtle dot-grid background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/8 via-transparent to-transparent pointer-events-none" />
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, oklch(0.72 0.12 75) 1px, transparent 0)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        <div className="container max-w-4xl pt-10 pb-14 relative">
+          {/* Back link */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-10 group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            חזרה לדף הבית
+          </Link>
+
+          {/* Centered hero */}
+          <div className="flex flex-col items-center text-center gap-5">
+            {/* Icon medallion */}
+            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10">
+              <Feather className="w-7 h-7 text-primary" />
+            </div>
+
+            <div>
+              <h1 className="font-display font-bold text-5xl md:text-6xl text-foreground tracking-tight leading-tight">
+                {title}
               </h1>
-              <p className="text-lg text-muted-foreground">
-                {settings?.heroSubtitle || "מרחב לעומק, לשקט ולחיפוש הפנימי"}
+              {subtitle && (
+                <p className="mt-3 text-lg text-muted-foreground font-serif">
+                  {subtitle}
+                </p>
+              )}
+              <p className="mt-1 text-sm text-primary/70 font-medium tracking-wide">
+                {siteTitle}
               </p>
             </div>
+
+            {/* Gold divider */}
+            <div className="w-32 divider-gold mt-2" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cover image ──────────────────────────────────────── */}
+      {imageUrl && (
+        <div className="container max-w-4xl pb-10">
+          <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-primary/20">
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full max-h-[480px] object-cover"
+            />
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="container max-w-3xl py-10">
-        <div className="divider-gold mb-8" />
-        <div className="prose max-w-none text-right" dir="rtl">
-          {aboutContent?.content ? (
-            <div dangerouslySetInnerHTML={{ __html: aboutContent.content }} />
-          ) : (
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              תוכן זה עדיין לא הוגדר. בואו נחזור לדף הבית ונתחיל לקרוא מאמרים!
-            </p>
-          )}
+      {/* ── Main content card ─────────────────────────────────── */}
+      <div className="container max-w-3xl pb-20">
+        <div className="relative bg-card/60 backdrop-blur-sm border border-border/60 rounded-2xl shadow-xl shadow-black/20 overflow-hidden">
+          {/* Top accent bar */}
+          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+
+          <div className="p-8 md:p-12">
+            {aboutContent?.content ? (
+              <div
+                className="prose-rtl max-w-none"
+                dangerouslySetInnerHTML={{ __html: aboutContent.content }}
+              />
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  תוכן זה עדיין לא הוגדר.{" "}
+                  <Link href="/" className="text-primary hover:underline">
+                    חזרו לדף הבית
+                  </Link>{" "}
+                  ותתחילו לקרוא מאמרים!
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom accent bar */}
+          <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+        </div>
+
+        {/* Footer CTA */}
+        <div className="mt-12 text-center">
+          <div className="divider-gold mb-8 mx-auto max-w-xs" />
+          <p className="text-muted-foreground text-sm mb-4">
+            מוזמנים לקרוא את המאמרים
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            לכל המאמרים
+          </Link>
         </div>
       </div>
     </div>

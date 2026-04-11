@@ -178,3 +178,6 @@
 
 ## Bug – About Page Content Wiped on Deploy
 - [x] Fix: About page content is deleted/reset every time a checkpoint is saved or the server restarts — fixed RichTextEditor readyRef guard to prevent empty-string onChange on mount before async value arrives
+
+## Feature – About Page Redesign
+- [x] Redesign About page with improved layout, typography, visual hierarchy matching the site's dark golden aesthetic
