@@ -84,7 +84,7 @@ export default function AdminArticleForm() {
     }
   }, [dynamicCategories, isEdit]);
 
-  // Populate form when editing
+  // Populate form when editing — lock slug so it is never regenerated
   useEffect(() => {
     if (existingArticle) {
       setForm((prev) => ({
@@ -97,9 +97,10 @@ export default function AdminArticleForm() {
         tags: existingArticle.tags ?? "",
         published: existingArticle.published,
       }));
+      // Always lock slug when editing an existing article
       setSlugManuallyEdited(true);
     }
-  }, [existingArticle]);
+  }, [existingArticle?.id]);
 
   // Load full article body for edit
   const { data: fullArticle } = trpc.articles.bySlug.useQuery(

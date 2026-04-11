@@ -184,3 +184,6 @@
 
 ## Bug – Article Creation SQL Error
 - [x] Fix: creating a new article fails with SQL INSERT error on the articles table — slugify now generates timestamp-based slug for Hebrew titles
+
+## Bug – Slug Regenerated on Every Update
+- [x] Fix: updating an article creates a new slug instead of keeping the existing one
