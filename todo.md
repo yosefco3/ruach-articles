@@ -194,3 +194,6 @@
 
 ## Bug – Article Page Starts at Wrong Scroll Position
 - [x] Fix: when opening an article, the page starts scrolled to the body instead of the title — added ScrollToTop component
+
+## Bug – Category Drag-and-Drop Reordering Not Working
+- [x] Fix: drag-and-drop to reorder categories in admin page does not work — implemented real drag-and-drop with @dnd-kit and server-side sortOrder persistence

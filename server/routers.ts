@@ -37,6 +37,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  reorderCategories,
   subscribeToNewsletter,
   unsubscribeFromNewsletter,
   getNewsletterSubscribers,
@@ -422,6 +423,16 @@ const categoriesRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await deleteCategory(input.id);
+      return { success: true };
+    }),
+  reorder: adminProcedure
+    .input(
+      z.object({
+        items: z.array(z.object({ id: z.number(), sortOrder: z.number() })),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await reorderCategories(input.items);
       return { success: true };
     }),
 });

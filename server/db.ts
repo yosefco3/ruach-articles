@@ -436,6 +436,15 @@ export async function updateCategory(id: number, data: Partial<InsertCategory>) 
   await db.update(categories).set(data).where(eq(categories.id, id));
 }
 
+export async function reorderCategories(items: { id: number; sortOrder: number }[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await Promise.all(
+    items.map(({ id, sortOrder }) =>
+      db.update(categories).set({ sortOrder }).where(eq(categories.id, id))
+    )
+  );
+}
 export async function deleteCategory(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
