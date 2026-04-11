@@ -21,12 +21,18 @@ import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 
 function slugify(text: string) {
-  return text
+  // Try ASCII-based slug first
+  const ascii = text
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim();
+  // If the title is Hebrew (or other non-ASCII), fall back to a timestamp slug
+  if (!ascii || ascii === "-") {
+    return "article-" + Date.now().toString(36);
+  }
+  return ascii;
 }
 
 interface UploadedFile {

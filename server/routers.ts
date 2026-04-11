@@ -100,18 +100,34 @@ const articlesRouter = router({
   create: writerProcedure
     .input(
       z.object({
-        title: z.string(),
+        title: z.string().min(1),
         slug: z.string(),
         excerpt: z.string().optional(),
-        body: z.string(),
+        body: z.string().min(1),
         coverImage: z.string().optional(),
         category: z.string().min(1),
         tags: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // Server-side slug normalization: strip non-ASCII, fallback to timestamp slug
+      let slug = input.slug
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      if (!slug || slug === "-") {
+        slug = "article-" + Date.now().toString(36);
+      }
+      // Ensure slug uniqueness by appending a suffix if needed
+      const existing = await getArticleBySlug(slug);
+      if (existing) {
+        slug = slug + "-" + Date.now().toString(36);
+      }
       return await createArticle({
         ...input,
+        slug,
         authorId: ctx.user!.id,
         published: false,
       });

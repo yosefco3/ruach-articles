@@ -181,3 +181,6 @@
 
 ## Feature – About Page Redesign
 - [x] Redesign About page with improved layout, typography, visual hierarchy matching the site's dark golden aesthetic
+
+## Bug – Article Creation SQL Error
+- [x] Fix: creating a new article fails with SQL INSERT error on the articles table — slugify now generates timestamp-based slug for Hebrew titles

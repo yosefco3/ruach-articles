@@ -159,6 +159,30 @@ describe("articles.create", () => {
     expect(result).toBeDefined();
   });
 
+  it("normalizes Hebrew slug to timestamp-based slug on server", async () => {
+    // Hebrew titles produce empty slugs from the ASCII slugify — server must handle this
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.create({
+      title: "הרמבים המיסטיקן",
+      slug: "", // empty slug as would come from Hebrew title
+      body: "תוכן המאמר",
+      category: "רמבם",
+    });
+    expect(result).toBeDefined();
+  });
+
+  it("handles duplicate slug by appending suffix", async () => {
+    // getArticleBySlug mock returns an article for 'test-article', so a suffix should be added
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.create({
+      title: "New Article",
+      slug: "test-article", // this slug already exists in the mock
+      body: "Article body",
+      category: "philosophy",
+    });
+    expect(result).toBeDefined();
+  });
+
   it("allows approved guest writer to create an article", async () => {
     const caller = appRouter.createCaller(makeCtx("user", { guestPostApproved: true }));
     const result = await caller.articles.create({

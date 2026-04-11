@@ -75,10 +75,14 @@ describe("categories", () => {
 
   it("fetches a category by slug", async () => {
     const caller = appRouter.createCaller(createPublicContext());
-    const cat = await caller.categories.bySlug({ slug: "spirituality" });
+    // Use the first available category from the list so the test is not tied to seeded data
+    const categories = await caller.categories.list();
+    const first = categories[0];
+    expect(first).toBeDefined();
+    const cat = await caller.categories.bySlug({ slug: first.slug });
     expect(cat).toBeDefined();
-    expect(cat?.name).toBe("רוחניות");
-    expect(cat?.slug).toBe("spirituality");
+    expect(cat?.slug).toBe(first.slug);
+    expect(cat?.name).toBe(first.name);
   });
 
   it("returns undefined for non-existent slug", async () => {
