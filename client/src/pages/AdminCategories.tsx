@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, ArrowRight, Plus, Trash2, GripVertical, Palette, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
@@ -33,6 +33,28 @@ type Category = {
   color?: string | null;
   sortOrder: number;
 };
+
+// Palette of 12 visually distinct colors for categories
+const CATEGORY_PALETTE = [
+  "#8B6914", // gold (default)
+  "#7C3AED", // violet
+  "#0EA5E9", // sky blue
+  "#16A34A", // green
+  "#DC2626", // red
+  "#EA580C", // orange
+  "#DB2777", // pink
+  "#0891B2", // cyan
+  "#65A30D", // lime
+  "#9333EA", // purple
+  "#B45309", // amber-brown
+  "#0D9488", // teal
+];
+
+/** Pick the first palette color not already used by existing categories */
+function pickNextColor(existingColors: (string | null | undefined)[]): string {
+  const used = new Set(existingColors.map((c) => (c ?? "").toLowerCase()));
+  return CATEGORY_PALETTE.find((c) => !used.has(c.toLowerCase())) ?? CATEGORY_PALETTE[existingColors.length % CATEGORY_PALETTE.length];
+}
 
 function slugify(text: string) {
   return text
@@ -206,6 +228,17 @@ export default function AdminCategories() {
     description: "",
     color: "#8B6914",
   });
+
+  // Once categories load, update the default color to the next unused palette color
+  useEffect(() => {
+    if (categoriesData) {
+      const colors = (categoriesData as Category[]).map((c) => c.color);
+      setNewCategory((prev) => ({
+        ...prev,
+        color: pickNextColor(colors),
+      }));
+    }
+  }, [categoriesData]);
   const [slugManual, setSlugManual] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: "", description: "", color: "#8B6914" });
@@ -216,10 +249,12 @@ export default function AdminCategories() {
   );
 
   const createCategory = trpc.categories.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
       utils.categories.list.invalidate();
       setLocalCategories(null);
-      setNewCategory({ name: "", slug: "", description: "", color: "#8B6914" });
+      // After creating, pick next unused color from updated list
+      const allColors = [...((categoriesData as Category[] | undefined)?.map((c) => c.color) ?? []), vars.color];
+      setNewCategory({ name: "", slug: "", description: "", color: pickNextColor(allColors) });
       setSlugManual(false);
       toast.success("הקטגוריה נוצרה בהצלחה");
     },

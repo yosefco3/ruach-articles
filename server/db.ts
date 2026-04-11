@@ -407,7 +407,21 @@ export async function getApprovedGuestWriters() {
   return await db.select().from(users).where(eq(users.guestPostApproved, true));
 }
 
-// --- Categories ---
+/// --- Categories ---
+const CATEGORY_PALETTE = [
+  "#8B6914", // gold
+  "#7C3AED", // violet
+  "#0EA5E9", // sky blue
+  "#16A34A", // green
+  "#DC2626", // red
+  "#EA580C", // orange
+  "#DB2777", // pink
+  "#0891B2", // cyan
+  "#65A30D", // lime
+  "#9333EA", // purple
+  "#B45309", // amber-brown
+  "#0D9488", // teal
+];
 
 export async function getCategories() {
   const db = await getDb();
@@ -425,7 +439,15 @@ export async function getCategoryBySlug(slug: string) {
 export async function createCategory(data: InsertCategory) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(categories).values(data);
+  // Auto-assign a unique palette color if none provided
+  let color = data.color;
+  if (!color) {
+    const existing = await db.select({ color: categories.color }).from(categories);
+    const usedColors = new Set(existing.map((r) => (r.color ?? "").toLowerCase()));
+    color = CATEGORY_PALETTE.find((c) => !usedColors.has(c.toLowerCase())) ??
+      CATEGORY_PALETTE[existing.length % CATEGORY_PALETTE.length];
+  }
+  await db.insert(categories).values({ ...data, color });
   const created = await db.select().from(categories).where(eq(categories.slug, data.slug)).limit(1);
   return created.length > 0 ? created[0] : data;
 }

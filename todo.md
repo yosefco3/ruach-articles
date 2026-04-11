@@ -197,3 +197,6 @@
 
 ## Bug – Category Drag-and-Drop Reordering Not Working
 - [x] Fix: drag-and-drop to reorder categories in admin page does not work — implemented real drag-and-drop with @dnd-kit and server-side sortOrder persistence
+
+## Feature – Auto-Unique Category Color
+- [x] Auto-assign unique color to each new category from a predefined palette (avoid duplicate default color)
