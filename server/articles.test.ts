@@ -91,11 +91,29 @@ vi.mock("./db", () => ({
   revokeGuestWriter: vi.fn().mockResolvedValue(undefined),
   getApprovedGuestWriters: vi.fn().mockResolvedValue([]),
   getAllUsers: vi.fn().mockResolvedValue([]),
+  getCategories: vi.fn().mockResolvedValue([]),
+  getCategoryBySlug: vi.fn().mockResolvedValue(null),
+  createCategory: vi.fn().mockResolvedValue({ id: 1 }),
+  updateCategory: vi.fn().mockResolvedValue({ success: true }),
+  deleteCategory: vi.fn().mockResolvedValue({ success: true }),
+  reorderCategories: vi.fn().mockResolvedValue(undefined),
+  subscribeToNewsletter: vi.fn().mockResolvedValue(undefined),
+  unsubscribeFromNewsletter: vi.fn().mockResolvedValue(undefined),
+  getNewsletterSubscribers: vi.fn().mockResolvedValue([]),
+  deleteNewsletterSubscriber: vi.fn().mockResolvedValue(undefined),
+  searchNewsletterSubscribers: vi.fn().mockResolvedValue([]),
+  getFeaturedArticle: vi.fn().mockResolvedValue(null),
+  setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock contact notifyOwner
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
+}));
+
+// Mock newsletter email sender
+vi.mock("./newsletterEmail", () => ({
+  sendArticleNewsletter: vi.fn().mockResolvedValue(undefined),
 }));
 
 function makeCtx(role: "user" | "admin" | null = null, opts?: { guestPostApproved?: boolean }): TrpcContext {

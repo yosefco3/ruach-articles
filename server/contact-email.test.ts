@@ -7,6 +7,58 @@ vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn(async () => true),
 }));
 
+// Mock db so no real DB is touched
+vi.mock("./db", () => ({
+  getSiteSettings: vi.fn().mockResolvedValue({ siteTitle: "רוּחַ", heroSubtitle: "", contactEmail: "contact@ruach.test" }),
+  updateSiteSettings: vi.fn().mockImplementation(async (data: Record<string, unknown>) => data),
+  getArticles: vi.fn().mockResolvedValue([]),
+  getArticleBySlug: vi.fn().mockResolvedValue(null),
+  getArticleById: vi.fn().mockResolvedValue(null),
+  createArticle: vi.fn().mockResolvedValue({ id: 1 }),
+  updateArticle: vi.fn().mockResolvedValue(undefined),
+  deleteArticle: vi.fn().mockResolvedValue(undefined),
+  getAttachmentsByArticle: vi.fn().mockResolvedValue([]),
+  getCommentsByArticle: vi.fn().mockResolvedValue([]),
+  createComment: vi.fn().mockResolvedValue({ success: true, id: 1 }),
+  deleteComment: vi.fn().mockResolvedValue(undefined),
+  getCommentById: vi.fn().mockResolvedValue(null),
+  getAboutPage: vi.fn().mockResolvedValue({ title: "אודות", content: "", imageUrl: null }),
+  updateAboutPage: vi.fn().mockResolvedValue(undefined),
+  getGuestPosts: vi.fn().mockResolvedValue([]),
+  createGuestPost: vi.fn().mockResolvedValue({ success: true }),
+  updateGuestPostStatus: vi.fn().mockResolvedValue(undefined),
+  deleteGuestPost: vi.fn().mockResolvedValue(undefined),
+  getLikeCount: vi.fn().mockResolvedValue(0),
+  getUserLike: vi.fn().mockResolvedValue(null),
+  createLike: vi.fn().mockResolvedValue(undefined),
+  deleteLike: vi.fn().mockResolvedValue(undefined),
+  getUserProfile: vi.fn().mockResolvedValue(null),
+  createUserProfile: vi.fn().mockResolvedValue(undefined),
+  updateUserProfile: vi.fn().mockResolvedValue(undefined),
+  getUserCommentCount: vi.fn().mockResolvedValue(0),
+  approveGuestWriter: vi.fn().mockResolvedValue(undefined),
+  revokeGuestWriter: vi.fn().mockResolvedValue(undefined),
+  getApprovedGuestWriters: vi.fn().mockResolvedValue([]),
+  getAllUsers: vi.fn().mockResolvedValue([]),
+  getCategories: vi.fn().mockResolvedValue([]),
+  getCategoryBySlug: vi.fn().mockResolvedValue(null),
+  createCategory: vi.fn().mockResolvedValue({ id: 1 }),
+  updateCategory: vi.fn().mockResolvedValue({ success: true }),
+  deleteCategory: vi.fn().mockResolvedValue({ success: true }),
+  reorderCategories: vi.fn().mockResolvedValue(undefined),
+  subscribeToNewsletter: vi.fn().mockResolvedValue(undefined),
+  unsubscribeFromNewsletter: vi.fn().mockResolvedValue(undefined),
+  getNewsletterSubscribers: vi.fn().mockResolvedValue([]),
+  deleteNewsletterSubscriber: vi.fn().mockResolvedValue(undefined),
+  searchNewsletterSubscribers: vi.fn().mockResolvedValue([]),
+  getFeaturedArticle: vi.fn().mockResolvedValue(null),
+  setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./newsletterEmail", () => ({
+  sendArticleNewsletter: vi.fn().mockResolvedValue(undefined),
+}));
+
 function createPublicContext(): TrpcContext {
   return {
     user: null,

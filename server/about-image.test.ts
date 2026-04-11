@@ -51,10 +51,17 @@ vi.mock("./db", () => ({
   updateCategory: vi.fn().mockResolvedValue(undefined),
   deleteCategory: vi.fn().mockResolvedValue(undefined),
   getNewsletterSubscribers: vi.fn().mockResolvedValue([]),
-  subscribeNewsletter: vi.fn().mockResolvedValue(undefined),
-  unsubscribeNewsletter: vi.fn().mockResolvedValue(undefined),
+  subscribeToNewsletter: vi.fn().mockResolvedValue(undefined),
+  unsubscribeFromNewsletter: vi.fn().mockResolvedValue(undefined),
+  deleteNewsletterSubscriber: vi.fn().mockResolvedValue(undefined),
+  searchNewsletterSubscribers: vi.fn().mockResolvedValue([]),
+  reorderCategories: vi.fn().mockResolvedValue(undefined),
   getFeaturedArticle: vi.fn().mockResolvedValue(null),
   setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./newsletterEmail", () => ({
+  sendArticleNewsletter: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./_core/notification", () => ({

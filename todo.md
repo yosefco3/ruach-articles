@@ -213,3 +213,7 @@
 - [x] Build AdminNewsletter page: subscriber list table with email search and delete button
 - [x] Add link to AdminNewsletter page from admin dashboard
 - [x] Write vitest tests for new newsletter procedures
+
+## Fix – Test Isolation (no writes to production DB)
+- [x] Refactor all vitest tests that write to the real DB to use vi.mock instead
+- [x] Delete test data already written to production DB
