@@ -1,6 +1,90 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+
+// ── Mock ALL db functions so no real DB is touched ──────────────────────────
+const seedCategories = [
+  { id: 1, name: "ריפוי", slug: "healing", description: null, color: null, createdAt: new Date() },
+  { id: 2, name: 'רמב"ם', slug: "רמבם", description: null, color: null, createdAt: new Date() },
+  { id: 3, name: "כללי", slug: "כללי", description: null, color: null, createdAt: new Date() },
+];
+
+let mockCategories = [...seedCategories];
+let nextCategoryId = 10;
+const mockSubscribers: { email: string; name?: string }[] = [];
+
+vi.mock("./db", () => ({
+  getCategories: vi.fn().mockImplementation(async () => [...mockCategories]),
+  getCategoryBySlug: vi.fn().mockImplementation(async (slug: string) =>
+    mockCategories.find((c) => c.slug === slug) ?? undefined
+  ),
+  createCategory: vi.fn().mockImplementation(async (data: { name: string; slug: string; description?: string; color?: string }) => {
+    const cat = { id: nextCategoryId++, ...data, description: data.description ?? null, color: data.color ?? null, createdAt: new Date() };
+    mockCategories.push(cat);
+    return cat;
+  }),
+  updateCategory: vi.fn().mockImplementation(async (id: number, data: Partial<{ name: string; color: string }>) => {
+    mockCategories = mockCategories.map((c) => (c.id === id ? { ...c, ...data } : c));
+    return { success: true };
+  }),
+  deleteCategory: vi.fn().mockImplementation(async (id: number) => {
+    mockCategories = mockCategories.filter((c) => c.id !== id);
+    return { success: true };
+  }),
+  subscribeNewsletter: vi.fn().mockImplementation(async (data: { email: string; name?: string }) => {
+    mockSubscribers.push(data);
+  }),
+  subscribeToNewsletter: vi.fn().mockImplementation(async (data: { email: string; name?: string }) => {
+    mockSubscribers.push(data);
+  }),
+  unsubscribeNewsletter: vi.fn().mockImplementation(async (email: string) => {
+    const idx = mockSubscribers.findIndex((s) => s.email === email);
+    if (idx !== -1) mockSubscribers.splice(idx, 1);
+  }),
+  unsubscribeFromNewsletter: vi.fn().mockImplementation(async (email: string) => {
+    const idx = mockSubscribers.findIndex((s) => s.email === email);
+    if (idx !== -1) mockSubscribers.splice(idx, 1);
+  }),
+  getNewsletterSubscribers: vi.fn().mockImplementation(async () => [...mockSubscribers]),
+  // Other db functions used by routers
+  getArticles: vi.fn().mockResolvedValue([]),
+  getArticleBySlug: vi.fn().mockResolvedValue(null),
+  getArticleById: vi.fn().mockResolvedValue(null),
+  createArticle: vi.fn().mockResolvedValue({ id: 1 }),
+  updateArticle: vi.fn().mockResolvedValue(undefined),
+  deleteArticle: vi.fn().mockResolvedValue(undefined),
+  getAttachmentsByArticle: vi.fn().mockResolvedValue([]),
+  getCommentsByArticle: vi.fn().mockResolvedValue([]),
+  createComment: vi.fn().mockResolvedValue({ success: true, id: 1 }),
+  deleteComment: vi.fn().mockResolvedValue(undefined),
+  getCommentById: vi.fn().mockResolvedValue(null),
+  getSiteSettings: vi.fn().mockResolvedValue({ siteTitle: "רוּחַ", heroSubtitle: "" }),
+  updateSiteSettings: vi.fn().mockResolvedValue(undefined),
+  getAboutPage: vi.fn().mockResolvedValue({ title: "אודות", content: "", imageUrl: null }),
+  updateAboutPage: vi.fn().mockResolvedValue(undefined),
+  getGuestPosts: vi.fn().mockResolvedValue([]),
+  createGuestPost: vi.fn().mockResolvedValue({ success: true }),
+  updateGuestPostStatus: vi.fn().mockResolvedValue(undefined),
+  deleteGuestPost: vi.fn().mockResolvedValue(undefined),
+  getLikeCount: vi.fn().mockResolvedValue(0),
+  getUserLike: vi.fn().mockResolvedValue(null),
+  createLike: vi.fn().mockResolvedValue(undefined),
+  deleteLike: vi.fn().mockResolvedValue(undefined),
+  getUserProfile: vi.fn().mockResolvedValue(null),
+  createUserProfile: vi.fn().mockResolvedValue(undefined),
+  updateUserProfile: vi.fn().mockResolvedValue(undefined),
+  getUserCommentCount: vi.fn().mockResolvedValue(0),
+  approveGuestWriter: vi.fn().mockResolvedValue(undefined),
+  revokeGuestWriter: vi.fn().mockResolvedValue(undefined),
+  getApprovedGuestWriters: vi.fn().mockResolvedValue([]),
+  getAllUsers: vi.fn().mockResolvedValue([]),
+  getFeaturedArticle: vi.fn().mockResolvedValue(null),
+  setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./_core/notification", () => ({
+  notifyOwner: vi.fn().mockResolvedValue(true),
+}));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -16,13 +100,10 @@ function createAdminContext(): TrpcContext {
     updatedAt: new Date(),
     lastSignedIn: new Date(),
   };
-
   return {
     user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: {
-      clearCookie: () => {},
-    } as TrpcContext["res"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
   };
 }
 
@@ -30,9 +111,7 @@ function createPublicContext(): TrpcContext {
   return {
     user: null,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: {
-      clearCookie: () => {},
-    } as TrpcContext["res"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
   };
 }
 
@@ -48,24 +127,25 @@ function createRegularUserContext(): TrpcContext {
     updatedAt: new Date(),
     lastSignedIn: new Date(),
   };
-
   return {
     user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: {
-      clearCookie: () => {},
-    } as TrpcContext["res"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
   };
 }
+
+beforeEach(() => {
+  mockCategories = [...seedCategories];
+  nextCategoryId = 10;
+  mockSubscribers.length = 0;
+});
 
 describe("categories", () => {
   it("lists categories publicly", async () => {
     const caller = appRouter.createCaller(createPublicContext());
     const categories = await caller.categories.list();
     expect(Array.isArray(categories)).toBe(true);
-    // Should have at least the seeded categories
     expect(categories.length).toBeGreaterThanOrEqual(3);
-    // Each category should have required fields
     for (const cat of categories) {
       expect(cat).toHaveProperty("id");
       expect(cat).toHaveProperty("name");
@@ -75,14 +155,10 @@ describe("categories", () => {
 
   it("fetches a category by slug", async () => {
     const caller = appRouter.createCaller(createPublicContext());
-    // Use the first available category from the list so the test is not tied to seeded data
-    const categories = await caller.categories.list();
-    const first = categories[0];
-    expect(first).toBeDefined();
-    const cat = await caller.categories.bySlug({ slug: first.slug });
+    const cat = await caller.categories.bySlug({ slug: "healing" });
     expect(cat).toBeDefined();
-    expect(cat?.slug).toBe(first.slug);
-    expect(cat?.name).toBe(first.name);
+    expect(cat?.slug).toBe("healing");
+    expect(cat?.name).toBe("ריפוי");
   });
 
   it("returns undefined for non-existent slug", async () => {
@@ -118,7 +194,7 @@ describe("categories", () => {
     // Create
     const created = await caller.categories.create({
       name: "Test Category",
-      slug: "test-cat-" + Date.now(),
+      slug: "test-cat-mock",
       description: "A test category",
       color: "#FF0000",
     });
@@ -126,7 +202,7 @@ describe("categories", () => {
 
     // Get the list to find the new category
     const list = await caller.categories.list();
-    const newCat = list.find((c) => c.slug.startsWith("test-cat-"));
+    const newCat = list.find((c) => c.slug === "test-cat-mock");
     expect(newCat).toBeDefined();
 
     // Update
@@ -149,7 +225,7 @@ describe("categories", () => {
 });
 
 describe("newsletter", () => {
-  const testEmail = `test-${Date.now()}@example.com`;
+  const testEmail = `test-mock@example.com`;
 
   it("allows public subscription", async () => {
     const caller = appRouter.createCaller(createPublicContext());

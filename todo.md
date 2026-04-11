@@ -187,3 +187,7 @@
 
 ## Bug – Slug Regenerated on Every Update
 - [x] Fix: updating an article creates a new slug instead of keeping the existing one
+
+## Bug – Tests Pollute Production Database
+- [x] Fix: running tests creates real data (articles, categories, newsletter subscribers) in the production database — all tests now use vi.mock for db module
+- [x] Clean up test data already created in production DB — removed 17 fake newsletter subscribers
