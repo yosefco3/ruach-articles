@@ -200,3 +200,6 @@
 
 ## Feature – Auto-Unique Category Color
 - [x] Auto-assign unique color to each new category from a predefined palette (avoid duplicate default color)
+
+## Fix – About Page Layout
+- [x] Unify image and text into same container on About page; image should not overflow beyond text width

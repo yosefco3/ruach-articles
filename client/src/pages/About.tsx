@@ -34,7 +34,7 @@ export default function About() {
           }}
         />
 
-        <div className="container max-w-4xl pt-10 pb-14 relative">
+        <div className="container max-w-3xl pt-10 pb-14 relative">
           {/* Back link */}
           <Link
             href="/"
@@ -71,24 +71,24 @@ export default function About() {
         </div>
       </div>
 
-      {/* ── Cover image ──────────────────────────────────────── */}
-      {imageUrl && (
-        <div className="container max-w-4xl pb-10">
-          <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-primary/20">
-            <img
-              src={imageUrl}
-              alt={title}
-              className="w-full max-h-[480px] object-cover"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Main content card ─────────────────────────────────── */}
+      {/* ── Unified card: image + text ────────────────────────── */}
       <div className="container max-w-3xl pb-20">
         <div className="relative bg-card/60 backdrop-blur-sm border border-border/60 rounded-2xl shadow-xl shadow-black/20 overflow-hidden">
           {/* Top accent bar */}
           <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+
+          {/* Cover image inside the card */}
+          {imageUrl && (
+            <div className="overflow-hidden">
+              <img
+                src={imageUrl}
+                alt={title}
+                className="w-full max-h-[420px] object-cover"
+              />
+              {/* Subtle gradient fade from image into card body */}
+              <div className="h-8 bg-gradient-to-b from-transparent to-card/60 -mt-8 relative z-10" />
+            </div>
+          )}
 
           <div className="p-8 md:p-12">
             {aboutContent?.content ? (
