@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -87,8 +87,22 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      <div className="divider-gold mb-8" />
-
+       <div className="divider-gold mb-8" />
+      {/* Quick links */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/categories" className="gap-2">
+            <Settings className="w-4 h-4" />
+            ניהול קטגוריות
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/newsletter" className="gap-2">
+            <Mail className="w-4 h-4" />
+            מנויי ניוזלטר
+          </Link>
+        </Button>
+      </div>
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[

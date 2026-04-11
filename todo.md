@@ -203,3 +203,13 @@
 
 ## Fix – About Page Layout
 - [x] Unify image and text into same container on About page; image should not overflow beyond text width
+
+## Feature – Newsletter Auto-Email & Subscriber Management
+- [x] Build sendNewsletterEmail helper that emails all active subscribers when an article is published
+- [x] Trigger newsletter send automatically when article is created with published=true
+- [x] Trigger newsletter send automatically when article is updated from unpublished to published
+- [x] Add deleteSubscriber admin procedure (hard delete by id)
+- [x] Add getNewsletterSubscribers procedure with optional email search filter
+- [x] Build AdminNewsletter page: subscriber list table with email search and delete button
+- [x] Add link to AdminNewsletter page from admin dashboard
+- [x] Write vitest tests for new newsletter procedures

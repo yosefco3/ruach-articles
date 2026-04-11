@@ -41,10 +41,13 @@ import {
   subscribeToNewsletter,
   unsubscribeFromNewsletter,
   getNewsletterSubscribers,
+  deleteNewsletterSubscriber,
+  searchNewsletterSubscribers,
   getFeaturedArticle,
   setFeaturedArticle,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
+import { sendArticleNewsletter } from "./newsletterEmail";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -146,11 +149,31 @@ const articlesRouter = router({
         category: z.string().optional(),
         tags: z.string().optional(),
         published: z.boolean().optional(),
+        siteUrl: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
-      const { id, ...data } = input;
-      return await updateArticle(id, data);
+      const { id, siteUrl, ...data } = input;
+      // Fetch article before update to detect publish transition
+      const before = await getArticleById(id);
+      const updated = await updateArticle(id, data);
+      // Trigger newsletter when article transitions from unpublished → published
+      if (!before?.published && data.published === true && siteUrl) {
+        const article = await getArticleById(id);
+        if (article) {
+          sendArticleNewsletter({
+            title: article.title,
+            excerpt: article.excerpt,
+            slug: article.slug,
+            coverImage: article.coverImage,
+            category: article.category,
+            siteUrl,
+          }).catch((err) =>
+            console.error("[Newsletter] Failed to send newsletter:", err)
+          );
+        }
+      }
+      return updated;
     }),
 
   delete: adminProcedure
@@ -458,9 +481,21 @@ const newsletterRouter = router({
       return { success: true };
     }),
 
-  list: adminProcedure.query(async () => {
-    return await getNewsletterSubscribers();
-  }),
+  list: adminProcedure
+    .input(z.object({ search: z.string().optional() }).optional())
+    .query(async ({ input }) => {
+      if (input?.search && input.search.trim()) {
+        return await searchNewsletterSubscribers(input.search.trim());
+      }
+      return await getNewsletterSubscribers();
+    }),
+
+  delete: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteNewsletterSubscriber(input.id);
+      return { success: true };
+    }),
 });
 
 // Featured Article router

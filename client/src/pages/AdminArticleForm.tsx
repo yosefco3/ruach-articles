@@ -229,6 +229,7 @@ export default function AdminArticleForm() {
         category: form.category,
         tags: form.tags || undefined,
         published: form.published,
+        siteUrl: window.location.origin,
       });
     } else {
       createArticle.mutate(form);

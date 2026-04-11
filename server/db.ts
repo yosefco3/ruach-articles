@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   articles, comments, users, attachments, siteSettings, guestPosts,
@@ -524,4 +524,20 @@ export async function setFeaturedArticle(articleId: number) {
   } else {
     await db.insert(featuredArticle).values({ articleId });
   }
+}
+
+export async function deleteNewsletterSubscriber(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id));
+}
+
+export async function searchNewsletterSubscribers(emailQuery: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(newsletterSubscribers)
+    .where(like(newsletterSubscribers.email, `%${emailQuery}%`))
+    .orderBy(desc(newsletterSubscribers.subscribedAt));
 }
