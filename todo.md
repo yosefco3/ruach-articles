@@ -175,3 +175,6 @@
 
 ## Bug – Category Page Missing Featured Article
 - [x] Fix: category page does not show the article that is set as the featured article (it is excluded from the list)
+
+## Bug – About Page Content Wiped on Deploy
+- [x] Fix: About page content is deleted/reset every time a checkpoint is saved or the server restarts — fixed RichTextEditor readyRef guard to prevent empty-string onChange on mount before async value arrives

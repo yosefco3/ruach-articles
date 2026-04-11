@@ -150,6 +150,10 @@ export default function RichTextEditor({
   const colorRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
   const fontSizeRef = useRef<HTMLDivElement>(null);
+  // Guard: don't propagate onChange until the editor has been seeded with real
+  // content. This prevents an empty-string write when the editor mounts before
+  // the async `value` prop arrives from the server.
+  const readyRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -170,6 +174,7 @@ export default function RichTextEditor({
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      if (!readyRef.current) return;
       onChange(editor.getHTML());
     },
     editorProps: {
@@ -181,13 +186,22 @@ export default function RichTextEditor({
     },
   });
 
-  // Populate editor when value arrives asynchronously (edit mode)
+  // Populate editor when value arrives asynchronously (edit mode).
+  // Once real content is loaded, mark the editor as ready so onUpdate
+  // can safely call onChange without risk of writing an empty string.
   useEffect(() => {
     if (!editor) return;
-    const current = editor.getHTML();
-    const isEmpty = current === "" || current === "<p></p>";
-    if (isEmpty && value && value !== "<p></p>") {
-      editor.commands.setContent(value, false as any);
+    if (value && value !== "<p></p>") {
+      const current = editor.getHTML();
+      const isEmpty = current === "" || current === "<p></p>";
+      if (isEmpty) {
+        editor.commands.setContent(value, false as any);
+      }
+      // Mark ready regardless — value has arrived from the server.
+      readyRef.current = true;
+    } else if (!value) {
+      // No async value expected (new article) — allow typing immediately.
+      readyRef.current = true;
     }
   }, [editor, value]);
 
