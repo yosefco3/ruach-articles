@@ -338,7 +338,9 @@ export default function AdminArticleForm() {
             onValueChange={(v) => setForm((prev) => ({ ...prev, category: v }))}
           >
             <SelectTrigger>
-              <SelectValue placeholder="בחרו קטגוריה" />
+              <SelectValue placeholder="בחרו קטגוריה">
+                {form.category ? dynamicCategories?.find((c) => c.slug === form.category)?.name : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {(dynamicCategories ?? []).map((cat) => (

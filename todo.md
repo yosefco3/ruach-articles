@@ -217,3 +217,6 @@
 ## Fix – Test Isolation (no writes to production DB)
 - [x] Refactor all vitest tests that write to the real DB to use vi.mock instead
 - [x] Delete test data already written to production DB
+
+## Fix – Article Edit Form Category Pre-Selection
+- [x] Pre-select the current article's category in the category dropdown when editing
