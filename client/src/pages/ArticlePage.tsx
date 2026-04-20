@@ -3,7 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart } from "lucide-react";
+import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart, Download, ImageDown } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import CommentsSection from "@/components/CommentsSection";
@@ -135,6 +135,30 @@ export default function ArticlePage() {
             </div>
           )}
         </header>
+
+        {/* Download buttons */}
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <a
+            href={`/api/article-docx/${article.slug}`}
+            download
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all text-sm font-medium"
+          >
+            <Download className="w-4 h-4" />
+            הורד מאמר (Word)
+          </a>
+          {article.coverImage && (
+            <a
+              href={article.coverImage}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all text-sm font-medium"
+            >
+              <ImageDown className="w-4 h-4" />
+              הורד תמונת שער
+            </a>
+          )}
+        </div>
 
         {/* Likes Section */}
         <div className="flex items-center gap-4 mb-6">

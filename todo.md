@@ -228,3 +228,9 @@
 
 ## Fix – Category Not Remembered on Edit (revisit)
 - [x] Properly fix category pre-selection: ensure form.category is populated from existingArticle before categories data loads
+
+## Feature – Download Article as Word (.docx)
+- [x] Install docx npm package for Word generation
+- [x] Add server-side tRPC procedure articles.downloadDocx that generates a .docx file with cover image, title, excerpt, body content, and RTL/LTR direction based on language detection
+- [x] Add "הורד מאמר" download button on the article page
+- [x] Write vitest test for the downloadDocx procedure
