@@ -143,7 +143,7 @@ export default function Home() {
                     <Link
                       key={cat.slug}
                       href={`/category/${cat.slug}`}
-                      className="block group"
+                      className="block group p-0.5"
                     >
                       <div className="relative bg-card border border-border rounded-2xl overflow-hidden card-hover transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/30">
                         {/* Cover Image */}
