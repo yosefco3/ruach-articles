@@ -244,3 +244,6 @@
 - [x] Build admin drag-and-drop UI for reordering articles within a category
 - [x] Register /category/:slug route in App.tsx
 - [x] Write vitest tests for reorderArticles and categories.listWithCounts procedures (85 tests passing)
+
+## Bug – Hover Line on Category Cards
+- [x] Fix: hover on category card shows a visible line between the image and content area — redesigned cards to use full-bleed background image with gradient overlay (no separate image/content areas)

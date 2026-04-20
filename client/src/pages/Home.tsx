@@ -143,36 +143,36 @@ export default function Home() {
                     <Link
                       key={cat.slug}
                       href={`/category/${cat.slug}`}
-                      className="block group p-0.5 outline-none"
+                      className="block group outline-none"
                     >
-                      <div className="relative bg-card border border-border rounded-2xl card-hover outline-none transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/30">
-                        {/* Cover Image */}
-                        <div className="relative h-48 overflow-hidden rounded-t-2xl">
-                          {cat.latestCoverImage || cat.coverImage ? (
-                            <img
-                              src={cat.coverImage || cat.latestCoverImage || ""}
-                              alt={cat.name}
-                              className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div
-                              className="w-full h-full flex items-center justify-center"
-                              style={{
-                                background: `linear-gradient(135deg, ${cat.color || "#8B6914"}22, ${cat.color || "#8B6914"}44)`,
-                              }}
-                            >
+                      <div className="relative h-72 rounded-2xl overflow-hidden shadow-md shadow-black/20 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-black/30 group-hover:ring-1 group-hover:ring-primary/30">
+                        {/* Full background image */}
+                        {cat.latestCoverImage || cat.coverImage ? (
+                          <img
+                            src={cat.coverImage || cat.latestCoverImage || ""}
+                            alt={cat.name}
+                            className="absolute inset-0 w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div
+                            className="absolute inset-0 w-full h-full"
+                            style={{
+                              background: `linear-gradient(135deg, ${cat.color || "#8B6914"}22, ${cat.color || "#8B6914"}44)`,
+                            }}
+                          >
+                            <div className="flex items-center justify-center h-full">
                               <BookOpen
                                 className="w-16 h-16 opacity-30"
                                 style={{ color: cat.color || "#8B6914" }}
                               />
                             </div>
-                          )}
-                          {/* Gradient overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-                        </div>
+                          </div>
+                        )}
+                        {/* Gradient overlay from bottom */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
-                        {/* Content */}
-                        <div className="relative p-5 -mt-8">
+                        {/* Content pinned to bottom */}
+                        <div className="absolute inset-x-0 bottom-0 p-5">
                           <div className="flex items-center justify-between mb-2">
                             <span
                               className="inline-block px-3 py-1.5 rounded-full text-sm font-bold border"
@@ -184,12 +184,12 @@ export default function Home() {
                             >
                               {cat.name}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-white/70">
                               {cat.articleCount} מאמרים
                             </span>
                           </div>
                           {cat.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                            <p className="text-sm text-white/70 line-clamp-2 mt-2">
                               {cat.description}
                             </p>
                           )}
