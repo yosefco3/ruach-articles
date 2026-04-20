@@ -1,4 +1,4 @@
-import { and, desc, eq, like, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   articles, comments, users, attachments, siteSettings, guestPosts,
@@ -104,7 +104,7 @@ export async function getArticles(opts?: { category?: string; published?: boolea
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(articles.createdAt));
+    .orderBy(asc(articles.sortOrder), desc(articles.createdAt));
   return rows;
 }
 
@@ -467,6 +467,42 @@ export async function reorderCategories(items: { id: number; sortOrder: number }
     )
   );
 }
+export async function reorderArticles(items: { id: number; sortOrder: number }[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await Promise.all(
+    items.map(({ id, sortOrder }) =>
+      db.update(articles).set({ sortOrder }).where(eq(articles.id, id))
+    )
+  );
+}
+
+export async function getCategoriesWithArticleCount() {
+  const db = await getDb();
+  if (!db) return [];
+  const cats = await db.select().from(categories).orderBy(categories.sortOrder);
+  const result = await Promise.all(
+    cats.map(async (cat) => {
+      const countResult = await db
+        .select({ count: count() })
+        .from(articles)
+        .where(and(eq(articles.category, cat.slug), eq(articles.published, true)));
+      const latestArticle = await db
+        .select({ coverImage: articles.coverImage })
+        .from(articles)
+        .where(and(eq(articles.category, cat.slug), eq(articles.published, true)))
+        .orderBy(desc(articles.createdAt))
+        .limit(1);
+      return {
+        ...cat,
+        articleCount: countResult[0]?.count ?? 0,
+        latestCoverImage: latestArticle[0]?.coverImage ?? null,
+      };
+    })
+  );
+  return result;
+}
+
 export async function deleteCategory(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

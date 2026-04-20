@@ -56,6 +56,8 @@ vi.mock("./db", () => ({
   deleteNewsletterSubscriber: vi.fn().mockResolvedValue(undefined),
   searchNewsletterSubscribers: vi.fn().mockResolvedValue([]),
   reorderCategories: vi.fn().mockResolvedValue(undefined),
+  reorderArticles: vi.fn().mockResolvedValue(undefined),
+  getCategoriesWithArticleCount: vi.fn().mockResolvedValue([]),
   getFeaturedArticle: vi.fn().mockResolvedValue(null),
   setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
 }));

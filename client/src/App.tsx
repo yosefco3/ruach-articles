@@ -16,6 +16,7 @@ import AdminGuestPosts from "./pages/AdminGuestPosts";
 import AdminUsers from "./pages/AdminUsers";
 import AdminCategories from "./pages/AdminCategories";
 import AdminNewsletter from "./pages/AdminNewsletter";
+import AdminArticleOrder from "./pages/AdminArticleOrder";
 import GuestPostForm from "./pages/GuestPostForm";
 import UserProfile from "./pages/UserProfile";
 import SiteLayout from "./components/SiteLayout";
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/admin/users" component={AdminUsers} />
         <Route path="/admin/categories" component={AdminCategories} />
         <Route path="/admin/newsletter" component={AdminNewsletter} />
+        <Route path="/admin/article-order" component={AdminArticleOrder} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

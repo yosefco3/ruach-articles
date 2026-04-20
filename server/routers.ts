@@ -45,6 +45,8 @@ import {
   searchNewsletterSubscribers,
   getFeaturedArticle,
   setFeaturedArticle,
+  reorderArticles,
+  getCategoriesWithArticleCount,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { sendArticleNewsletter } from "./newsletterEmail";
@@ -183,6 +185,17 @@ const articlesRouter = router({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await deleteArticle(input.id);
+      return { success: true };
+    }),
+
+  reorder: adminProcedure
+    .input(
+      z.object({
+        items: z.array(z.object({ id: z.number(), sortOrder: z.number() })),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await reorderArticles(input.items);
       return { success: true };
     }),
 });
@@ -406,6 +419,10 @@ const guestWritersRouter = router({
 const categoriesRouter = router({
   list: publicProcedure.query(async () => {
     return await getCategories();
+  }),
+
+  listWithCounts: publicProcedure.query(async () => {
+    return await getCategoriesWithArticleCount();
   }),
 
   bySlug: publicProcedure

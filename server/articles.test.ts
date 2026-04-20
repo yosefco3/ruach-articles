@@ -97,6 +97,10 @@ vi.mock("./db", () => ({
   updateCategory: vi.fn().mockResolvedValue({ success: true }),
   deleteCategory: vi.fn().mockResolvedValue({ success: true }),
   reorderCategories: vi.fn().mockResolvedValue(undefined),
+  reorderArticles: vi.fn().mockResolvedValue(undefined),
+  getCategoriesWithArticleCount: vi.fn().mockResolvedValue([
+    { id: 1, name: "רוחניות", slug: "spirituality", description: "מאמרים ברוחניות", color: "#8B6914", sortOrder: 1, coverImage: null, articleCount: 3, latestCoverImage: null },
+  ]),
   subscribeToNewsletter: vi.fn().mockResolvedValue(undefined),
   unsubscribeFromNewsletter: vi.fn().mockResolvedValue(undefined),
   getNewsletterSubscribers: vi.fn().mockResolvedValue([]),
@@ -431,6 +435,49 @@ describe("guestWriters", () => {
   it("rejects non-admin guest writer approval", async () => {
     const caller = appRouter.createCaller(makeCtx("user"));
     await expect(caller.guestWriters.approve({ userId: 2 })).rejects.toThrow();
+  });
+});
+
+// ─── Articles Reorder ────────────────────────────────────────────────────────
+
+describe("articles.reorder", () => {
+  it("allows admin to reorder articles", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.reorder({
+      items: [
+        { id: 1, sortOrder: 2 },
+        { id: 2, sortOrder: 1 },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-admin users from reordering", async () => {
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await expect(
+      caller.articles.reorder({ items: [{ id: 1, sortOrder: 1 }] })
+    ).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated users from reordering", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    await expect(
+      caller.articles.reorder({ items: [{ id: 1, sortOrder: 1 }] })
+    ).rejects.toThrow();
+  });
+});
+
+// ─── Categories listWithCounts ───────────────────────────────────────────────
+
+describe("categories.listWithCounts", () => {
+  it("returns categories with article counts publicly", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    const result = await caller.categories.listWithCounts();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toHaveProperty("articleCount");
+    expect(result[0]).toHaveProperty("latestCoverImage");
+    expect(result[0].slug).toBe("spirituality");
   });
 });
 

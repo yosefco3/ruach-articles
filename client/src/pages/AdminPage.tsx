@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -105,6 +105,12 @@ export default function AdminPage() {
           <Link href="/admin/newsletter" className="gap-2">
             <Mail className="w-4 h-4" />
             מנויי ניוזלטר
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/article-order" className="gap-2">
+            <ArrowUpDown className="w-4 h-4" />
+            סידור מאמרים
           </Link>
         </Button>
       </div>

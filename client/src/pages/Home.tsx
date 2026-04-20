@@ -1,23 +1,23 @@
 import { trpc } from "@/lib/trpc";
 import ArticleCard from "@/components/ArticleCard";
 import { useState } from "react";
-import { Loader2, Feather, Mail, Send } from "lucide-react";
+import { Loader2, Feather, Mail, Send, BookOpen, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: settings } = trpc.settings.get.useQuery();
-  const { categories, getCategoryBadgeStyle } = useDynamicCategories();
-
-  const { data: articles, isLoading } = trpc.articles.list.useQuery(
-    activeCategory ? { category: activeCategory } : undefined
-  );
+  const { data: categoriesWithCounts, isLoading: catsLoading } =
+    trpc.categories.listWithCounts.useQuery();
   const { data: featuredArticle } = trpc.featured.get.useQuery();
+
+  // For search — fetch all published articles only when searching
+  const { data: allArticles } = trpc.articles.list.useQuery(undefined, {
+    enabled: searchQuery.length > 0,
+  });
 
   // Newsletter state
   const [nlEmail, setNlEmail] = useState("");
@@ -40,22 +40,14 @@ export default function Home() {
     subscribeMutation.mutate({ email: nlEmail, name: nlName || undefined });
   };
 
-   const featured = featuredArticle || articles?.[0];
-  // Only hide the featured article from the list when viewing ALL articles (no category filter).
-  // When a category is active, include all articles in that category — even the featured one.
-  const displayFeatured = activeCategory ? null : featured;
-  const rest = activeCategory
-    ? (articles ?? [])
-    : (articles?.filter(a => !featured || a.id !== featured.id) ?? []);
-  const filteredRest = activeCategory
-    ? rest.filter(a => a.category === activeCategory)
-    : rest;
-
-  const filteredArticles = filteredRest.filter(article =>
-    searchQuery === "" ||
-    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    article.tags?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) ?? [];
+  const isSearching = searchQuery.length > 0;
+  const searchResults =
+    allArticles?.filter(
+      (article) =>
+        article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.excerpt?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        article.tags?.toLowerCase().includes(searchQuery.toLowerCase())
+    ) ?? [];
 
   return (
     <div>
@@ -72,7 +64,8 @@ export default function Home() {
           </h1>
           <div className="divider-gold max-w-xs mx-auto mb-6" />
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light">
-            {settings?.heroSubtitle || "מרחב לעומק, לשקט ולחיפוש הפנימי — מאמרים ברוחניות, פילוסופיה וריפוי"}
+            {settings?.heroSubtitle ||
+              "מרחב לעומק, לשקט ולחיפוש הפנימי — מאמרים ברוחניות, פילוסופיה וריפוי"}
           </p>
           <div className="mt-8 max-w-md mx-auto">
             <input
@@ -87,108 +80,132 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Category Tabs ── */}
-      <section className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="container">
-          <div className="flex items-center gap-1 py-3 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setActiveCategory(null)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !activeCategory
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              }`}
-            >
-              הכל
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat.slug}
-                onClick={() => setActiveCategory(cat.slug === activeCategory ? null : cat.slug)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  activeCategory === cat.slug
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+      {/* ── Search Results ── */}
+      {isSearching ? (
+        <section className="container py-12">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              תוצאות חיפוש עבור &quot;{searchQuery}&quot;
+            </span>
+            <div className="flex-1 h-px bg-border" />
           </div>
-        </div>
-      </section>
-
-      {/* ── Articles ── */}
-      <section className="container py-12">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : !filteredArticles || filteredArticles.length === 0 ? (
-          <div className="text-center py-24">
-            <Feather className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground text-lg">{searchQuery ? "לא נמצאו מאמרים תואמים" : "אין מאמרים עדיין"}</p>
-            <p className="text-muted-foreground/60 text-sm mt-1">חזרו בקרוב לתכנים חדשים</p>
-          </div>
-        ) : (
-          <>
-            {/* Featured article */}
-            {displayFeatured && (
-              <div className="mb-10">
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-primary">מאמר מומלץ</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-                <ArticleCard {...displayFeatured} featured />
-              </div>
-            )}
-
-            {/* Grid */}
-            {filteredArticles.length > 0 && (
-              <>
-                {!activeCategory && (
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">מאמרים נוספים</span>
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredArticles.map((article) => (
-                    <ArticleCard key={article.id} {...article} />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* ── Category Showcase ── */}
-      {!activeCategory && !isLoading && categories.length > 0 && (
-        <section className="bg-secondary/50 py-16">
-          <div className="container">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">גלו לפי נושא</span>
-              <div className="flex-1 h-px bg-border" />
+          {searchResults.length === 0 ? (
+            <div className="text-center py-24">
+              <Feather className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">לא נמצאו מאמרים תואמים</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {categories.map((cat) => (
-                <Link key={cat.slug} href={`/category/${cat.slug}`} className="block group">
-                  <div className="bg-card border border-border rounded-xl p-6 text-center card-hover">
-                    <span
-                      className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3 border"
-                      style={getCategoryBadgeStyle(cat.slug)}
-                    >
-                      {cat.name}
-                    </span>
-                    <p className="text-sm text-muted-foreground">{cat.description}</p>
-                  </div>
-                </Link>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {searchResults.map((article) => (
+                <ArticleCard key={article.id} {...article} />
               ))}
             </div>
-          </div>
+          )}
         </section>
+      ) : (
+        <>
+          {/* ── Featured Article ── */}
+          {featuredArticle && (
+            <section className="container py-12">
+              <div className="flex items-center gap-3 mb-5">
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  מאמר מומלץ
+                </span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <ArticleCard {...featuredArticle} featured />
+            </section>
+          )}
+
+          {/* ── Categories Grid ── */}
+          <section className="py-16 bg-secondary/30">
+            <div className="container">
+              <div className="flex items-center gap-3 mb-10">
+                <div className="flex-1 h-px bg-border" />
+                <h2 className="text-xl font-display font-bold text-foreground">
+                  גלו לפי נושא
+                </h2>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {catsLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : !categoriesWithCounts || categoriesWithCounts.length === 0 ? (
+                <div className="text-center py-16">
+                  <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground text-lg">אין קטגוריות עדיין</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {categoriesWithCounts.map((cat) => (
+                    <Link
+                      key={cat.slug}
+                      href={`/category/${cat.slug}`}
+                      className="block group"
+                    >
+                      <div className="relative bg-card border border-border rounded-2xl overflow-hidden card-hover transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/30">
+                        {/* Cover Image */}
+                        <div className="relative h-48 overflow-hidden">
+                          {cat.latestCoverImage || cat.coverImage ? (
+                            <img
+                              src={cat.coverImage || cat.latestCoverImage || ""}
+                              alt={cat.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex items-center justify-center"
+                              style={{
+                                background: `linear-gradient(135deg, ${cat.color || "#8B6914"}22, ${cat.color || "#8B6914"}44)`,
+                              }}
+                            >
+                              <BookOpen
+                                className="w-16 h-16 opacity-30"
+                                style={{ color: cat.color || "#8B6914" }}
+                              />
+                            </div>
+                          )}
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="relative p-5 -mt-8">
+                          <div className="flex items-center justify-between mb-2">
+                            <span
+                              className="inline-block px-3 py-1 rounded-full text-xs font-bold border"
+                              style={{
+                                color: cat.color || "#8B6914",
+                                borderColor: `${cat.color || "#8B6914"}44`,
+                                backgroundColor: `${cat.color || "#8B6914"}15`,
+                              }}
+                            >
+                              {cat.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {cat.articleCount} מאמרים
+                            </span>
+                          </div>
+                          {cat.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                              {cat.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1 mt-3 text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ArrowLeft className="w-4 h-4" />
+                            <span>צפו במאמרים</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </>
       )}
 
       {/* ── Newsletter Signup ── */}
@@ -204,9 +221,13 @@ export default function Home() {
               הישארו מחוברים
             </h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              הירשמו לניוזלטר שלנו וקבלו עדכונים על מאמרים חדשים, תובנות ותכנים בלעדיים ישירות לתיבת הדוא״ל.
+              הירשמו לניוזלטר שלנו וקבלו עדכונים על מאמרים חדשים, תובנות ותכנים
+              בלעדיים ישירות לתיבת הדוא״ל.
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+            <form
+              onSubmit={handleNewsletterSubmit}
+              className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto"
+            >
               <Input
                 type="text"
                 placeholder="שם (אופציונלי)"

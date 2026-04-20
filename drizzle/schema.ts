@@ -35,6 +35,7 @@ export const articles = mysqlTable("articles", {
   tags: varchar("tags", { length: 512 }).default(""),
   authorId: int("authorId").notNull(),
   published: boolean("published").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -131,6 +132,7 @@ export const categories = mysqlTable("categories", {
   slug: varchar("slug", { length: 128 }).notNull().unique(),
   description: varchar("description", { length: 512 }),
   color: varchar("color", { length: 32 }).default("#8B6914"),
+  coverImage: varchar("coverImage", { length: 1024 }),
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

@@ -234,3 +234,13 @@
 - [x] Add server-side tRPC procedure articles.downloadDocx that generates a .docx file with cover image, title, excerpt, body content, and RTL/LTR direction based on language detection
 - [x] Add "הורד מאמר" download button on the article page
 - [x] Write vitest test for the downloadDocx procedure
+
+## Feature – Homepage Redesign: Category Cards + Category Page + Drag Reorder
+- [x] Add sortOrder column to articles table for per-category ordering
+- [x] Add server-side reorderArticles procedure (admin, per category)
+- [x] Redesign homepage: replace article list with category card grid (keep search bar + featured article)
+- [x] Each category card shows: name, color, cover image (from latest article), article count
+- [x] Create dedicated /category/:slug page showing all articles in that category sorted by sortOrder
+- [x] Build admin drag-and-drop UI for reordering articles within a category
+- [x] Register /category/:slug route in App.tsx
+- [x] Write vitest tests for reorderArticles and categories.listWithCounts procedures (85 tests passing)
