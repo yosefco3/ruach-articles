@@ -153,27 +153,30 @@ const articlesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const { id, siteUrl, ...data } = input;
-      // Fetch article before update to detect publish transition
-      const before = await getArticleById(id);
+      const { id, siteUrl: _siteUrl, ...data } = input;
       const updated = await updateArticle(id, data);
-      // Trigger newsletter when article transitions from unpublished → published
-      if (!before?.published && data.published === true && siteUrl) {
-        const article = await getArticleById(id);
-        if (article) {
-          sendArticleNewsletter({
-            title: article.title,
-            excerpt: article.excerpt,
-            slug: article.slug,
-            coverImage: article.coverImage,
-            category: article.category,
-            siteUrl,
-          }).catch((err) =>
-            console.error("[Newsletter] Failed to send newsletter:", err)
-          );
-        }
-      }
       return updated;
+    }),
+
+  sendNewsletter: adminProcedure
+    .input(
+      z.object({
+        articleId: z.number(),
+        siteUrl: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const article = await getArticleById(input.articleId);
+      if (!article) throw new TRPCError({ code: "NOT_FOUND", message: "מאמר לא נמצא" });
+      await sendArticleNewsletter({
+        title: article.title,
+        excerpt: article.excerpt,
+        slug: article.slug,
+        coverImage: article.coverImage,
+        category: article.category,
+        siteUrl: input.siteUrl,
+      });
+      return { success: true };
     }),
 
   delete: adminProcedure

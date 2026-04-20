@@ -220,3 +220,11 @@
 
 ## Fix – Article Edit Form Category Pre-Selection
 - [x] Pre-select the current article's category in the category dropdown when editing
+
+## Fix – Manual Newsletter Send Button
+- [x] Remove automatic newsletter send on article publish
+- [x] Add "שלח לניוזלטר" button in the admin articles list toolbar per article
+- [x] Add sendNewsletterForArticle tRPC procedure (manual trigger)
+
+## Fix – Category Not Remembered on Edit (revisit)
+- [x] Properly fix category pre-selection: ensure form.category is populated from existingArticle before categories data loads

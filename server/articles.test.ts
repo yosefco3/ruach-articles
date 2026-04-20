@@ -298,6 +298,33 @@ describe("articles.delete", () => {
   });
 });
 
+describe("articles.sendNewsletter", () => {
+  it("allows admin to manually send newsletter for an article", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.sendNewsletter({
+      articleId: 1,
+      siteUrl: "https://ruach.club",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-admin users from sending newsletter", async () => {
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await expect(
+      caller.articles.sendNewsletter({ articleId: 1, siteUrl: "https://ruach.club" })
+    ).rejects.toThrow();
+  });
+
+  it("does NOT auto-send newsletter when article is published via update", async () => {
+    const { sendArticleNewsletter } = await import("./newsletterEmail");
+    const sendSpy = vi.mocked(sendArticleNewsletter);
+    sendSpy.mockClear();
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    await caller.articles.update({ id: 1, published: true, siteUrl: "https://ruach.club" });
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+});
+
 // ─── Comments ─────────────────────────────────────────────────────────────────
 
 describe("comments.list", () => {

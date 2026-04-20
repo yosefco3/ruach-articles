@@ -236,7 +236,12 @@ export default function AdminArticleForm() {
     }
   };
 
-  if (loading) {
+  // In edit mode, wait for both the article data AND categories before rendering
+  // so the Select component finds its matching SelectItem on first render
+  const categoriesLoading = !dynamicCategories;
+  const articleDataLoading = isEdit && (!existingArticle || !form.category || categoriesLoading);
+
+  if (loading || articleDataLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -338,9 +343,7 @@ export default function AdminArticleForm() {
             onValueChange={(v) => setForm((prev) => ({ ...prev, category: v }))}
           >
             <SelectTrigger>
-              <SelectValue placeholder="בחרו קטגוריה">
-                {form.category ? dynamicCategories?.find((c) => c.slug === form.category)?.name : undefined}
-              </SelectValue>
+              <SelectValue placeholder="בחרו קטגוריה" />
             </SelectTrigger>
             <SelectContent>
               {(dynamicCategories ?? []).map((cat) => (

@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -48,6 +48,11 @@ export default function AdminPage() {
       toast.success("המאמר הוגדר כמומלץ");
     },
     onError: (err) => toast.error(err.message || "שגיאה בהגדרת מאמר מומלץ"),
+  });
+
+  const sendNewsletter = trpc.articles.sendNewsletter.useMutation({
+    onSuccess: () => toast.success("הניוזלטר נשלח בהצלחה לכל המנויים הפעילים"),
+    onError: (err) => toast.error(err.message || "שגיאה בשליחת הניוזלטר"),
   });
 
   if (loading) {
@@ -209,6 +214,25 @@ export default function AdminPage() {
                           title={featuredArticle?.id === article.id ? "מאמר מומלץ" : "הגדר כמומלץ"}
                         >
                           {featuredArticle?.id === article.id ? "⭐" : "☆"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-blue-400 hover:bg-blue-900/20"
+                          title="שלח לניוזלטר"
+                          disabled={sendNewsletter.isPending}
+                          onClick={() =>
+                            sendNewsletter.mutate({
+                              articleId: article.id,
+                              siteUrl: window.location.origin,
+                            })
+                          }
+                        >
+                          {sendNewsletter.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5" />
+                          )}
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                           <Link href={`/admin/edit/${article.id}`}>
