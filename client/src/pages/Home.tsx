@@ -174,8 +174,11 @@ export default function Home() {
                         {/* Content pinned to bottom */}
                         <div className="absolute inset-x-0 bottom-0 p-5">
                           <h3
-                            className="text-2xl font-bold drop-shadow-lg"
-                            style={{ color: cat.color || "#8B6914" }}
+                            className="inline-block text-2xl font-bold px-3 py-1 rounded-lg backdrop-blur-sm"
+                            style={{
+                              color: cat.color || "#8B6914",
+                              backgroundColor: "rgba(0, 0, 0, 0.6)",
+                            }}
                           >
                             {cat.name}
                           </h3>
