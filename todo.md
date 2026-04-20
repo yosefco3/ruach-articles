@@ -247,3 +247,4 @@
 
 ## Bug – Hover Line on Category Cards
 - [x] Fix: hover on category card shows a visible line between the image and content area — redesigned cards to use full-bleed background image with gradient overlay (no separate image/content areas)
+- [x] Make category name larger and more visible on category cards — changed to text-2xl bold heading with drop-shadow

@@ -173,18 +173,14 @@ export default function Home() {
 
                         {/* Content pinned to bottom */}
                         <div className="absolute inset-x-0 bottom-0 p-5">
-                          <div className="flex items-center justify-between mb-2">
-                            <span
-                              className="inline-block px-3 py-1.5 rounded-full text-sm font-bold border"
-                              style={{
-                                color: cat.color || "#8B6914",
-                                borderColor: `${cat.color || "#8B6914"}44`,
-                                backgroundColor: `${cat.color || "#8B6914"}15`,
-                              }}
-                            >
-                              {cat.name}
-                            </span>
-                            <span className="text-xs text-white/70">
+                          <h3
+                            className="text-2xl font-bold drop-shadow-lg"
+                            style={{ color: cat.color || "#8B6914" }}
+                          >
+                            {cat.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-sm text-white/80 font-medium">
                               {cat.articleCount} מאמרים
                             </span>
                           </div>
