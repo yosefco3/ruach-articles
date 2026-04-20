@@ -143,16 +143,16 @@ export default function Home() {
                     <Link
                       key={cat.slug}
                       href={`/category/${cat.slug}`}
-                      className="block group p-0.5"
+                      className="block group p-0.5 outline-none"
                     >
-                      <div className="relative bg-card border border-border rounded-2xl overflow-hidden card-hover transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/30">
+                      <div className="relative bg-card border border-border rounded-2xl card-hover outline-none transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/30">
                         {/* Cover Image */}
-                        <div className="relative h-48 overflow-hidden">
+                        <div className="relative h-48 overflow-hidden rounded-t-2xl">
                           {cat.latestCoverImage || cat.coverImage ? (
                             <img
                               src={cat.coverImage || cat.latestCoverImage || ""}
                               alt={cat.name}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105"
                             />
                           ) : (
                             <div
