@@ -175,7 +175,7 @@ export default function Home() {
                         <div className="relative p-5 -mt-8">
                           <div className="flex items-center justify-between mb-2">
                             <span
-                              className="inline-block px-3 py-1 rounded-full text-xs font-bold border"
+                              className="inline-block px-3 py-1.5 rounded-full text-sm font-bold border"
                               style={{
                                 color: cat.color || "#8B6914",
                                 borderColor: `${cat.color || "#8B6914"}44`,
