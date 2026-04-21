@@ -249,3 +249,12 @@
 - [x] Fix: hover on category card shows a visible line between the image and content area — redesigned cards to use full-bleed background image with gradient overlay (no separate image/content areas)
 - [x] Make category name larger and more visible on category cards — changed to text-2xl bold heading with drop-shadow
 - [x] Add dark background behind category name on cards for better readability
+
+## Bug – Contact Email Override
+- [ ] Fix: contact email in admin settings gets overwritten back to default value (contact@ruach.test)
+
+## Feature – Email Notification on New Comment
+- [ ] Send email notification to admin when a new comment is posted on any article, including comment details and link to the article
+
+## Bug – Newsletter Article Link Goes to 404
+- [ ] Fix: clicking "קרא את המאמר המלא" link in newsletter email leads to 404 page (wrong URL path — likely /article/ instead of /articles/ or incorrect slug)
