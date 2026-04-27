@@ -258,3 +258,6 @@
 
 ## Bug – Newsletter Article Link Goes to 404
 - [ ] Fix: clicking "קרא את המאמר המלא" link in newsletter email leads to 404 page (wrong URL path — likely /article/ instead of /articles/ or incorrect slug)
+
+## Feature – SEO & Open Graph Updates
+- [x] Update SEO metadata: Site Title, Description, and Open Graph tags for social sharing

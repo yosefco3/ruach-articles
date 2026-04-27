@@ -23,10 +23,18 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   const isAdmin = user?.role === "admin";
   const siteName = settings?.siteTitle || "רוּחַ";
 
-  // Dynamically update browser tab title from site settings
+  // Dynamically update browser tab title and meta tags from site settings
   useEffect(() => {
     if (settings?.siteTitle) {
       document.title = `${settings.siteTitle} – מאמרים ברוחניות, פילוסופיה וריפוי`;
+      // Update og:title meta tag
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', `${settings.siteTitle} – מאמרים ברוחניות, פילוסופיה וריפוי`);
+      // Update meta description and og:description
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', 'האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי.');
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute('content', 'האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי.');
     }
   }, [settings?.siteTitle]);
 
