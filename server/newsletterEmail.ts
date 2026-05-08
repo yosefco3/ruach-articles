@@ -19,7 +19,7 @@ function buildEmailHtml(
   siteTitle: string,
   subscriberEmail: string
 ): string {
-  const articleUrl = `${article.siteUrl}/articles/${article.slug}`;
+  const articleUrl = `${article.siteUrl}/article/${article.slug}`;
   const unsubscribeUrl = `${article.siteUrl}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
   const coverImageHtml = article.coverImage
     ? `<img src="${article.coverImage}" alt="${article.title}" style="width:100%;max-height:320px;object-fit:cover;border-radius:8px;margin-bottom:24px;" />`

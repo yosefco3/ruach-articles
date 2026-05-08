@@ -60,7 +60,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
       toast.error("אנא כתוב תגובה");
       return;
     }
-    createCommentMutation.mutate({ articleId, body: newComment });
+    createCommentMutation.mutate({ articleId, body: newComment, siteUrl: window.location.origin });
   };
 
   const handleSubmitReply = (parentId: number) => {
@@ -68,7 +68,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
       toast.error("אנא כתוב תגובה");
       return;
     }
-    createCommentMutation.mutate({ articleId, body: replyBody, parentCommentId: parentId });
+    createCommentMutation.mutate({ articleId, body: replyBody, parentCommentId: parentId, siteUrl: window.location.origin });
   };
 
   const parentComments = comments?.filter((c) => !(c as any).parentCommentId || (c as any).parentCommentId === null) ?? [];

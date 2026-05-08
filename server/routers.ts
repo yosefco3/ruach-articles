@@ -50,6 +50,7 @@ import {
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { sendArticleNewsletter } from "./newsletterEmail";
+import { notifyOwner } from "./_core/notification";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -214,15 +215,55 @@ const commentsRouter = router({
         articleId: z.number(),
         body: z.string(),
         parentCommentId: z.number().optional(),
+        siteUrl: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      return await createComment({
+      const comment = await createComment({
         articleId: input.articleId,
         userId: ctx.user!.id,
         body: input.body,
         parentCommentId: input.parentCommentId,
       });
+
+      // Notify owner about new comment (fire-and-forget)
+      try {
+        const article = await getArticleById(input.articleId);
+        if (article) {
+          const commenterName = ctx.user!.name || ctx.user!.email || "משתמש";
+          const articleLink = input.siteUrl ? `${input.siteUrl}/article/${article.slug}` : `/article/${article.slug}`;
+          const notifContent = `תגובה חדשה מאת ${commenterName} על המאמר "${article.title}":\n\n${input.body}\n\nקישור למאמר: ${articleLink}`;
+          await notifyOwner({ title: `תגובה חדשה: ${article.title}`, content: notifContent });
+
+          // Also send email if contactEmail is configured
+          const settings = await getSiteSettings();
+          const adminEmail = settings.contactEmail;
+          if (adminEmail) {
+            const { Resend } = await import("resend");
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruach.club";
+            await resend.emails.send({
+              from: `${settings.siteTitle || "רוּחַ חָכְמָה"} <${FROM_EMAIL}>`,
+              to: adminEmail,
+              subject: `תגובה חדשה: ${article.title}`,
+              html: `<div dir="rtl" style="font-family:Arial,sans-serif;background:#1a1008;color:#f0e6d0;padding:32px;border-radius:12px;max-width:600px;">
+  <h2 style="color:#c9a84c;">תגובה חדשה על המאמר</h2>
+  <p><strong>מאמר:</strong> <a href="${articleLink}" style="color:#c9a84c;">${article.title}</a></p>
+  <p><strong>מגיב:</strong> ${commenterName}</p>
+  <div style="background:#231508;border-radius:8px;padding:16px;margin:16px 0;border-right:4px solid #c9a84c;">
+    <p style="margin:0;">${input.body.replace(/\n/g, "<br/>")}</p>
+  </div>
+  <a href="${articleLink}" style="display:inline-block;background:#8B6914;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;">עבור למאמר</a>
+</div>`,
+            });
+          }
+        }
+      } catch (err) {
+        // Non-critical — log but don't fail the comment creation
+        console.warn("[Comment] Failed to send owner notification:", err);
+      }
+
+      return comment;
     }),
 
   delete: protectedProcedure

@@ -251,13 +251,13 @@
 - [x] Add dark background behind category name on cards for better readability
 
 ## Bug – Contact Email Override
-- [ ] Fix: contact email in admin settings gets overwritten back to default value (contact@ruach.test)
+- [x] Fix: contact email in admin settings gets overwritten back to default value — getSiteSettings now includes contactEmail in fallback type so TypeScript infers it correctly
 
 ## Feature – Email Notification on New Comment
-- [ ] Send email notification to admin when a new comment is posted on any article, including comment details and link to the article
+- [x] Send email notification to admin when a new comment is posted on any article — notifyOwner + Resend email with commenter name, comment body, and article link
 
 ## Bug – Newsletter Article Link Goes to 404
-- [ ] Fix: clicking "קרא את המאמר המלא" link in newsletter email leads to 404 page (wrong URL path — likely /article/ instead of /articles/ or incorrect slug)
+- [x] Fix: clicking "קרא את המאמר המלא" link in newsletter email leads to 404 page — fixed URL from /articles/ to /article/ to match the actual route in App.tsx
 
 ## Feature – SEO & Open Graph Updates
 - [x] Update SEO metadata: Site Title, Description, and Open Graph tags for social sharing

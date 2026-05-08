@@ -347,6 +347,17 @@ describe("comments.create", () => {
     expect(result).toBeDefined();
   });
 
+  it("calls notifyOwner after comment creation", async () => {
+    const { notifyOwner } = await import("./_core/notification");
+    const notifyMock = notifyOwner as ReturnType<typeof vi.fn>;
+    notifyMock.mockClear();
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await caller.comments.create({ articleId: 1, body: "Test notification", siteUrl: "https://ruach.club" });
+    expect(notifyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ title: expect.stringContaining("תגובה חדשה") })
+    );
+  });
+
   it("rejects unauthenticated users", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
     await expect(

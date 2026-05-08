@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, siteTitle, heroSubtitle, contactEmail FROM siteSettings LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4K6mYxnq66vmNc9.root --database ZSbJu87WZsauVigKKPTYUh --execute SELECT id, siteTitle, heroSubtitle, contactEmail FROM siteSettings LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "siteTitle": "רוּחַ חָכְמָה",
+      "heroSubtitle": "האתר של יוסף כהן",
+      "contactEmail": "yosefco12@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tsiteTitle\theroSubtitle\tcontactEmail\n1\tרוּחַ חָכְמָה\tהאתר של יוסף כהן\tyosefco12@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1770
+}

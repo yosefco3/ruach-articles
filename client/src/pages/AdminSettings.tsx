@@ -32,7 +32,7 @@ export default function AdminSettings() {
     if (settings) {
       setSiteTitle(settings.siteTitle || "");
       setHeroSubtitle(settings.heroSubtitle || "");
-      setContactEmail((settings as any).contactEmail || "");
+      setContactEmail(settings.contactEmail || "");
     }
   }, [settings]);
 
