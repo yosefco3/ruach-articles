@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
-  Loader2, Save, ArrowRight, Upload, X, File, ImageIcon, Trash2,
+  Loader2, Save, ArrowRight, Upload, X, File, ImageIcon, Trash2, Pencil, Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
@@ -35,11 +35,26 @@ function slugify(text: string) {
   return ascii;
 }
 
-interface UploadedFile {
-  id: string;
-  name: string;
+interface PendingFile {
+  /** Temp local ID before the article is saved */
+  tempId: string;
+  /** Custom display name (editable) */
+  displayName: string;
+  /** Original filename from the OS */
+  originalName: string;
+  /** File size in bytes */
   size: number;
+  /** S3 URL returned by /api/upload */
   url: string;
+  /** Editing the display name? */
+  editingName: boolean;
+}
+
+interface SavedAttachment {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
 }
 
 export default function AdminArticleForm() {
@@ -73,9 +88,16 @@ export default function AdminArticleForm() {
   });
 
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  // Files pending save (uploaded to S3 but not yet linked to an article in DB)
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  // Files already saved in DB (edit mode)
+  const [savedAttachments, setSavedAttachments] = useState<SavedAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+
+  // tRPC mutations for attachments
+  const addAttachment = trpc.articles.addAttachment.useMutation();
+  const deleteAttachmentMutation = trpc.articles.deleteAttachment.useMutation();
 
   // Set default category when categories load (only for new articles)
   useEffect(() => {
@@ -112,26 +134,18 @@ export default function AdminArticleForm() {
     if (fullArticle?.body) {
       setForm((prev) => ({ ...prev, body: fullArticle.body }));
     }
+    // Load existing attachments into savedAttachments state
+    if (fullArticle?.attachments) {
+      setSavedAttachments(
+        (fullArticle.attachments as SavedAttachment[]).map((a) => ({
+          id: a.id,
+          fileName: a.fileName,
+          fileUrl: a.fileUrl,
+          fileSize: a.fileSize,
+        }))
+      );
+    }
   }, [fullArticle]);
-
-  const createArticle = trpc.articles.create.useMutation({
-    onSuccess: () => {
-      utils.articles.list.invalidate();
-      toast.success("המאמר נוצר בהצלחה");
-      navigate("/admin");
-    },
-    onError: (err) => toast.error(err.message || "שגיאה ביצירת המאמר"),
-  });
-
-  const updateArticle = trpc.articles.update.useMutation({
-    onSuccess: () => {
-      utils.articles.list.invalidate();
-      utils.articles.bySlug.invalidate();
-      toast.success("המאמר עודכן בהצלחה");
-      navigate("/admin");
-    },
-    onError: (err) => toast.error(err.message || "שגיאה בעדכון המאמר"),
-  });
 
   const handleTitleChange = (value: string) => {
     setForm((prev) => ({
@@ -171,7 +185,7 @@ export default function AdminArticleForm() {
     }
   };
 
-  // Upload general file attachments
+  // Upload general file attachments — store in pendingFiles until article is saved
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -184,12 +198,21 @@ export default function AdminArticleForm() {
         const response = await fetch("/api/upload", { method: "POST", body: formData });
         if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
         const data = await response.json();
-        setUploadedFiles((prev) => [
+        // Strip extension from name for a cleaner default display name
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+        setPendingFiles((prev) => [
           ...prev,
-          { id: Math.random().toString(36).substr(2, 9), name: file.name, size: file.size, url: data.url },
+          {
+            tempId: Math.random().toString(36).substr(2, 9),
+            displayName: nameWithoutExt,
+            originalName: file.name,
+            size: file.size,
+            url: data.url,
+            editingName: false,
+          },
         ]);
       }
-      toast.success("קבצים הועלו בהצלחה");
+      toast.success("קבצים הועלו בהצלחה — יישמרו עם המאמר");
     } catch {
       toast.error("שגיאה בהעלאת קבצים");
     } finally {
@@ -198,7 +221,28 @@ export default function AdminArticleForm() {
     }
   };
 
-  const removeFile = (id: string) => setUploadedFiles((prev) => prev.filter((f) => f.id !== id));
+  const removePendingFile = (tempId: string) =>
+    setPendingFiles((prev) => prev.filter((f) => f.tempId !== tempId));
+
+  const updateDisplayName = (tempId: string, name: string) =>
+    setPendingFiles((prev) =>
+      prev.map((f) => (f.tempId === tempId ? { ...f, displayName: name } : f))
+    );
+
+  const toggleEditName = (tempId: string) =>
+    setPendingFiles((prev) =>
+      prev.map((f) => (f.tempId === tempId ? { ...f, editingName: !f.editingName } : f))
+    );
+
+  const handleDeleteSavedAttachment = async (id: number) => {
+    try {
+      await deleteAttachmentMutation.mutateAsync({ id });
+      setSavedAttachments((prev) => prev.filter((a) => a.id !== id));
+      toast.success("הקובץ נמחק");
+    } catch {
+      toast.error("שגיאה במחיקת הקובץ");
+    }
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -207,6 +251,55 @@ export default function AdminArticleForm() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
+
+  // Save pending attachments to DB after article is created/updated
+  const savePendingAttachments = async (artId: number) => {
+    const failed: string[] = [];
+    for (const pf of pendingFiles) {
+      try {
+        await addAttachment.mutateAsync({
+          articleId: artId,
+          fileName: pf.displayName.trim() || pf.originalName,
+          fileUrl: pf.url,
+          fileSize: pf.size,
+        });
+      } catch {
+        failed.push(pf.displayName || pf.originalName);
+      }
+    }
+    setPendingFiles([]);
+    if (failed.length > 0) {
+      toast.error(`שגיאה בשמירת ${failed.length} קבצים: ${failed.join(', ')}`);
+    }
+  };
+
+  const createArticle = trpc.articles.create.useMutation({
+    onSuccess: async (newArticle) => {
+      // Save any pending attachments now that we have an article ID
+      const createdId = newArticle && 'id' in newArticle ? newArticle.id : undefined;
+      if (pendingFiles.length > 0 && createdId) {
+        await savePendingAttachments(createdId);
+      }
+      utils.articles.list.invalidate();
+      toast.success("המאמר נוצר בהצלחה");
+      navigate("/admin");
+    },
+    onError: (err) => toast.error(err.message || "שגיאה ביצירת המאמר"),
+  });
+
+  const updateArticle = trpc.articles.update.useMutation({
+    onSuccess: async () => {
+      // Save any pending attachments for existing article
+      if (pendingFiles.length > 0 && articleId) {
+        await savePendingAttachments(articleId);
+      }
+      utils.articles.list.invalidate();
+      utils.articles.bySlug.invalidate();
+      toast.success("המאמר עודכן בהצלחה");
+      navigate("/admin");
+    },
+    onError: (err) => toast.error(err.message || "שגיאה בעדכון המאמר"),
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,7 +400,6 @@ export default function AdminArticleForm() {
             placeholder="כותרת המאמר"
             className="text-right"
             dir="rtl"
-            required
           />
         </div>
 
@@ -324,13 +416,26 @@ export default function AdminArticleForm() {
               setForm((prev) => ({ ...prev, slug: e.target.value }));
             }}
             placeholder="article-url-slug"
-            className="text-left font-mono text-sm"
+            className="text-left"
             dir="ltr"
-            required
           />
           <p className="text-xs text-muted-foreground">
-            הכתובת תיראה כך: /article/{form.slug || "..."}
+            /article/{form.slug || "..."}
           </p>
+        </div>
+
+        {/* Excerpt */}
+        <div className="space-y-2">
+          <Label htmlFor="excerpt" className="text-sm font-medium">תקציר</Label>
+          <Textarea
+            id="excerpt"
+            value={form.excerpt}
+            onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
+            placeholder="תקציר קצר של המאמר (יוצג בכרטיסיות)"
+            className="text-right resize-none"
+            dir="rtl"
+            rows={3}
+          />
         </div>
 
         {/* Category */}
@@ -342,11 +447,15 @@ export default function AdminArticleForm() {
             value={form.category}
             onValueChange={(v) => setForm((prev) => ({ ...prev, category: v }))}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="בחרו קטגוריה" />
+            <SelectTrigger dir="rtl">
+              <SelectValue placeholder="בחרו קטגוריה">
+                {form.category
+                  ? (dynamicCategories?.find((c) => c.slug === form.category)?.name ?? form.category)
+                  : "בחרו קטגוריה"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {(dynamicCategories ?? []).map((cat) => (
+              {dynamicCategories?.map((cat) => (
                 <SelectItem key={cat.slug} value={cat.slug}>
                   {cat.name}
                 </SelectItem>
@@ -355,46 +464,28 @@ export default function AdminArticleForm() {
           </Select>
         </div>
 
-        {/* Excerpt */}
-        <div className="space-y-2">
-          <Label htmlFor="excerpt" className="text-sm font-medium">תקציר</Label>
-          <Textarea
-            id="excerpt"
-            value={form.excerpt}
-            onChange={(e) => setForm((prev) => ({ ...prev, excerpt: e.target.value }))}
-            placeholder="תיאור קצר של המאמר (יוצג בכרטיסיה)"
-            className="resize-none text-right"
-            dir="rtl"
-            rows={3}
-          />
-        </div>
-
         {/* Body */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">
-            תוכן המאמר <span className="text-destructive">*</span>
+            תוכן <span className="text-destructive">*</span>
           </Label>
           <RichTextEditor
             value={form.body}
-            onChange={(html) => setForm((prev) => ({ ...prev, body: html }))}
-            placeholder="כתבו את תוכן המאמר כאן..."
+            onChange={(v) => setForm((prev) => ({ ...prev, body: v }))}
           />
         </div>
 
-        {/* Cover Image — file upload */}
+        {/* Cover Image */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">תמונת שער</Label>
-
           {form.coverImage ? (
-            /* Preview with replace/remove */
-            <div className="relative group rounded-2xl overflow-hidden border border-border/50 bg-secondary/20 shadow-md">
+            <div className="relative rounded-xl overflow-hidden border border-border bg-secondary/20">
               <img
                 src={form.coverImage}
                 alt="תמונת שער"
-                className="w-full object-contain"
-                style={{ aspectRatio: "16/9", objectFit: "contain" }}
+                className="w-full max-h-64 object-contain"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+              <div className="absolute bottom-3 right-3 flex gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -457,8 +548,114 @@ export default function AdminArticleForm() {
         </div>
 
         {/* File Attachments */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label className="text-sm font-medium">קבצים מצורפים</Label>
+
+          {/* Already-saved attachments (edit mode) */}
+          {savedAttachments.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">קבצים שמורים:</p>
+              {savedAttachments.map((att) => (
+                <div
+                  key={att.id}
+                  className="flex items-center justify-between bg-secondary/50 rounded-lg p-3 gap-3"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <File className="w-4 h-4 text-primary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <a
+                        href={att.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-foreground truncate hover:text-primary transition-colors block"
+                      >
+                        {att.fileName}
+                      </a>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(att.fileSize)}</p>
+                    </div>
+                  </div>
+                  {user?.role === "admin" && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteSavedAttachment(att.id)}
+                      className="flex-shrink-0 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending files (uploaded to S3 but not yet in DB) */}
+          {pendingFiles.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">קבצים חדשים (יישמרו עם המאמר):</p>
+              {pendingFiles.map((pf) => (
+                <div
+                  key={pf.tempId}
+                  className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg p-3 gap-3"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <File className="w-4 h-4 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      {pf.editingName ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={pf.displayName}
+                            onChange={(e) => updateDisplayName(pf.tempId, e.target.value)}
+                            className="h-7 text-sm py-0 px-2"
+                            dir="rtl"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") { e.preventDefault(); toggleEditName(pf.tempId); }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleEditName(pf.tempId)}
+                            className="h-7 w-7 p-0 flex-shrink-0"
+                          >
+                            <Check className="w-3.5 h-3.5 text-green-500" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">{pf.displayName || pf.originalName}</p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleEditName(pf.tempId)}
+                            className="h-6 w-6 p-0 flex-shrink-0 opacity-60 hover:opacity-100"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground">{formatFileSize(pf.size)}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePendingFile(pf.tempId)}
+                    className="flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload dropzone */}
           <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
             <input
               type="file"
@@ -469,34 +666,24 @@ export default function AdminArticleForm() {
               id="file-input"
             />
             <label htmlFor="file-input" className="cursor-pointer block">
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground mb-1">
-                {isUploading ? "מעלה..." : "לחצו או גררו קבצים"}
-              </p>
-              <p className="text-xs text-muted-foreground">PDF, Word, תמונות וקבצים אחרים</p>
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+                  <p className="text-sm text-muted-foreground">מעלה קבצים...</p>
+                </div>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground mb-1">לחצו או גררו קבצים</p>
+                  <p className="text-xs text-muted-foreground">PDF, Word, תמונות וקבצים אחרים — עד 10MB לקובץ</p>
+                </>
+              )}
             </label>
           </div>
-
-          {uploadedFiles.length > 0 && (
-            <div className="space-y-2 mt-4">
-              <p className="text-sm font-medium text-foreground">קבצים שהועלו:</p>
-              <div className="space-y-2">
-                {uploadedFiles.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between bg-secondary/50 rounded-lg p-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <File className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
-                      </div>
-                    </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeFile(file.id)} className="flex-shrink-0">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {pendingFiles.length > 0 && (
+            <p className="text-xs text-amber-500/80">
+              * הקבצים יישמרו לאחר לחיצה על &quot;{isEdit ? "שמירת שינויים" : "יצירת מאמר"}&quot;
+            </p>
           )}
         </div>
 

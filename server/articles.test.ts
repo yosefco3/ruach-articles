@@ -108,6 +108,8 @@ vi.mock("./db", () => ({
   searchNewsletterSubscribers: vi.fn().mockResolvedValue([]),
   getFeaturedArticle: vi.fn().mockResolvedValue(null),
   setFeaturedArticle: vi.fn().mockResolvedValue(undefined),
+  createAttachment: vi.fn().mockResolvedValue(undefined),
+  deleteAttachment: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock contact notifyOwner
@@ -510,5 +512,72 @@ describe("likes", () => {
   it("rejects unauthenticated like toggle", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
     await expect(caller.likes.toggle({ articleId: 1 })).rejects.toThrow();
+  });
+});
+
+// ─── Article Attachments ──────────────────────────────────────────────────────
+describe("articles.addAttachment", () => {
+  it("allows admin to add an attachment", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.addAttachment({
+      articleId: 1,
+      fileName: "מסמך חשוב",
+      fileUrl: "https://cdn.example.com/file.pdf",
+      fileSize: 12345,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("allows approved guest writer to add an attachment", async () => {
+    const caller = appRouter.createCaller(makeCtx("user", { guestPostApproved: true }));
+    const result = await caller.articles.addAttachment({
+      articleId: 1,
+      fileName: "קובץ מצורף",
+      fileUrl: "https://cdn.example.com/doc.docx",
+      fileSize: 5000,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects unauthenticated users from adding attachments", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    await expect(
+      caller.articles.addAttachment({
+        articleId: 1,
+        fileName: "file.pdf",
+        fileUrl: "https://cdn.example.com/file.pdf",
+        fileSize: 1000,
+      })
+    ).rejects.toThrow();
+  });
+
+  it("rejects regular users from adding attachments", async () => {
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await expect(
+      caller.articles.addAttachment({
+        articleId: 1,
+        fileName: "file.pdf",
+        fileUrl: "https://cdn.example.com/file.pdf",
+        fileSize: 1000,
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("articles.deleteAttachment", () => {
+  it("allows admin to delete an attachment", async () => {
+    const caller = appRouter.createCaller(makeCtx("admin"));
+    const result = await caller.articles.deleteAttachment({ id: 1 });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-admin from deleting attachments", async () => {
+    const caller = appRouter.createCaller(makeCtx("user"));
+    await expect(caller.articles.deleteAttachment({ id: 1 })).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated users from deleting attachments", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    await expect(caller.articles.deleteAttachment({ id: 1 })).rejects.toThrow();
   });
 });

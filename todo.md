@@ -261,3 +261,15 @@
 
 ## Feature – SEO & Open Graph Updates
 - [x] Update SEO metadata: Site Title, Description, and Open Graph tags for social sharing
+
+## Feature – File Attachments for Articles (Fix)
+- [x] DB schema, helpers, and S3 upload already existed
+- [x] Add articles.addAttachment tRPC procedure (writer guard → saves metadata to DB after S3 upload)
+- [x] Add articles.deleteAttachment tRPC procedure (admin only)
+- [x] Fix AdminArticleForm: pending files saved to DB after article create/update; edit mode loads existing attachments; custom display names; delete saved attachments
+- [x] Write vitest tests for addAttachment and deleteAttachment (93 tests passing)
+
+## Bug – Rich Text Editor Color Not Preserved
+- [x] Root cause: .prose-rtl CSS sets color: var(--foreground) on container; span[style] color was overridden
+- [x] Fix: added .prose-rtl span[style*="color"] { color: revert; } to index.css
+- [x] Fix: added .prose-rtl span[style*="font-size"] { font-size: revert; } for font-size inline styles too

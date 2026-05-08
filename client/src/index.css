@@ -303,6 +303,15 @@
     background: var(--muted);
     font-weight: 600;
   }
+  /* Allow TipTap inline color & font-size styles to override the container defaults.
+     TipTap outputs <span style="color: #eab308"> for colored text.
+     Without these rules the parent .prose-rtl color: var(--foreground) wins. */
+  .prose-rtl span[style*="color"] {
+    color: revert;
+  }
+  .prose-rtl span[style*="font-size"] {
+    font-size: revert;
+  }
   .badge-spirituality {
     background-color: oklch(0.92 0.04 290);
     color: oklch(0.35 0.12 290);

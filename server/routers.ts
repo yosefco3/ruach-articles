@@ -12,6 +12,8 @@ import {
   getCommentsByArticle,
   updateArticle,
   getAttachmentsByArticle,
+  createAttachment,
+  deleteAttachment,
   getSiteSettings,
   updateSiteSettings,
   getGuestPosts,
@@ -189,7 +191,7 @@ const articlesRouter = router({
       return { success: true };
     }),
 
-  reorder: adminProcedure
+   reorder: adminProcedure
     .input(
       z.object({
         items: z.array(z.object({ id: z.number(), sortOrder: z.number() })),
@@ -199,8 +201,33 @@ const articlesRouter = router({
       await reorderArticles(input.items);
       return { success: true };
     }),
+  // Save attachment metadata after file upload to S3
+  addAttachment: writerProcedure
+    .input(
+      z.object({
+        articleId: z.number(),
+        fileName: z.string().min(1),
+        fileUrl: z.string().url(),
+        fileSize: z.number(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await createAttachment({
+        articleId: input.articleId,
+        fileName: input.fileName,
+        fileUrl: input.fileUrl,
+        fileSize: input.fileSize,
+      });
+      return { success: true };
+    }),
+  // Delete an attachment (admin only)
+  deleteAttachment: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await deleteAttachment(input.id);
+      return { success: true };
+    }),
 });
-
 // Comments router
 const commentsRouter = router({
   list: publicProcedure
