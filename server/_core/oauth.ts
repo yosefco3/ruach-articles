@@ -111,7 +111,7 @@ export function setupOAuth(app: express.Express) {
         secure: env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: env.NODE_ENV === 'production' ? 'lax' : 'none',
+        sameSite: 'lax',
         domain: env.NODE_ENV === 'production' ? '.ruachwisdom.org' : undefined,
       },
     }),
