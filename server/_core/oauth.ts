@@ -127,9 +127,26 @@ export function setupOAuth(app: express.Express) {
   // Google callback
   app.get(
     '/api/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/' }),
-    (_req, res) => {
-      res.redirect('/');
+    passport.authenticate('google', { 
+      failureRedirect: '/',
+      session: true 
+    }),
+    (req, res) => {
+      // Log successful authentication for debugging
+      console.log('[OAuth] User authenticated successfully:', {
+        userId: (req.user as any)?.id,
+        email: (req.user as any)?.email,
+        role: (req.user as any)?.role,
+        sessionID: req.sessionID
+      });
+      
+      // Ensure session is saved before redirect
+      req.session.save((err) => {
+        if (err) {
+          console.error('[OAuth] Session save error:', err);
+        }
+        res.redirect('/');
+      });
     },
   );
 
