@@ -603,9 +603,28 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return { success: true } as const;
+      return new Promise((resolve) => {
+        // Use passport's logout method to properly clear session
+        ctx.req.logout((err: any) => {
+          if (err) {
+            console.error('[Logout] Error during passport logout:', err);
+          }
+          // Destroy the session completely
+          ctx.req.session.destroy((destroyErr: any) => {
+            if (destroyErr) {
+              console.error('[Logout] Error destroying session:', destroyErr);
+            }
+            // Clear the session cookie
+            ctx.res.clearCookie('connect.sid', {
+              path: '/',
+              httpOnly: true,
+              secure: false, // Match the session cookie settings
+              sameSite: 'lax',
+            });
+            resolve({ success: true } as const);
+          });
+        });
+      });
     }),
   }),
   articles: articlesRouter,
