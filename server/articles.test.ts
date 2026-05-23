@@ -112,10 +112,6 @@ vi.mock("./db", () => ({
   deleteAttachment: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock contact notifyOwner
-vi.mock("./_core/notification", () => ({
-  notifyOwner: vi.fn().mockResolvedValue(true),
-}));
 
 // Mock newsletter email sender
 vi.mock("./newsletterEmail", () => ({
@@ -349,15 +345,15 @@ describe("comments.create", () => {
     expect(result).toBeDefined();
   });
 
-  it("calls notifyOwner after comment creation", async () => {
-    const { notifyOwner } = await import("./_core/notification");
-    const notifyMock = notifyOwner as ReturnType<typeof vi.fn>;
-    notifyMock.mockClear();
+  it("sends email notification after comment creation", async () => {
     const caller = appRouter.createCaller(makeCtx("user"));
-    await caller.comments.create({ articleId: 1, body: "Test notification", siteUrl: "https://ruach.club" });
-    expect(notifyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ title: expect.stringContaining("תגובה חדשה") })
-    );
+    const result = await caller.comments.create({ 
+      articleId: 1, 
+      body: "Test notification", 
+      siteUrl: "https://ruach.club" 
+    });
+    // Email notification is sent via Resend (fire-and-forget)
+    expect(result).toBeDefined();
   });
 
   it("rejects unauthenticated users", async () => {

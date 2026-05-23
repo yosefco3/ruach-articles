@@ -85,9 +85,6 @@ vi.mock("./db", () => ({
   unsubscribeNewsletter: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("./_core/notification", () => ({
-  notifyOwner: vi.fn().mockResolvedValue(true),
-}));
 
 import { createArticle, setFeaturedArticle, getFeaturedArticle } from "./db";
 

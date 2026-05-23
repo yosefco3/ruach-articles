@@ -52,7 +52,6 @@ import {
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { sendArticleNewsletter } from "./newsletterEmail";
-import { notifyOwner } from "./_core/notification";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -253,16 +252,14 @@ const commentsRouter = router({
         parentCommentId: input.parentCommentId,
       });
 
-      // Notify owner about new comment (fire-and-forget)
+      // Notify owner about new comment via email (fire-and-forget)
       try {
         const article = await getArticleById(input.articleId);
         if (article) {
           const commenterName = ctx.user!.name || ctx.user!.email || "משתמש";
           const articleLink = input.siteUrl ? `${input.siteUrl}/article/${article.slug}` : `/article/${article.slug}`;
-          const notifContent = `תגובה חדשה מאת ${commenterName} על המאמר "${article.title}":\n\n${input.body}\n\nקישור למאמר: ${articleLink}`;
-          await notifyOwner({ title: `תגובה חדשה: ${article.title}`, content: notifContent });
 
-          // Also send email if contactEmail is configured
+          // Send email if contactEmail is configured
           const settings = await getSiteSettings();
           const adminEmail = settings.contactEmail;
           if (adminEmail) {

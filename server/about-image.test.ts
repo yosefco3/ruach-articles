@@ -66,9 +66,6 @@ vi.mock("./newsletterEmail", () => ({
   sendArticleNewsletter: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("./_core/notification", () => ({
-  notifyOwner: vi.fn().mockResolvedValue(true),
-}));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 

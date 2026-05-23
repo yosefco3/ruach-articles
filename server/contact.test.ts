@@ -2,10 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
-// Mock the notifyOwner function
-vi.mock("./_core/notification", () => ({
-  notifyOwner: vi.fn(async () => true),
-}));
 
 // Mock db so no real DB is touched
 vi.mock("./db", () => ({
