@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import cors from "cors";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { setupOAuth } from "./oauth";
 import { uploadRouter } from "../upload";
@@ -32,6 +33,17 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  
+  // CORS configuration - MUST be before OAuth and session middleware
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production' 
+      ? 'https://ruachwisdom.org'
+      : 'http://localhost:5173', // Vite's default dev server port
+    credentials: true, // Allow cookies to be sent and received
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
