@@ -305,7 +305,7 @@ describe("articles.sendNewsletter", () => {
     const caller = appRouter.createCaller(makeCtx("admin"));
     const result = await caller.articles.sendNewsletter({
       articleId: 1,
-      siteUrl: "https://ruach.club",
+      siteUrl: "https://ruachwisdom.org",
     });
     expect(result.success).toBe(true);
   });
@@ -313,7 +313,7 @@ describe("articles.sendNewsletter", () => {
   it("rejects non-admin users from sending newsletter", async () => {
     const caller = appRouter.createCaller(makeCtx("user"));
     await expect(
-      caller.articles.sendNewsletter({ articleId: 1, siteUrl: "https://ruach.club" })
+      caller.articles.sendNewsletter({ articleId: 1, siteUrl: "https://ruachwisdom.org" })
     ).rejects.toThrow();
   });
 
@@ -322,7 +322,7 @@ describe("articles.sendNewsletter", () => {
     const sendSpy = vi.mocked(sendArticleNewsletter);
     sendSpy.mockClear();
     const caller = appRouter.createCaller(makeCtx("admin"));
-    await caller.articles.update({ id: 1, published: true, siteUrl: "https://ruach.club" });
+    await caller.articles.update({ id: 1, published: true, siteUrl: "https://ruachwisdom.org" });
     expect(sendSpy).not.toHaveBeenCalled();
   });
 });
@@ -350,7 +350,7 @@ describe("comments.create", () => {
     const result = await caller.comments.create({ 
       articleId: 1, 
       body: "Test notification", 
-      siteUrl: "https://ruach.club" 
+      siteUrl: "https://ruachwisdom.org" 
     });
     // Email notification is sent via Resend (fire-and-forget)
     expect(result).toBeDefined();

@@ -112,7 +112,8 @@ export function setupOAuth(app: express.Express) {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         sameSite: 'lax',
-        domain: env.NODE_ENV === 'production' ? '.ruachwisdom.org' : undefined,
+        // Don't set domain - let browser use current domain automatically
+        // This is more reliable than setting '.ruachwisdom.org'
       },
     }),
   );

@@ -3,7 +3,7 @@ import { getNewsletterSubscribers, getSiteSettings } from "./db";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL =
-  process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruach.club";
+  process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruachwisdom.org";
 
 export interface ArticleEmailPayload {
   title: string;

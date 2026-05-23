@@ -265,7 +265,7 @@ const commentsRouter = router({
           if (adminEmail) {
             const { Resend } = await import("resend");
             const resend = new Resend(process.env.RESEND_API_KEY);
-            const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruach.club";
+            const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruachwisdom.org";
             await resend.emails.send({
               from: `${settings.siteTitle || "רוּחַ חָכְמָה"} <${FROM_EMAIL}>`,
               to: adminEmail,
