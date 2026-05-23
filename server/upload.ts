@@ -1,7 +1,6 @@
 import { Router, Request, Response } from "express";
-import { storagePut } from "./storage";
+import { uploadBuffer } from "./storage";
 import { nanoid } from "nanoid";
-import { sdk } from "./_core/sdk";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -24,15 +23,8 @@ const uploadRouter = Router();
 
 uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
   try {
-    // Auth check: only logged-in users can upload
-    let user;
-    try {
-      user = await sdk.authenticateRequest(req);
-    } catch {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-    if (!user) {
+    // Auth check: only logged-in users can upload (Passport.js session)
+    if (!(req as any).isAuthenticated || !(req as any).isAuthenticated()) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
@@ -99,7 +91,7 @@ uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
         return;
       }
 
-      const { url } = await storagePut(safeKey, cleanData, fileMime);
+      const url = await uploadBuffer(cleanData, safeKey, fileMime);
 
       res.json({
         url,
