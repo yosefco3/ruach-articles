@@ -1,28 +1,37 @@
-import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import type { Request, Response } from 'express';
 
-export type TrpcContext = {
-  req: CreateExpressContextOptions["req"];
-  res: CreateExpressContextOptions["res"];
-  user: User | null;
-};
+/**
+ * tRPC context — reads the authenticated user from Passport's express-session.
+ * Replaces the old Manus session / SDK-based context.
+ *
+ * The `role` field is set to "admin" when the user's email matches ADMIN_EMAIL
+ * (handled in oauth.ts during Google login).
+ */
 
-export async function createContext(
-  opts: CreateExpressContextOptions
-): Promise<TrpcContext> {
-  let user: User | null = null;
-
-  try {
-    user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
-    // Authentication is optional for public procedures.
-    user = null;
-  }
-
-  return {
-    req: opts.req,
-    res: opts.res,
-    user,
-  };
+export interface ContextUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar: string;
+  role: 'admin' | 'user';
 }
+
+export function createContext({ req, res }: { req: Request; res: Response }) {
+  // Passport stores the serialised user object on req.user after session deserialization
+  const sessionUser = (req as any).user as ContextUser | undefined;
+
+  const user: ContextUser | null =
+    sessionUser && sessionUser.email
+      ? {
+          id: sessionUser.id,
+          email: sessionUser.email,
+          name: sessionUser.name ?? '',
+          avatar: sessionUser.avatar ?? '',
+          role: sessionUser.role ?? 'user',
+        }
+      : null;
+
+  return { req, res, user };
+}
+
+export type Context = ReturnType<typeof createContext>;

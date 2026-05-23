@@ -1,102 +1,163 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import fs from "fs";
+import path from "path";
+import { pipeline } from "stream/promises";
+import { createReadStream } from "fs";
+import { getEnv } from "./_core/env";
 
-import { ENV } from './_core/env';
+/**
+ * Cloudflare R2 S3-compatible client
+ *
+ * Replaces the previous Manus S3 Proxy with a direct R2 connection.
+ * Environment variables used:
+ *   R2_ACCESS_KEY_ID     – Cloudflare R2 API token Access Key ID
+ *   R2_SECRET_ACCESS_KEY – Cloudflare R2 API token Secret Access Key
+ *   R2_ENDPOINT          – e.g. https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+ *   R2_BUCKET            – bucket name (e.g. "ruach-files")
+ *   R2_PUBLIC_URL        – public URL for reading files (e.g. https://pub-XXXX.r2.dev)
+ */
 
-type StorageConfig = { baseUrl: string; apiKey: string };
-
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
-  }
-
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+function createR2Client(): S3Client {
+  return new S3Client({
+    region: "auto",
+    endpoint: getEnv().R2_ENDPOINT,
+    credentials: {
+      accessKeyId: getEnv().R2_ACCESS_KEY_ID,
+      secretAccessKey: getEnv().R2_SECRET_ACCESS_KEY,
+    },
+    // Cloudflare R2 uses path-style addressing
+    forcePathStyle: true,
+  });
 }
 
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
-  return url;
+// ────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────
+
+export function getPublicUrl(key: string): string {
+  const base = getEnv().R2_PUBLIC_URL.replace(/\/+$/, "");
+  return `${base}/${key}`;
 }
 
-async function buildDownloadUrl(
-  baseUrl: string,
-  relKey: string,
-  apiKey: string
+// ────────────────────────────────────────
+// Public API
+// ────────────────────────────────────────
+
+/**
+ * Upload a file from a local path to R2.
+ */
+export async function uploadFile(
+  localFilePath: string,
+  remoteKey: string,
+  contentType?: string,
 ): Promise<string> {
-  const downloadApiUrl = new URL(
-    "v1/storage/downloadUrl",
-    ensureTrailingSlash(baseUrl)
+  const client = createR2Client();
+  const bucket = getEnv().R2_BUCKET;
+
+  const fileStream = createReadStream(localFilePath);
+  const stats = fs.statSync(localFilePath);
+
+  const upload = new Upload({
+    client,
+    params: {
+      Bucket: bucket,
+      Key: remoteKey,
+      Body: fileStream,
+      ContentType: contentType || "application/octet-stream",
+      ContentLength: stats.size,
+    },
+  });
+
+  await upload.done();
+
+  return getPublicUrl(remoteKey);
+}
+
+/**
+ * Upload a Buffer directly to R2.
+ */
+export async function uploadBuffer(
+  buffer: Buffer,
+  remoteKey: string,
+  contentType?: string,
+): Promise<string> {
+  const client = createR2Client();
+  const bucket = getEnv().R2_BUCKET;
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: remoteKey,
+      Body: buffer,
+      ContentType: contentType || "application/octet-stream",
+    }),
   );
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  return (await response.json()).url;
+
+  return getPublicUrl(remoteKey);
 }
 
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
-}
+/**
+ * Get a pre-signed URL for temporary read access (useful for private files).
+ */
+export async function getPresignedUrl(
+  remoteKey: string,
+  expiresInSeconds = 3600,
+): Promise<string> {
+  const client = createR2Client();
+  const bucket = getEnv().R2_BUCKET;
 
-function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
-}
-
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
-
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
-}
-
-export async function storagePut(
-  relKey: string,
-  data: Buffer | Uint8Array | string,
-  contentType = "application/octet-stream"
-): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: remoteKey,
   });
 
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
+  return getSignedUrl(client, command, { expiresIn: expiresInSeconds });
+}
+
+/**
+ * Download a file from R2 to a local path.
+ */
+export async function downloadFile(
+  remoteKey: string,
+  localFilePath: string,
+): Promise<void> {
+  const client = createR2Client();
+  const bucket = getEnv().R2_BUCKET;
+
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: remoteKey,
+    }),
+  );
+
+  if (!response.Body) {
+    throw new Error(`Empty response body for key: ${remoteKey}`);
   }
-  const url = (await response.json()).url;
-  return { key, url };
+
+  // Ensure directory exists
+  const dir = path.dirname(localFilePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  // @ts-expect-error – Body is a ReadableStream in Node
+  await pipeline(response.Body as NodeJS.ReadableStream, fs.createWriteStream(localFilePath));
 }
 
-export async function storageGet(relKey: string): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
-  };
+// ────────────────────────────────────────
+// Legacy compatibility — re-export a simple client getter
+// for use in upload middleware that expects an S3-like interface.
+// ────────────────────────────────────────
+
+export { createR2Client as createS3Client };
+
+/**
+ * Get the configured bucket name.
+ */
+export function getBucket(): string {
+  return getEnv().R2_BUCKET;
 }

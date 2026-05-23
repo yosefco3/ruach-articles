@@ -1,10 +1,52 @@
-export const ENV = {
-  appId: process.env.VITE_APP_ID ?? "",
-  cookieSecret: process.env.JWT_SECRET ?? "",
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  oAuthServerUrl: process.env.OAUTH_SERVER_URL ?? "",
-  ownerOpenId: process.env.OWNER_OPEN_ID ?? "",
-  isProduction: process.env.NODE_ENV === "production",
-  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-};
+import 'dotenv/config';
+import { z } from 'zod';
+
+const envSchema = z.object({
+  // Server
+  NODE_ENV: z.enum(['development', 'production']).default('development'),
+  PORT: z.coerce.number().default(3000),
+
+  // Database
+  DATABASE_URL: z.string().min(1),
+
+  // Google OAuth 2.0
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  GOOGLE_CALLBACK_URL: z.string().min(1),
+
+  // JWT / Session
+  JWT_SECRET: z.string().min(16),
+  ADMIN_EMAIL: z.string().email(),
+
+  // Cloudflare R2 Storage (S3-compatible)
+  R2_ENDPOINT: z.string().min(1),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
+  R2_BUCKET: z.string().min(1),
+  R2_PUBLIC_URL: z.string().min(1),
+
+  // Email (Resend) — optional
+  RESEND_API_KEY: z.string().optional(),
+
+  // Google Maps — optional
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+
+  // OpenAI — optional
+  OPENAI_API_KEY: z.string().optional(),
+
+  // Contact form recipient — optional
+  CONTACT_EMAIL_TO: z.string().optional(),
+});
+
+function loadEnv() {
+  const parsed = envSchema.safeParse(process.env);
+  if (!parsed.success) {
+    console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors);
+    process.exit(1);
+  }
+  return parsed.data;
+}
+
+export const env = loadEnv();
+
+export type Env = z.infer<typeof envSchema>;
