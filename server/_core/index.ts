@@ -34,6 +34,9 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // Trust proxy - CRITICAL for cookies to work behind reverse proxy (nginx, etc.)
+  app.set('trust proxy', 1);
+  
   // CORS configuration - MUST be before OAuth and session middleware
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
