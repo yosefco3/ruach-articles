@@ -1,8 +1,42 @@
 import express from 'express';
 import session from 'express-session';
+import MySQLStoreFactory from 'express-mysql-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from './env.js';
+
+// Create MySQL session store
+const MySQLStore = MySQLStoreFactory(session);
+
+// Parse DATABASE_URL to extract connection details
+// Format: mysql://user:password@host:port/database
+function parseDatabaseUrl(url: string) {
+  const match = url.match(/mysql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+  if (!match) {
+    throw new Error('Invalid DATABASE_URL format. Expected: mysql://user:password@host:port/database');
+  }
+  return {
+    host: match[3],
+    port: parseInt(match[4], 10),
+    user: match[1],
+    password: match[2],
+    database: match[5],
+  };
+}
+
+const dbConfig = parseDatabaseUrl(env.DATABASE_URL);
+const sessionStore = new MySQLStore({
+  ...dbConfig,
+  createDatabaseTable: true, // Auto-create sessions table if it doesn't exist
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data',
+    },
+  },
+});
 
 /**
  * Google OAuth 2.0 authentication setup.
@@ -50,12 +84,13 @@ passport.use(
 );
 
 export function setupOAuth(app: express.Express) {
-  // Session middleware — replaces Manus session management
+  // Session middleware — now using MySQL session store for production-ready persistence
   app.use(
     session({
       secret: env.JWT_SECRET,
       resave: false,
       saveUninitialized: false,
+      store: sessionStore, // Use MySQL instead of MemoryStore
       cookie: {
         secure: env.NODE_ENV === 'production',
         httpOnly: true,
