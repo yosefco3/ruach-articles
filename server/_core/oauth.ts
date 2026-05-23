@@ -108,7 +108,7 @@ export function setupOAuth(app: express.Express) {
       saveUninitialized: false,
       store: sessionStore, // Use MySQL instead of MemoryStore
       cookie: {
-        secure: false, // TEMPORARILY disable secure flag to test if HTTPS is the issue
+        secure: env.NODE_ENV === 'production', // Secure cookies in production (HTTPS only)
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         sameSite: 'lax',

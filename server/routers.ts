@@ -618,7 +618,7 @@ export const appRouter = router({
             ctx.res.clearCookie('connect.sid', {
               path: '/',
               httpOnly: true,
-              secure: false, // Match the session cookie settings
+              secure: process.env.NODE_ENV === 'production', // Match the session cookie settings
               sameSite: 'lax',
             });
             resolve({ success: true } as const);
