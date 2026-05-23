@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { pipeline } from "stream/promises";
 import { createReadStream } from "fs";
-import { getEnv } from "./_core/env";
+import { env } from "./_core/env";
 
 /**
  * Cloudflare R2 S3-compatible client
@@ -23,10 +23,10 @@ import { getEnv } from "./_core/env";
 function createR2Client(): S3Client {
   return new S3Client({
     region: "auto",
-    endpoint: getEnv().R2_ENDPOINT,
+    endpoint: env.R2_ENDPOINT,
     credentials: {
-      accessKeyId: getEnv().R2_ACCESS_KEY_ID,
-      secretAccessKey: getEnv().R2_SECRET_ACCESS_KEY,
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
     },
     // Cloudflare R2 uses path-style addressing
     forcePathStyle: true,
@@ -38,7 +38,7 @@ function createR2Client(): S3Client {
 // ────────────────────────────────────────
 
 export function getPublicUrl(key: string): string {
-  const base = getEnv().R2_PUBLIC_URL.replace(/\/+$/, "");
+  const base = env.R2_PUBLIC_URL.replace(/\/+$/, "");
   return `${base}/${key}`;
 }
 
@@ -55,7 +55,7 @@ export async function uploadFile(
   contentType?: string,
 ): Promise<string> {
   const client = createR2Client();
-  const bucket = getEnv().R2_BUCKET;
+  const bucket = env.R2_BUCKET;
 
   const fileStream = createReadStream(localFilePath);
   const stats = fs.statSync(localFilePath);
@@ -85,7 +85,7 @@ export async function uploadBuffer(
   contentType?: string,
 ): Promise<string> {
   const client = createR2Client();
-  const bucket = getEnv().R2_BUCKET;
+  const bucket = env.R2_BUCKET;
 
   await client.send(
     new PutObjectCommand({
@@ -107,7 +107,7 @@ export async function getPresignedUrl(
   expiresInSeconds = 3600,
 ): Promise<string> {
   const client = createR2Client();
-  const bucket = getEnv().R2_BUCKET;
+  const bucket = env.R2_BUCKET;
 
   const command = new GetObjectCommand({
     Bucket: bucket,
@@ -125,7 +125,7 @@ export async function downloadFile(
   localFilePath: string,
 ): Promise<void> {
   const client = createR2Client();
-  const bucket = getEnv().R2_BUCKET;
+  const bucket = env.R2_BUCKET;
 
   const response = await client.send(
     new GetObjectCommand({
@@ -159,5 +159,5 @@ export { createR2Client as createS3Client };
  * Get the configured bucket name.
  */
 export function getBucket(): string {
-  return getEnv().R2_BUCKET;
+  return env.R2_BUCKET;
 }

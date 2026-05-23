@@ -7,7 +7,7 @@ import {
   type InsertSiteSettings, type InsertGuestPost, type InsertLike,
   type InsertUserProfile, type InsertAboutPage, type InsertCategory, type InsertNewsletterSubscriber, type InsertFeaturedArticle,
 } from "../drizzle/schema";
-import { ENV } from "./_core/env";
+import { env } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -46,7 +46,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
   if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-  else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
+  else if (user.email && user.email === env.ADMIN_EMAIL) { values.role = "admin"; updateSet.role = "admin"; }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
