@@ -4,6 +4,7 @@ import MySQLStoreFactory from 'express-mysql-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from './env.js';
+import { upsertUser } from '../db.js';
 
 // Create MySQL session store
 const MySQLStore = MySQLStoreFactory(session);
@@ -61,24 +62,39 @@ passport.use(
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       callbackURL: env.GOOGLE_CALLBACK_URL,
     },
-    (
+    async (
       _accessToken: string,
       _refreshToken: string,
       profile: any,
       done: (error: any, user?: any) => void,
     ) => {
-      const email = profile.emails?.[0]?.value ?? '';
-      const isAdmin = email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
+      try {
+        const email = profile.emails?.[0]?.value ?? '';
+        const isAdmin = email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
 
-      const user = {
-        id: profile.id,
-        email,
-        name: profile.displayName,
-        avatar: profile.photos?.[0]?.value ?? '',
-        role: isAdmin ? 'admin' : 'user',
-      };
+        const user = {
+          id: profile.id,
+          email,
+          name: profile.displayName,
+          avatar: profile.photos?.[0]?.value ?? '',
+          role: isAdmin ? 'admin' : 'user',
+        };
 
-      return done(null, user);
+        // Persist user to database with correct role
+        await upsertUser({
+          openId: profile.id,
+          email,
+          name: profile.displayName,
+          loginMethod: 'google',
+          role: isAdmin ? 'admin' : 'user',
+          lastSignedIn: new Date(),
+        });
+
+        return done(null, user);
+      } catch (error) {
+        console.error('[OAuth] Failed to upsert user:', error);
+        return done(error);
+      }
     },
   ),
 );
