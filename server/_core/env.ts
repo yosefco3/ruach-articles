@@ -18,12 +18,12 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16),
   ADMIN_EMAIL: z.string().email(),
 
-  // Cloudflare R2 Storage (S3-compatible)
-  R2_ENDPOINT: z.string().min(1),
-  R2_ACCESS_KEY_ID: z.string().min(1),
-  R2_SECRET_ACCESS_KEY: z.string().min(1),
-  R2_BUCKET: z.string().min(1),
-  R2_PUBLIC_URL: z.string().min(1),
+  // Cloudflare R2 Storage (S3-compatible) — OPTIONAL in development
+  R2_ENDPOINT: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET: z.string().optional(),
+  R2_PUBLIC_URL: z.string().optional(),
 
   // Email (Resend) — optional
   RESEND_API_KEY: z.string().optional(),
@@ -50,3 +50,14 @@ function loadEnv() {
 export const env = loadEnv();
 
 export type Env = z.infer<typeof envSchema>;
+
+// Helper to check if R2 is configured
+export function isR2Configured(): boolean {
+  return !!(
+    env.R2_ENDPOINT &&
+    env.R2_ACCESS_KEY_ID &&
+    env.R2_SECRET_ACCESS_KEY &&
+    env.R2_BUCKET &&
+    env.R2_PUBLIC_URL
+  );
+}
