@@ -10,6 +10,7 @@ import { appRouter } from "../routers";
 import { articleDocxRouter } from "../articleDocxRoute";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { SITE_URL_PRODUCTION } from "@shared/const";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,7 +41,7 @@ async function startServer() {
   // CORS configuration - MUST be before OAuth and session middleware
   app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? 'https://ruachwisdom.org'
+      ? SITE_URL_PRODUCTION
       : 'http://localhost:5173', // Vite's default dev server port
     credentials: true, // Allow cookies to be sent and received
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
