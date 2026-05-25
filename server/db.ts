@@ -166,20 +166,8 @@ export async function createArticle(data: InsertArticle) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Explicitly construct the insert object to ensure correct field mapping
-  const insertData: InsertArticle = {
-    title: data.title,
-    slug: data.slug,
-    excerpt: data.excerpt,
-    body: data.body,
-    coverImage: data.coverImage,
-    category: data.category,
-    tags: data.tags || "",
-    authorId: data.authorId,
-    published: data.published ?? false,
-  };
+  const result = await db.insert(articles).values(data);
   
-  const result = await db.insert(articles).values(insertData);
   // Return the created article by fetching it with the insertId
   const insertId = (result as any)[0]?.insertId;
   if (insertId) {

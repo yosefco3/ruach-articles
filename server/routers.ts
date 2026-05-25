@@ -142,7 +142,7 @@ const articlesRouter = router({
       return await createArticle({
         ...input,
         slug,
-        authorId: ctx.user!.id,
+        authorId: ctx.user!.dbId,
         published: false,
       });
     }),
