@@ -7,6 +7,7 @@ import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart, Download, Im
 import { toast } from "sonner";
 import { Link } from "wouter";
 import CommentsSection from "@/components/CommentsSection";
+import NextArticleCard from "@/components/NextArticleCard";
 
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
@@ -30,6 +31,21 @@ export default function ArticlePage() {
   const { data: userLike } = trpc.likes.userLike.useQuery(
     { articleId: article?.id ?? 0 },
     { enabled: !!article?.id && isAuthenticated }
+  );
+
+  // Query for next article in same category
+  const { data: nextArticle } = trpc.articles.nextInCategory.useQuery(
+    {
+      currentSlug: params.slug,
+      category: article?.category ?? "",
+    },
+    { enabled: !!article?.category }
+  );
+
+  // Query for random article (only if no next article exists)
+  const { data: randomArticle } = trpc.articles.random.useQuery(
+    { excludeId: article?.id },
+    { enabled: !!article?.id && !nextArticle }
   );
 
   const likeMutation = trpc.likes.toggle.useMutation({
@@ -221,6 +237,18 @@ export default function ArticlePage() {
                 </a>
               ))}
             </div>
+          </section>
+        )}
+
+        <div className="divider-gold mb-10" />
+
+        {/* Next Article Navigation */}
+        {(nextArticle || randomArticle) && (
+          <section className="mb-10">
+            <NextArticleCard 
+              article={nextArticle || randomArticle!} 
+              isRandom={!nextArticle && !!randomArticle}
+            />
           </section>
         )}
 

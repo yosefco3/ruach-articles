@@ -129,6 +129,72 @@ export async function getArticles(opts?: { category?: string; published?: boolea
   return rows;
 }
 
+export async function getNextArticleInCategory(currentSlug: string, category: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  // Get all published articles in the same category, ordered by sortOrder then createdAt
+  const articlesInCategory = await db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      slug: articles.slug,
+      excerpt: articles.excerpt,
+      coverImage: articles.coverImage,
+      category: articles.category,
+      tags: articles.tags,
+      createdAt: articles.createdAt,
+      sortOrder: articles.sortOrder,
+      authorName: users.name,
+    })
+    .from(articles)
+    .leftJoin(users, eq(articles.authorId, users.id))
+    .where(and(eq(articles.category, category), eq(articles.published, true)))
+    .orderBy(asc(articles.sortOrder), desc(articles.createdAt));
+  
+  // Find the current article's index
+  const currentIndex = articlesInCategory.findIndex(a => a.slug === currentSlug);
+  
+  // Return the next article (if exists)
+  if (currentIndex !== -1 && currentIndex < articlesInCategory.length - 1) {
+    return articlesInCategory[currentIndex + 1];
+  }
+  
+  return undefined;
+}
+
+export async function getRandomArticle(excludeId?: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  // Get all published articles except the excluded one
+  const conditions = [eq(articles.published, true)];
+  if (excludeId) {
+    conditions.push(sql`${articles.id} != ${excludeId}`);
+  }
+  
+  const allArticles = await db
+    .select({
+      id: articles.id,
+      title: articles.title,
+      slug: articles.slug,
+      excerpt: articles.excerpt,
+      coverImage: articles.coverImage,
+      category: articles.category,
+      tags: articles.tags,
+      createdAt: articles.createdAt,
+      authorName: users.name,
+    })
+    .from(articles)
+    .leftJoin(users, eq(articles.authorId, users.id))
+    .where(and(...conditions));
+  
+  // Return a random article
+  if (allArticles.length === 0) return undefined;
+  const randomIndex = Math.floor(Math.random() * allArticles.length);
+  return allArticles[randomIndex];
+}
+
 export async function getArticleBySlug(slug: string) {
   const db = await getDb();
   if (!db) return undefined;

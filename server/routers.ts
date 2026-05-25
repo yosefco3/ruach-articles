@@ -51,6 +51,8 @@ import {
   setFeaturedArticle,
   reorderArticles,
   getCategoriesWithArticleCount,
+  getNextArticleInCategory,
+  getRandomArticle,
 } from "./db";
 import { systemRouter } from "./_core/systemRouter";
 import { sendArticleNewsletter } from "./newsletterEmail";
@@ -105,6 +107,29 @@ const articlesRouter = router({
       if (!article) return null;
       const attachments = await getAttachmentsByArticle(article.id);
       return { ...article, attachments };
+    }),
+
+  // Get next article in same category
+  nextInCategory: publicProcedure
+    .input(
+      z.object({
+        currentSlug: z.string(),
+        category: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      return await getNextArticleInCategory(input.currentSlug, input.category);
+    }),
+
+  // Get random article
+  random: publicProcedure
+    .input(
+      z.object({
+        excludeId: z.number().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      return await getRandomArticle(input.excludeId);
     }),
 
   create: writerProcedure

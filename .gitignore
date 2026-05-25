@@ -120,3 +120,6 @@ uploads/
 
 # Development environment setup (internal documentation)
 dev-environment-setup/
+
+# Feature prompts (internal documentation)
+feature-prompts/
