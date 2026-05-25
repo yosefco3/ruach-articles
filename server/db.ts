@@ -512,6 +512,12 @@ const CATEGORY_PALETTE = [
   "#0D9488", // teal
 ];
 
+export async function getAllCategories() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(categories).orderBy(categories.sortOrder);
+}
+
 export async function getCategories() {
   const db = await getDb();
   if (!db) return [];

@@ -216,7 +216,7 @@ export default function AdminCategories() {
 
   const isAdmin = user?.role === "admin";
 
-  const { data: categoriesData, isLoading: categoriesLoading } = trpc.categories.list.useQuery();
+  const { data: categoriesData, isLoading: categoriesLoading } = trpc.categories.listAll.useQuery();
 
   // Local ordered list for optimistic drag reorder
   const [localCategories, setLocalCategories] = useState<Category[] | null>(null);
@@ -250,7 +250,7 @@ export default function AdminCategories() {
 
   const createCategory = trpc.categories.create.useMutation({
     onSuccess: (_, vars) => {
-      utils.categories.list.invalidate();
+      utils.categories.listAll.invalidate();
       setLocalCategories(null);
       // After creating, pick next unused color from updated list
       const allColors = [...((categoriesData as Category[] | undefined)?.map((c) => c.color) ?? []), vars.color];
@@ -263,7 +263,7 @@ export default function AdminCategories() {
 
   const deleteCategory = trpc.categories.delete.useMutation({
     onSuccess: () => {
-      utils.categories.list.invalidate();
+      utils.categories.listAll.invalidate();
       setLocalCategories(null);
       toast.success("הקטגוריה נמחקה");
     },
@@ -272,7 +272,7 @@ export default function AdminCategories() {
 
   const updateCategory = trpc.categories.update.useMutation({
     onSuccess: () => {
-      utils.categories.list.invalidate();
+      utils.categories.listAll.invalidate();
       toast.success("הקטגוריה עודכנה");
     },
     onError: (err) => toast.error(err.message || "שגיאה בעדכון קטגוריה"),
@@ -282,7 +282,7 @@ export default function AdminCategories() {
     onError: (err) => {
       toast.error("שגיאה בשמירת הסדר");
       setLocalCategories(null); // revert optimistic update
-      utils.categories.list.invalidate();
+      utils.categories.listAll.invalidate();
     },
   });
 
