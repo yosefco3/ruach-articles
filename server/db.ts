@@ -515,7 +515,24 @@ const CATEGORY_PALETTE = [
 export async function getCategories() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(categories).orderBy(categories.sortOrder);
+  
+  // Get all categories
+  const allCategories = await db.select().from(categories).orderBy(categories.sortOrder);
+  
+  // Filter to only categories with at least one published article
+  const categoriesWithPublishedArticles = await Promise.all(
+    allCategories.map(async (cat) => {
+      const countResult = await db
+        .select({ count: count() })
+        .from(articles)
+        .where(and(eq(articles.category, cat.slug), eq(articles.published, true)))
+        .limit(1);
+      
+      return countResult[0]?.count > 0 ? cat : null;
+    })
+  );
+  
+  return categoriesWithPublishedArticles.filter((cat): cat is NonNullable<typeof cat> => cat !== null);
 }
 
 export async function getCategoryBySlug(slug: string) {
@@ -589,7 +606,8 @@ export async function getCategoriesWithArticleCount() {
       };
     })
   );
-  return result;
+  // Filter out categories with no published articles
+  return result.filter(cat => cat.articleCount > 0);
 }
 
 export async function deleteCategory(id: number) {
