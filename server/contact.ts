@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
 import { getSiteSettings } from "./db";
+import { DEFAULT_FROM_EMAIL } from "@shared/const";
 
 export const contactRouter = router({
   // Public: get contact email for display on contact page
@@ -30,7 +31,7 @@ export const contactRouter = router({
           try {
             const { Resend } = await import("resend");
             const resend = new Resend(process.env.RESEND_API_KEY);
-            const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruachwisdom.org";
+            const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || DEFAULT_FROM_EMAIL;
             
             await resend.emails.send({
               from: `${siteName} <${FROM_EMAIL}>`,

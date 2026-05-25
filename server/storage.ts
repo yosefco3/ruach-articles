@@ -1,26 +1,40 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
 import { pipeline } from "stream/promises";
-import { createReadStream } from "fs";
-import { env } from "./_core/env";
+import { createReadStream, createWriteStream } from "fs";
+import { env, isR2Configured } from "./_core/env";
 
-/**
- * Cloudflare R2 S3-compatible client
- *
- * Replaces the previous Manus S3 Proxy with a direct R2 connection.
- * Environment variables used:
- *   R2_ACCESS_KEY_ID     – Cloudflare R2 API token Access Key ID
- *   R2_SECRET_ACCESS_KEY – Cloudflare R2 API token Secret Access Key
- *   R2_ENDPOINT          – e.g. https://<ACCOUNT_ID>.r2.cloudflarestorage.com
- *   R2_BUCKET            – bucket name (e.g. "ruach-files")
- *   R2_PUBLIC_URL        – public URL for reading files (e.g. https://pub-XXXX.r2.dev)
- */
+// Re-export for backward compatibility
+export { isR2Configured };
+
+// ────────────────────────────────────────
+// Local storage constants
+// ────────────────────────────────────────
+
+const LOCAL_UPLOAD_DIR =
+  process.env.LOCAL_UPLOAD_DIR || path.resolve(process.cwd(), "uploads");
+
+function ensureUploadDir(): void {
+  if (!fs.existsSync(LOCAL_UPLOAD_DIR)) {
+    fs.mkdirSync(LOCAL_UPLOAD_DIR, { recursive: true });
+  }
+}
+
+function localPublicUrl(key: string): string {
+  return `/uploads/${key}`;
+}
+
+// ────────────────────────────────────────
+// Cloudflare R2 client (used when isR2Configured())
+// ────────────────────────────────────────
 
 function createR2Client(): S3Client {
+  if (!env.R2_ENDPOINT || !env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY) {
+    throw new Error("R2 is not configured. Call isR2Configured() first.");
+  }
   return new S3Client({
     region: "auto",
     endpoint: env.R2_ENDPOINT,
@@ -34,28 +48,44 @@ function createR2Client(): S3Client {
 }
 
 // ────────────────────────────────────────
-// Helpers
-// ────────────────────────────────────────
-
-export function getPublicUrl(key: string): string {
-  const base = env.R2_PUBLIC_URL.replace(/\/+$/, "");
-  return `${base}/${key}`;
-}
-
-// ────────────────────────────────────────
-// Public API
+// Public API — works with both R2 and local
 // ────────────────────────────────────────
 
 /**
- * Upload a file from a local path to R2.
+ * Get the public URL for a stored file.
+ */
+export function getPublicUrl(key: string): string {
+  if (isR2Configured()) {
+    const base = env.R2_PUBLIC_URL!.replace(/\/+$/, "");
+    return `${base}/${key}`;
+  }
+  return localPublicUrl(key);
+}
+
+/**
+ * Upload a file from a local path.
+ * Uses R2 when configured, otherwise saves to the local uploads directory.
  */
 export async function uploadFile(
   localFilePath: string,
   remoteKey: string,
   contentType?: string,
 ): Promise<string> {
+  // ── Local fallback ──
+  if (!isR2Configured()) {
+    ensureUploadDir();
+    const dest = path.join(LOCAL_UPLOAD_DIR, remoteKey);
+    const destDir = path.dirname(dest);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    fs.copyFileSync(localFilePath, dest);
+    return localPublicUrl(remoteKey);
+  }
+
+  // ── R2 upload ──
   const client = createR2Client();
-  const bucket = env.R2_BUCKET;
+  const bucket = env.R2_BUCKET!;
 
   const fileStream = createReadStream(localFilePath);
   const stats = fs.statSync(localFilePath);
@@ -72,20 +102,33 @@ export async function uploadFile(
   });
 
   await upload.done();
-
   return getPublicUrl(remoteKey);
 }
 
 /**
- * Upload a Buffer directly to R2.
+ * Upload a Buffer directly.
+ * Uses R2 when configured, otherwise saves to the local uploads directory.
  */
 export async function uploadBuffer(
   buffer: Buffer,
   remoteKey: string,
   contentType?: string,
 ): Promise<string> {
+  // ── Local fallback ──
+  if (!isR2Configured()) {
+    ensureUploadDir();
+    const dest = path.join(LOCAL_UPLOAD_DIR, remoteKey);
+    const destDir = path.dirname(dest);
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    fs.writeFileSync(dest, buffer);
+    return localPublicUrl(remoteKey);
+  }
+
+  // ── R2 upload ──
   const client = createR2Client();
-  const bucket = env.R2_BUCKET;
+  const bucket = env.R2_BUCKET!;
 
   await client.send(
     new PutObjectCommand({
@@ -100,14 +143,19 @@ export async function uploadBuffer(
 }
 
 /**
- * Get a pre-signed URL for temporary read access (useful for private files).
+ * Get a pre-signed URL for temporary read access.
+ * Falls back to a direct local URL when R2 is not configured.
  */
 export async function getPresignedUrl(
   remoteKey: string,
   expiresInSeconds = 3600,
 ): Promise<string> {
+  if (!isR2Configured()) {
+    return localPublicUrl(remoteKey);
+  }
+
   const client = createR2Client();
-  const bucket = env.R2_BUCKET;
+  const bucket = env.R2_BUCKET!;
 
   const command = new GetObjectCommand({
     Bucket: bucket,
@@ -118,14 +166,27 @@ export async function getPresignedUrl(
 }
 
 /**
- * Download a file from R2 to a local path.
+ * Download a file to a local path.
+ * Uses R2 when configured, otherwise copies from the local uploads directory.
  */
 export async function downloadFile(
   remoteKey: string,
   localFilePath: string,
 ): Promise<void> {
+  // ── Local fallback ──
+  if (!isR2Configured()) {
+    const src = path.join(LOCAL_UPLOAD_DIR, remoteKey);
+    const dir = path.dirname(localFilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.copyFileSync(src, localFilePath);
+    return;
+  }
+
+  // ── R2 download ──
   const client = createR2Client();
-  const bucket = env.R2_BUCKET;
+  const bucket = env.R2_BUCKET!;
 
   const response = await client.send(
     new GetObjectCommand({
@@ -144,8 +205,7 @@ export async function downloadFile(
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  // @ts-expect-error – Body is a ReadableStream in Node
-  await pipeline(response.Body as NodeJS.ReadableStream, fs.createWriteStream(localFilePath));
+  await pipeline(response.Body as NodeJS.ReadableStream, createWriteStream(localFilePath));
 }
 
 // ────────────────────────────────────────
@@ -156,8 +216,20 @@ export async function downloadFile(
 export { createR2Client as createS3Client };
 
 /**
- * Get the configured bucket name.
+ * Get the configured bucket name (R2 only — throws in local mode).
+ * @deprecated Use getStorageMode() to check which backend is active.
  */
 export function getBucket(): string {
-  return env.R2_BUCKET;
+  if (!isR2Configured()) {
+    return 'local';
+  }
+  return env.R2_BUCKET!;
+}
+
+/**
+ * Returns the active storage backend: `"r2"` or `"local"`.
+ * Useful for diagnostics and admin endpoints.
+ */
+export function getStorageMode(): "r2" | "local" {
+  return isR2Configured() ? "r2" : "local";
 }

@@ -1,9 +1,10 @@
 import { Resend } from "resend";
 import { getNewsletterSubscribers, getSiteSettings } from "./db";
+import { DEFAULT_FROM_EMAIL } from "@shared/const";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 'dummy_key_for_dev');
 const FROM_EMAIL =
-  process.env.NEWSLETTER_FROM_EMAIL || "newsletter@ruachwisdom.org";
+  process.env.NEWSLETTER_FROM_EMAIL || DEFAULT_FROM_EMAIL;
 
 export interface ArticleEmailPayload {
   title: string;

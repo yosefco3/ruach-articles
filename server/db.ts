@@ -30,27 +30,48 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   const db = await getDb();
   if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
 
-  const values: InsertUser = { openId: user.openId };
-  const updateSet: Record<string, unknown> = {};
+  // Check if user exists first
+  const existingUser = await getUserByOpenId(user.openId);
+  
+  if (existingUser) {
+    // User exists - update only
+    const updateSet: Record<string, unknown> = {};
+    
+    const textFields = ["name", "email", "loginMethod"] as const;
+    type TextField = (typeof textFields)[number];
+    const assignNullable = (field: TextField) => {
+      const value = user[field];
+      if (value === undefined) return;
+      updateSet[field] = value ?? null;
+    };
+    textFields.forEach(assignNullable);
 
-  const textFields = ["name", "email", "loginMethod"] as const;
-  type TextField = (typeof textFields)[number];
-  const assignNullable = (field: TextField) => {
-    const value = user[field];
-    if (value === undefined) return;
-    const normalized = value ?? null;
-    values[field] = normalized;
-    updateSet[field] = normalized;
-  };
-  textFields.forEach(assignNullable);
+    if (user.lastSignedIn !== undefined) { updateSet.lastSignedIn = user.lastSignedIn; }
+    if (user.role !== undefined) { updateSet.role = user.role; }
+    else if (user.email && user.email === env.ADMIN_EMAIL) { updateSet.role = "admin"; }
+    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
-  if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
-  if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-  else if (user.email && user.email === env.ADMIN_EMAIL) { values.role = "admin"; updateSet.role = "admin"; }
-  if (!values.lastSignedIn) values.lastSignedIn = new Date();
-  if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
+    await db.update(users).set(updateSet).where(eq(users.openId, user.openId));
+  } else {
+    // User doesn't exist - insert new
+    const values: InsertUser = { openId: user.openId };
 
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+    const textFields = ["name", "email", "loginMethod"] as const;
+    type TextField = (typeof textFields)[number];
+    const assignNullable = (field: TextField) => {
+      const value = user[field];
+      if (value === undefined) return;
+      values[field] = value ?? null;
+    };
+    textFields.forEach(assignNullable);
+
+    if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; }
+    if (user.role !== undefined) { values.role = user.role; }
+    else if (user.email && user.email === env.ADMIN_EMAIL) { values.role = "admin"; }
+    if (!values.lastSignedIn) values.lastSignedIn = new Date();
+
+    await db.insert(users).values(values);
+  }
 }
 
 export async function getUserByOpenId(openId: string) {

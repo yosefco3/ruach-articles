@@ -20,19 +20,23 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 
+// Temporary client-side slugify - will be properly handled by server
 function slugify(text: string) {
-  // Try ASCII-based slug first
-  const ascii = text
+  // Generate a simple readable slug for display purposes
+  // The server will handle proper transliteration with the slugify package
+  const simple = text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
+    .replace(/[^\w\s\u0590-\u05FF-]/g, "") // Keep Hebrew characters temporarily
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim();
-  // If the title is Hebrew (or other non-ASCII), fall back to a timestamp slug
-  if (!ascii || ascii === "-") {
+  
+  // If empty after cleanup, use timestamp
+  if (!simple || simple === "-") {
     return "article-" + Date.now().toString(36);
   }
-  return ascii;
+  
+  return simple;
 }
 
 interface PendingFile {

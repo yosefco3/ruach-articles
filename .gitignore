@@ -111,3 +111,12 @@ temp/
 
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
+
+# Docker
+docker-compose.override.yml
+
+# Local development
+uploads/
+
+# Development environment setup (internal documentation)
+dev-environment-setup/
