@@ -72,14 +72,6 @@ passport.use(
         const email = profile.emails?.[0]?.value ?? '';
         const isAdmin = email.toLowerCase() === env.ADMIN_EMAIL.toLowerCase();
 
-        const user = {
-          id: profile.id,
-          email,
-          name: profile.displayName,
-          avatar: profile.photos?.[0]?.value ?? '',
-          role: isAdmin ? 'admin' : 'user',
-        };
-
         // Persist user to database with correct role
         await upsertUser({
           openId: profile.id,
@@ -89,6 +81,23 @@ passport.use(
           role: isAdmin ? 'admin' : 'user',
           lastSignedIn: new Date(),
         });
+
+        // Get the database user to retrieve the numeric ID
+        const { getUserByOpenId } = await import('../db.js');
+        const dbUser = await getUserByOpenId(profile.id);
+        
+        if (!dbUser) {
+          throw new Error('Failed to retrieve user from database after upsert');
+        }
+
+        const user = {
+          id: profile.id, // Keep OpenID for session identification
+          dbId: dbUser.id, // Add numeric database ID
+          email,
+          name: profile.displayName,
+          avatar: profile.photos?.[0]?.value ?? '',
+          role: isAdmin ? 'admin' : 'user',
+        };
 
         return done(null, user);
       } catch (error) {

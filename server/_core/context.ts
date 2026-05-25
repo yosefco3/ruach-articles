@@ -9,7 +9,8 @@ import type { Request, Response } from 'express';
  */
 
 export interface ContextUser {
-  id: string;
+  id: string; // OpenID for session identification
+  dbId: number; // Numeric database ID for foreign keys
   email: string;
   name: string;
   avatar: string;
@@ -24,6 +25,7 @@ export function createContext({ req, res }: { req: Request; res: Response }) {
     sessionUser && sessionUser.email
       ? {
           id: sessionUser.id,
+          dbId: sessionUser.dbId,
           email: sessionUser.email,
           name: sessionUser.name ?? '',
           avatar: sessionUser.avatar ?? '',
