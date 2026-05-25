@@ -117,3 +117,6 @@ docker-compose.override.yml
 
 # Local development
 uploads/
+
+# Development environment setup (internal documentation)
+dev-environment-setup/
