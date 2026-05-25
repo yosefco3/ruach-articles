@@ -123,3 +123,6 @@ dev-environment-setup/
 
 # Feature prompts (internal documentation)
 feature-prompts/
+
+# Prompts directory (internal documentation)
+prompts/

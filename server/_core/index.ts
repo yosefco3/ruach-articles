@@ -6,7 +6,7 @@ import cors from "cors";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { setupOAuth } from "./oauth";
 import { uploadRouter } from "../upload";
-import { appRouter } from "../routers";
+import { appRouter } from "../routers/index";
 import { articleDocxRouter } from "../articleDocxRoute";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
