@@ -3,6 +3,7 @@ import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
 import {
   getCategories,
+  getAllCategories,
   getCategoryBySlug,
   createCategory,
   updateCategory,
@@ -14,6 +15,10 @@ import {
 export const categoriesRouter = router({
   list: publicProcedure.query(async () => {
     return await getCategories();
+  }),
+
+  listAll: adminProcedure.query(async () => {
+    return await getAllCategories();
   }),
 
   listWithCounts: publicProcedure.query(async () => {

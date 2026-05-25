@@ -116,7 +116,7 @@ export default function AdminArticleOrder() {
 
   const isAdmin = user?.role === "admin";
 
-  const { data: categoriesData, isLoading: catsLoading } = trpc.categories.list.useQuery();
+  const { data: categoriesData, isLoading: catsLoading } = trpc.categories.listAll.useQuery();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   // Auto-select first category once loaded

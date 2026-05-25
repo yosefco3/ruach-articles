@@ -78,7 +78,7 @@ export default function AdminArticleForm() {
   const existingArticle = articles?.find((a) => a.id === articleId);
 
   // Load dynamic categories
-  const { data: dynamicCategories } = trpc.categories.list.useQuery();
+  const { data: dynamicCategories } = trpc.categories.listAll.useQuery();
 
   const [form, setForm] = useState({
     title: "",
