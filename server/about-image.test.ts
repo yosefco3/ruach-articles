@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter } from "./routers/index";
 import type { TrpcContext } from "./_core/context";
 
 // ── Mock ALL db functions so no real DB is touched ──────────────────────────

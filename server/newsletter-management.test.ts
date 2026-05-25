@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter } from "./routers/index";
 import type { TrpcContext } from "./_core/context";
 
 // ── In-memory store — no real DB is touched ──────────────────────────────────

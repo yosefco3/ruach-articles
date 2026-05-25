@@ -63,10 +63,15 @@ describe("Docker MySQL", () => {
   it("should be able to ping MySQL through the app's DB module", async () => {
     console.log("🔌 Testing MySQL connection...");
     try {
-      const { db } = await import("./db");
-      const result = await db.execute("SELECT 1 AS ok");
-      expect(result).toBeDefined();
-      console.log("  ✅ MySQL is reachable — query returned successfully");
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (db) {
+        const result = await db.execute("SELECT 1 AS ok");
+        expect(result).toBeDefined();
+        console.log("  ✅ MySQL is reachable — query returned successfully");
+      } else {
+        console.log("  ⚠️  Database not available");
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log(`  ⚠️  MySQL connection failed: ${msg}`);
@@ -264,3 +269,4 @@ describe("Resend API Key", () => {
     expect(contact).toBeDefined();
     console.log("  ✅ contact module loaded");
   });
+});
