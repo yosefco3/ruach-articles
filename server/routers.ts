@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import slugify from "slugify";
 import { DEFAULT_FROM_EMAIL } from "@shared/const";
 import {
   createArticle,
@@ -119,21 +120,25 @@ const articlesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Server-side slug normalization: strip non-ASCII, fallback to timestamp slug
-      let slug = input.slug
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .trim();
+      // Server-side slug normalization using slugify with Hebrew support
+      let slug = slugify(input.slug, {
+        lower: true,
+        strict: true,
+        locale: 'he',
+        remove: /[*+~.()'"!:@]/g,
+      });
+      
+      // Fallback to timestamp-based slug if slugify produces empty result
       if (!slug || slug === "-") {
         slug = "article-" + Date.now().toString(36);
       }
+      
       // Ensure slug uniqueness by appending a suffix if needed
       const existing = await getArticleBySlug(slug);
       if (existing) {
         slug = slug + "-" + Date.now().toString(36);
       }
+      
       return await createArticle({
         ...input,
         slug,
