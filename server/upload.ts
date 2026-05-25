@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { uploadBuffer } from "./storage";
 import { nanoid } from "nanoid";
+import { compressImage, shouldCompressImage } from "./imageCompression";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -80,7 +81,6 @@ uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
 
       const originalName = filenameMatch[1];
       const ext = originalName.includes(".") ? originalName.substring(originalName.lastIndexOf(".")) : "";
-      const safeKey = `attachments/${nanoid(12)}${ext}`;
 
       // Detect and validate content type
       const ctMatch = headerStr.match(/Content-Type:\s*(.+?)(?:\r\n|$)/i);
@@ -91,13 +91,30 @@ uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
         return;
       }
 
-      const url = await uploadBuffer(cleanData, safeKey, fileMime);
+      // Compress image if applicable
+      let finalData = cleanData;
+      let finalMime = fileMime;
+
+      if (shouldCompressImage(fileMime)) {
+        const compressed = await compressImage(cleanData, fileMime);
+        finalData = compressed.buffer;
+        finalMime = compressed.mimeType;
+      }
+
+      // Generate key with correct extension after compression
+      const finalExt = finalMime === "image/jpeg" ? ".jpg"
+                     : finalMime === "image/png" ? ".png"
+                     : finalMime === "image/webp" ? ".webp"
+                     : ext;
+      const safeKey = `attachments/${nanoid(12)}${finalExt}`;
+
+      const url = await uploadBuffer(finalData, safeKey, finalMime);
 
       res.json({
         url,
         fileName: originalName,
-        fileSize: cleanData.length,
-        mimeType: fileMime,
+        fileSize: finalData.length,
+        mimeType: finalMime,
       });
       return;
     }
