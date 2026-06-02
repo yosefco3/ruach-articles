@@ -11,6 +11,9 @@ import { articleDocxRouter } from "../articleDocxRoute";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { SITE_URL_PRODUCTION } from "@shared/const";
+import { seoMiddleware } from "../seo";
+import { serveSitemap } from "../sitemap";
+import { serveRobotsTxt } from "../robots";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -69,6 +72,14 @@ async function startServer() {
       createContext,
     })
   );
+
+  // SEO: Sitemap and robots.txt
+  app.get("/sitemap.xml", serveSitemap);
+  app.get("/robots.txt", serveRobotsTxt);
+
+  // SEO middleware — resolves article/category meta data before serving HTML
+  app.use(seoMiddleware);
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

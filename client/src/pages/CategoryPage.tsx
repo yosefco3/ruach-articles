@@ -1,6 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import ArticleCard from "@/components/ArticleCard";
 import { useParams, Link } from "wouter";
+import { Helmet } from "react-helmet-async";
+import { SITE_URL_PRODUCTION } from "@shared/const";
 import { Loader2, Feather, ArrowRight, BookOpen } from "lucide-react";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 
@@ -16,6 +18,16 @@ export default function CategoryPage() {
 
   return (
     <div>
+      <Helmet>
+        <title>{categoryInfo?.name ?? category} – מאמרים – רוח חכמה</title>
+        <meta name="description" content={categoryInfo?.description || `מאמרים בקטגוריית ${categoryInfo?.name ?? category}`} />
+        <meta property="og:title" content={`${categoryInfo?.name ?? category} – מאמרים – רוח חכמה`} />
+        <meta property="og:description" content={categoryInfo?.description || `מאמרים בקטגוריית ${categoryInfo?.name ?? category}`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${SITE_URL_PRODUCTION}/category/${category}`} />
+        <meta property="og:locale" content="he_IL" />
+        <link rel="canonical" href={`${SITE_URL_PRODUCTION}/category/${category}`} />
+      </Helmet>
       {/* ── Category Header ── */}
       <section
         className="relative py-20 px-4 overflow-hidden"
