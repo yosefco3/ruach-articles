@@ -1,39 +1,30 @@
 import type { Request, Response } from 'express';
+import type { AuthUser } from './auth/types';
+import { passportAuthService } from './auth/index';
 
 /**
- * tRPC context — reads the authenticated user from Passport's express-session.
- * Replaces the old Manus session / SDK-based context.
+ * tRPC context — delegates user resolution to the AuthService.
  *
- * The `role` field is set to "admin" when the user's email matches ADMIN_EMAIL
- * (handled in oauth.ts during Google login).
+ * `ContextUser` is a backward-compatible alias for `AuthUser`.
+ * The actual session extraction is handled by `passportAuthService`,
+ * making it swappable in tests via the AuthService interface.
  */
+export type ContextUser = AuthUser;
 
-export interface ContextUser {
-  id: string; // OpenID for session identification
-  dbId: number; // Numeric database ID for foreign keys
-  email: string;
-  name: string;
-  avatar: string;
-  role: 'admin' | 'user';
+/**
+ * Active AuthService instance.  Swap this in tests or future integrations.
+ * Defaults to the Passport session-based implementation.
+ */
+export let authService = passportAuthService;
+
+/** Replace the active auth service (useful in tests). */
+export function setAuthService(service: typeof authService) {
+  authService = service;
 }
 
-export function createContext({ req, res }: { req: Request; res: Response }) {
-  // Passport stores the serialised user object on req.user after session deserialization
-  const sessionUser = (req as any).user as ContextUser | undefined;
-
-  const user: ContextUser | null =
-    sessionUser && sessionUser.email
-      ? {
-          id: sessionUser.id,
-          dbId: sessionUser.dbId,
-          email: sessionUser.email,
-          name: sessionUser.name ?? '',
-          avatar: sessionUser.avatar ?? '',
-          role: sessionUser.role ?? 'user',
-        }
-      : null;
-
+export async function createContext({ req, res }: { req: Request; res: Response }) {
+  const user = await authService.getSession(req);
   return { req, res, user };
 }
 
-export type Context = ReturnType<typeof createContext>;
+export type TrpcContext = Awaited<ReturnType<typeof createContext>>;
