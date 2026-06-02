@@ -11,13 +11,13 @@ export const createLikesRouter = (deps: RouterDeps) => router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const existing = await deps.db.getUserLike(ctx.user!.id, input.articleId, input.commentId);
+      const existing = await deps.db.getUserLike(ctx.user!.dbId, input.articleId, input.commentId);
       if (existing) {
         await deps.db.deleteLike(existing.id);
         return { liked: false };
       } else {
         await deps.db.createLike({
-          userId: ctx.user!.id,
+          userId: ctx.user!.dbId,
           articleId: input.articleId,
           commentId: input.commentId,
         });
@@ -44,6 +44,6 @@ export const createLikesRouter = (deps: RouterDeps) => router({
       })
     )
     .query(async ({ input, ctx }) => {
-      return await deps.db.getUserLike(ctx.user!.id, input.articleId, input.commentId);
+      return await deps.db.getUserLike(ctx.user!.dbId, input.articleId, input.commentId);
     }),
 });

@@ -19,8 +19,8 @@ type MapsConfig = {
 };
 
 function getMapsConfig(): MapsConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
+  const baseUrl = ENV.FORGE_API_URL;
+  const apiKey = ENV.FORGE_API_KEY;
 
   if (!baseUrl || !apiKey) {
     throw new Error(

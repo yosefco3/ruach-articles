@@ -134,7 +134,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
                         {formatDistanceToNow(new Date(comment.createdAt), { locale: he, addSuffix: true })}
                       </p>
                     </div>
-                    {user && (comment.userId === user.id || user.role === "admin") && (
+                    {user && (String(comment.userId) === String(user.id) || user.role === "admin") && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -210,7 +210,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
                               {formatDistanceToNow(new Date(reply.createdAt), { locale: he, addSuffix: true })}
                             </p>
                           </div>
-                          {user && (reply.userId === user.id || user.role === "admin") && (
+                          {user && (String(reply.userId) === String(user.id) || user.role === "admin") && (
                             <Button
                               variant="ghost"
                               size="sm"

@@ -14,11 +14,11 @@ export const createProfilesRouter = (deps: RouterDeps) => router({
   update: protectedProcedure
     .input(z.object({ bio: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
-      const existing = await deps.db.getUserProfile(ctx.user!.id);
+      const existing = await deps.db.getUserProfile(ctx.user!.dbId);
       if (!existing) {
-        await deps.db.createUserProfile({ userId: ctx.user!.id, bio: input.bio });
+        await deps.db.createUserProfile({ userId: ctx.user!.dbId, bio: input.bio });
       } else {
-        await deps.db.updateUserProfile(ctx.user!.id, { bio: input.bio });
+        await deps.db.updateUserProfile(ctx.user!.dbId, { bio: input.bio });
       }
       return { success: true };
     }),

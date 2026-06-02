@@ -233,3 +233,13 @@ export function getBucket(): string {
 export function getStorageMode(): "r2" | "local" {
   return isR2Configured() ? "r2" : "local";
 }
+
+/** @deprecated Use uploadBuffer() directly */
+export async function storagePut(
+  key: string,
+  buffer: Buffer,
+  contentType?: string,
+): Promise<{ url: string }> {
+  const url = await uploadBuffer(buffer, key, contentType);
+  return { url };
+}

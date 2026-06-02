@@ -7,8 +7,8 @@ import { Loader2, Feather, ArrowRight, BookOpen } from "lucide-react";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 
 export default function CategoryPage() {
-  const params = useParams<{ category: string }>();
-  const category = params.category;
+  const params = useParams<{ slug: string }>();
+  const category = params.slug;
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ category });
   const { data: categoryInfo } = trpc.categories.bySlug.useQuery({ slug: category });
@@ -19,7 +19,7 @@ export default function CategoryPage() {
   return (
     <div>
       <Helmet>
-        <title>{categoryInfo?.name ?? category} – מאמרים – רוח חכמה</title>
+        <title>{`${categoryInfo?.name ?? category} – מאמרים – רוח חכמה`}</title>
         <meta name="description" content={categoryInfo?.description || `מאמרים בקטגוריית ${categoryInfo?.name ?? category}`} />
         <meta property="og:title" content={`${categoryInfo?.name ?? category} – מאמרים – רוח חכמה`} />
         <meta property="og:description" content={categoryInfo?.description || `מאמרים בקטגוריית ${categoryInfo?.name ?? category}`} />
