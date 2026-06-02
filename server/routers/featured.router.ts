@@ -1,20 +1,17 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
-import {
-  getFeaturedArticle,
-  setFeaturedArticle,
-} from "../db";
+import type { RouterDeps } from "./context";
 
-export const featuredArticleRouter = router({
+export const createFeaturedRouter = (deps: RouterDeps) => router({
   get: publicProcedure.query(async () => {
-    return await getFeaturedArticle();
+    return await deps.db.getFeaturedArticle();
   }),
 
   set: adminProcedure
     .input(z.object({ articleId: z.number() }))
     .mutation(async ({ input }) => {
-      await setFeaturedArticle(input.articleId);
+      await deps.db.setFeaturedArticle(input.articleId);
       return { success: true };
     }),
 });

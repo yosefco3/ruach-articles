@@ -1,9 +1,9 @@
 import { router } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
-import { getAllUsers } from "../db";
+import type { RouterDeps } from "./context";
 
-export const usersRouter = router({
+export const createUsersRouter = (deps: RouterDeps) => router({
   list: adminProcedure.query(async () => {
-    return await getAllUsers();
+    return await deps.db.getAllUsers();
   }),
 });

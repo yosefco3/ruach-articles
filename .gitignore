@@ -127,3 +127,5 @@ feature-prompts/
 # Prompts directory (internal documentation)
 prompts/
 feature-prompts/
+# Added by code-review-graph
+.code-review-graph/

@@ -1,18 +1,13 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
-import {
-  getGuestPosts,
-  createGuestPost,
-  updateGuestPostStatus,
-  deleteGuestPost,
-} from "../db";
+import type { RouterDeps } from "./context";
 
-export const guestPostsRouter = router({
+export const createGuestPostsRouter = (deps: RouterDeps) => router({
   list: adminProcedure
     .input(z.object({ status: z.enum(["pending", "approved", "rejected"]).optional() }))
     .query(async ({ input }) => {
-      return await getGuestPosts(input.status);
+      return await deps.db.getGuestPosts(input.status);
     }),
 
   submit: protectedProcedure
@@ -26,27 +21,27 @@ export const guestPostsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      return await createGuestPost(input);
+      return await deps.db.createGuestPost(input);
     }),
 
   approve: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      await updateGuestPostStatus(input.id, "approved");
+      await deps.db.updateGuestPostStatus(input.id, "approved");
       return { success: true };
     }),
 
   reject: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      await updateGuestPostStatus(input.id, "rejected");
+      await deps.db.updateGuestPostStatus(input.id, "rejected");
       return { success: true };
     }),
 
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      await deleteGuestPost(input.id);
+      await deps.db.deleteGuestPost(input.id);
       return { success: true };
     }),
 });

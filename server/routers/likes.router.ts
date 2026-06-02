@@ -1,13 +1,8 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
-import {
-  getLikeCount,
-  getUserLike,
-  createLike,
-  deleteLike,
-} from "../db";
+import type { RouterDeps } from "./context";
 
-export const likesRouter = router({
+export const createLikesRouter = (deps: RouterDeps) => router({
   toggle: protectedProcedure
     .input(
       z.object({
@@ -16,12 +11,12 @@ export const likesRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const existing = await getUserLike(ctx.user!.id, input.articleId, input.commentId);
+      const existing = await deps.db.getUserLike(ctx.user!.id, input.articleId, input.commentId);
       if (existing) {
-        await deleteLike(existing.id);
+        await deps.db.deleteLike(existing.id);
         return { liked: false };
       } else {
-        await createLike({
+        await deps.db.createLike({
           userId: ctx.user!.id,
           articleId: input.articleId,
           commentId: input.commentId,
@@ -38,7 +33,7 @@ export const likesRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return await getLikeCount(input.articleId, input.commentId);
+      return await deps.db.getLikeCount(input.articleId, input.commentId);
     }),
 
   userLike: protectedProcedure
@@ -49,6 +44,6 @@ export const likesRouter = router({
       })
     )
     .query(async ({ input, ctx }) => {
-      return await getUserLike(ctx.user!.id, input.articleId, input.commentId);
+      return await deps.db.getUserLike(ctx.user!.id, input.articleId, input.commentId);
     }),
 });

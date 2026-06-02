@@ -1,6 +1,8 @@
 import { router, publicProcedure } from "../_core/trpc";
 
-export const authRouter = router({
+// Auth router has no external dependencies — only uses ctx from trpc context.
+// Kept as a factory for consistency with the DI pattern.
+export const createAuthRouter = () => router({
   me: publicProcedure.query((opts) => opts.ctx.user),
   logout: publicProcedure.mutation(({ ctx }) => {
     return new Promise((resolve) => {
