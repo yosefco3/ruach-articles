@@ -1,14 +1,11 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
-import {
-  getSiteSettings,
-  updateSiteSettings,
-} from "../db";
+import type { RouterDeps } from "./context";
 
-export const settingsRouter = router({
+export const createSettingsRouter = (deps: RouterDeps) => router({
   get: publicProcedure.query(async () => {
-    return await getSiteSettings();
+    return await deps.db.getSiteSettings();
   }),
 
   update: adminProcedure
@@ -20,7 +17,7 @@ export const settingsRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      await updateSiteSettings(input);
-      return await getSiteSettings();
+      await deps.db.updateSiteSettings(input);
+      return await deps.db.getSiteSettings();
     }),
 });

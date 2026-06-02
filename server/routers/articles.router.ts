@@ -3,23 +3,9 @@ import { TRPCError } from "@trpc/server";
 import slugify from "slugify";
 import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure, writerProcedure } from "./middleware";
-import {
-  getArticles,
-  getArticleBySlug,
-  getArticleById,
-  createArticle,
-  updateArticle,
-  deleteArticle,
-  getAttachmentsByArticle,
-  createAttachment,
-  deleteAttachment,
-  reorderArticles,
-  getNextArticleInCategory,
-  getRandomArticle,
-} from "../db";
-import { sendArticleNewsletter } from "../newsletterEmail";
+import type { RouterDeps } from "./context";
 
-export const articlesRouter = router({
+export const createArticlesRouter = (deps: RouterDeps) => router({
   list: publicProcedure
     .input(
       z
@@ -32,7 +18,7 @@ export const articlesRouter = router({
     .query(async ({ input, ctx }) => {
       const isAdmin = ctx.user?.role === "admin";
       const all = isAdmin && input?.all;
-      const articles = await getArticles({
+      const articles = await deps.db.getArticles({
         category: input?.category,
         published: all ? undefined : true,
       });
@@ -42,9 +28,9 @@ export const articlesRouter = router({
   bySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
-      const article = await getArticleBySlug(input.slug);
+      const article = await deps.db.getArticleBySlug(input.slug);
       if (!article) return null;
-      const attachments = await getAttachmentsByArticle(article.id);
+      const attachments = await deps.db.getAttachmentsByArticle(article.id);
       return { ...article, attachments };
     }),
 
@@ -57,7 +43,7 @@ export const articlesRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return await getNextArticleInCategory(input.currentSlug, input.category);
+      return await deps.db.getNextArticleInCategory(input.currentSlug, input.category);
     }),
 
   // Get random article
@@ -68,7 +54,7 @@ export const articlesRouter = router({
       })
     )
     .query(async ({ input }) => {
-      return await getRandomArticle(input.excludeId);
+      return await deps.db.getRandomArticle(input.excludeId);
     }),
 
   create: writerProcedure
@@ -98,12 +84,12 @@ export const articlesRouter = router({
       }
       
       // Ensure slug uniqueness by appending a suffix if needed
-      const existing = await getArticleBySlug(slug);
+      const existing = await deps.db.getArticleBySlug(slug);
       if (existing) {
         slug = slug + "-" + Date.now().toString(36);
       }
       
-      return await createArticle({
+      return await deps.db.createArticle({
         ...input,
         slug,
         authorId: ctx.user!.dbId,
@@ -128,7 +114,7 @@ export const articlesRouter = router({
     )
     .mutation(async ({ input }) => {
       const { id, siteUrl: _siteUrl, ...data } = input;
-      const updated = await updateArticle(id, data);
+      const updated = await deps.db.updateArticle(id, data);
       return updated;
     }),
 
@@ -140,9 +126,9 @@ export const articlesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const article = await getArticleById(input.articleId);
+      const article = await deps.db.getArticleById(input.articleId);
       if (!article) throw new TRPCError({ code: "NOT_FOUND", message: "מאמר לא נמצא" });
-      await sendArticleNewsletter({
+      await deps.sendArticleNewsletter({
         title: article.title,
         excerpt: article.excerpt,
         slug: article.slug,
@@ -156,7 +142,7 @@ export const articlesRouter = router({
   delete: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      await deleteArticle(input.id);
+      await deps.db.deleteArticle(input.id);
       return { success: true };
     }),
 
@@ -167,7 +153,7 @@ export const articlesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      await reorderArticles(input.items);
+      await deps.db.reorderArticles(input.items);
       return { success: true };
     }),
   // Save attachment metadata after file upload to S3
@@ -181,7 +167,7 @@ export const articlesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      await createAttachment({
+      await deps.db.createAttachment({
         articleId: input.articleId,
         fileName: input.fileName,
         fileUrl: input.fileUrl,
@@ -193,7 +179,7 @@ export const articlesRouter = router({
   deleteAttachment: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
-      await deleteAttachment(input.id);
+      await deps.db.deleteAttachment(input.id);
       return { success: true };
     }),
 });

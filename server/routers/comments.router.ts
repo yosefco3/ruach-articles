@@ -2,20 +2,13 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { DEFAULT_FROM_EMAIL } from "@shared/const";
-import {
-  getCommentsByArticle,
-  getCommentById,
-  createComment,
-  deleteComment,
-  getArticleById,
-  getSiteSettings,
-} from "../db";
+import type { RouterDeps } from "./context";
 
-export const commentsRouter = router({
+export const createCommentsRouter = (deps: RouterDeps) => router({
   list: publicProcedure
     .input(z.object({ articleId: z.number() }))
     .query(async ({ input }) => {
-      return await getCommentsByArticle(input.articleId);
+      return await deps.db.getCommentsByArticle(input.articleId);
     }),
 
   create: protectedProcedure
@@ -28,7 +21,7 @@ export const commentsRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const comment = await createComment({
+      const comment = await deps.db.createComment({
         articleId: input.articleId,
         userId: ctx.user!.id,
         body: input.body,
@@ -37,13 +30,13 @@ export const commentsRouter = router({
 
       // Notify owner about new comment via email (fire-and-forget)
       try {
-        const article = await getArticleById(input.articleId);
+        const article = await deps.db.getArticleById(input.articleId);
         if (article) {
           const commenterName = ctx.user!.name || ctx.user!.email || "משתמש";
           const articleLink = input.siteUrl ? `${input.siteUrl}/article/${article.slug}` : `/article/${article.slug}`;
 
           // Send email if contactEmail is configured
-          const settings = await getSiteSettings();
+          const settings = await deps.db.getSiteSettings();
           const adminEmail = settings.contactEmail;
           if (adminEmail) {
             const { Resend } = await import("resend");
@@ -76,13 +69,13 @@ export const commentsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      const comment = await getCommentById(input.id);
+      const comment = await deps.db.getCommentById(input.id);
       if (!comment) throw new TRPCError({ code: "NOT_FOUND" });
       // Allow deletion by comment owner OR admin
       if (comment.userId !== ctx.user!.id && ctx.user!.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      await deleteComment(input.id);
+      await deps.db.deleteComment(input.id);
       return { success: true };
     }),
 });
