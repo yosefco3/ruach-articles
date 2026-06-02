@@ -23,7 +23,7 @@ export const createCommentsRouter = (deps: RouterDeps) => router({
     .mutation(async ({ input, ctx }) => {
       const comment = await deps.db.createComment({
         articleId: input.articleId,
-        userId: ctx.user!.id,
+        userId: ctx.user!.dbId,
         body: input.body,
         parentCommentId: input.parentCommentId,
       });
@@ -72,7 +72,7 @@ export const createCommentsRouter = (deps: RouterDeps) => router({
       const comment = await deps.db.getCommentById(input.id);
       if (!comment) throw new TRPCError({ code: "NOT_FOUND" });
       // Allow deletion by comment owner OR admin
-      if (comment.userId !== ctx.user!.id && ctx.user!.role !== "admin") {
+      if (comment.userId !== ctx.user!.dbId && ctx.user!.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
       await deps.db.deleteComment(input.id);

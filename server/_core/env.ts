@@ -36,6 +36,10 @@ const envSchema = z.object({
 
   // Contact form recipient — optional
   CONTACT_EMAIL_TO: z.string().optional(),
+
+  // Autodesk Forge (voice transcription) — optional
+  FORGE_API_KEY: z.string().optional(),
+  FORGE_API_URL: z.string().optional(),
 });
 
 function loadEnv() {
@@ -48,6 +52,9 @@ function loadEnv() {
 }
 
 export const env = loadEnv();
+
+/** @deprecated Use `env` (lowercase) */
+export const ENV = env;
 
 export type Env = z.infer<typeof envSchema>;
 
