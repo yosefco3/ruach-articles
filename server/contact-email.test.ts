@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers/index";
-import type { TrpcContext } from "./_core/context";
+import { publicCtx, adminCtx } from "./test-helpers/trpc";
 
+// NOTE: contact.ts imports getSiteSettings directly from ./db (it is not a deps-factory
+// router), so the harness's injected deps can't intercept it — we still vi.mock("./db")
+// here. Contexts come from the shared harness so they use the real AuthUser shape.
 
 // Mock db so no real DB is touched
 vi.mock("./db", () => ({
@@ -57,41 +60,8 @@ vi.mock("./newsletterEmail", () => ({
   sendArticleNewsletter: vi.fn().mockResolvedValue(undefined),
 }));
 
-function createPublicContext(): TrpcContext {
-  return {
-    user: null,
-    req: {
-      protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
-    res: {
-      clearCookie: vi.fn(),
-    } as unknown as TrpcContext["res"],
-  };
-}
-
-function createAdminContext(): TrpcContext {
-  return {
-    user: {
-      id: 1,
-      openId: "admin-open-id",
-      name: "Admin User",
-      email: "admin@ruach.test",
-      role: "admin",
-      avatarUrl: null,
-      bio: null,
-      guestPostApproved: false,
-      createdAt: new Date(),
-    },
-    req: {
-      protocol: "https",
-      headers: {},
-    } as TrpcContext["req"],
-    res: {
-      clearCookie: vi.fn(),
-    } as unknown as TrpcContext["res"],
-  };
-}
+const createPublicContext = () => publicCtx();
+const createAdminContext = () => adminCtx({ email: "admin@ruach.test" });
 
 describe("contact email feature", () => {
   describe("contact.getEmail", () => {
