@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-06-20T21:27:10",
+    "coverage%": 2,
+    "passed": 0,
+    "failed": 10
+  },
+  {
+    "timestamp": "2026-06-20T21:36:36",
+    "coverage%": 2,
+    "passed": 94,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-06-20T21:53:18",
+    "coverage%": 7,
+    "passed": 146,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-06-20T22:04:30",
+    "coverage%": 7,
+    "passed": 144,
+    "failed": 0
+  }
+]
