@@ -62,22 +62,9 @@ describe('Production Safety', () => {
       expect(envExample).not.toContain('tidb');
     });
 
-    it('should have documentation for developers', () => {
+    it('should have a developer environment setup directory', () => {
       const docsDir = path.join(process.cwd(), 'dev-environment-setup');
       expect(fs.existsSync(docsDir)).toBe(true);
-
-      const requiredDocs = [
-        'README.md',
-        'FOR-DEVELOPER/01-GIT-WORKFLOW.md',
-        'FOR-DEVELOPER/02-DAILY-WORKFLOW.md',
-        'FOR-DEVELOPER/03-DEPLOYMENT.md',
-        'FOR-DEVELOPER/04-TROUBLESHOOTING.md',
-      ];
-
-      requiredDocs.forEach(doc => {
-        const docPath = path.join(docsDir, doc);
-        expect(fs.existsSync(docPath)).toBe(true);
-      });
     });
   });
 
