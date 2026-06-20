@@ -44,3 +44,5 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
 | 2026-06-20 | Initial overview created (dev-kit bootstrap) | — |
+| 2026-06-20 | Vitest now loads `.env.local` so env-validated app modules no longer crash test files; repaired failing suite | `vitest.setup.ts`, `vitest.config.ts` |
+| 2026-06-20 | Added behavioural test layer for tRPC routers via a fake-deps harness over `createAppRouter` (coverage 2%→7%, 0→146 passing) | `server/test-helpers/trpc.ts`, `server/routers/*.router.test.ts` |

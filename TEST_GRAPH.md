@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-20 21:36_
+_נוצר אוטומטית ב: 2026-06-20 21:53_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 169 |
-| מכוסים / covered | 5 |
-| ללא טסט / uncovered | 164 |
-| כיסוי / coverage | 2% →0% |
-| טסטים עוברים / passing | 94 ✅ |
+| קבצי קוד / source files | 170 |
+| מכוסים / covered | 12 |
+| ללא טסט / uncovered | 158 |
+| כיסוי / coverage | 7% ↑5% |
+| טסטים עוברים / passing | 146 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -18,6 +18,7 @@ _נוצר אוטומטית ב: 2026-06-20 21:36_
 | קובץ קוד / source | קובץ טסט / test |
 |---|---|
 | `(no source found for about-image.test.ts)` | `server/about-image.test.ts` |
+| `(no source found for admin-small-routers.test.ts)` | `server/routers/admin-small-routers.test.ts` |
 | `(no source found for auth.logout.test.ts)` | `server/auth.logout.test.ts` |
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |
 | `(no source found for contact-email.test.ts)` | `server/contact-email.test.ts` |
@@ -30,9 +31,17 @@ _נוצר אוטומטית ב: 2026-06-20 21:36_
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
+| `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
+| `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
+| `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
+| `server/routers/featured.router.ts` | `server/routers/featured.router.test.ts` |
+| `server/routers/guestPosts.router.ts` | `server/routers/guestPosts.router.test.ts` |
+| `server/routers/likes.router.ts` | `server/routers/likes.router.test.ts` |
+| `server/routers/profiles.router.ts` | `server/routers/profiles.router.test.ts` |
+| `server/routers/settings.router.ts` | `server/routers/settings.router.test.ts` |
 | `server/seo.ts` | `server/seo.test.ts` |
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
 
@@ -46,20 +55,13 @@ _נוצר אוטומטית ב: 2026-06-20 21:36_
 | 🔴 HIGH | `server/_core/startup/routes.ts` |
 | 🔴 HIGH | `server/_core/startup/seo-routes.ts` |
 | 🔴 HIGH | `server/routers/about.router.ts` |
-| 🔴 HIGH | `server/routers/articles.router.ts` |
 | 🔴 HIGH | `server/routers/auth.router.ts` |
 | 🔴 HIGH | `server/routers/categories.router.ts` |
-| 🔴 HIGH | `server/routers/comments.router.ts` |
 | 🔴 HIGH | `server/routers/context.ts` |
-| 🔴 HIGH | `server/routers/featured.router.ts` |
-| 🔴 HIGH | `server/routers/guestPosts.router.ts` |
 | 🔴 HIGH | `server/routers/guestWriters.router.ts` |
 | 🔴 HIGH | `server/routers/index.ts` |
-| 🔴 HIGH | `server/routers/likes.router.ts` |
 | 🔴 HIGH | `server/routers/middleware.ts` |
 | 🔴 HIGH | `server/routers/newsletter.router.ts` |
-| 🔴 HIGH | `server/routers/profiles.router.ts` |
-| 🔴 HIGH | `server/routers/settings.router.ts` |
 | 🔴 HIGH | `server/routers/users.router.ts` |
 | 🟡 MEDIUM | `client/src/App.tsx` |
 | 🟡 MEDIUM | `client/src/_core/hooks/useAuth.ts` |
@@ -192,6 +194,7 @@ _נוצר אוטומטית ב: 2026-06-20 21:36_
 | 🟡 MEDIUM | `server/imageCompression.ts` |
 | 🟡 MEDIUM | `server/newsletterEmail.ts` |
 | 🟡 MEDIUM | `server/storage.ts` |
+| 🟡 MEDIUM | `server/test-helpers/trpc.ts` |
 | 🟡 MEDIUM | `server/upload.ts` |
 | 🟡 MEDIUM | `shared/_core/errors.ts` |
 | 🟡 MEDIUM | `shared/const.ts` |
