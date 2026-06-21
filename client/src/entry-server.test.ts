@@ -11,6 +11,13 @@ describe("entry-server render", () => {
     expect(result.helmetContext).toBeTypeOf("object");
   });
 
+  it("resolves lazy route content (prerender awaits Suspense)", async () => {
+    // The /iching page is React.lazy; renderToString would only emit the
+    // Suspense fallback. prerender must include the actual page title.
+    const { html } = await render("/iching");
+    expect(html).toContain("אִי צִ׳ינְג");
+  });
+
   it("renders different routes without crashing in node", async () => {
     for (const url of ["/", "/iching"]) {
       const { html } = await render(url);

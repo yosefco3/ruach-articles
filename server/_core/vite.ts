@@ -6,6 +6,8 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { applySeoToHtml } from "../seo";
+import { makeSsrFetch, renderHtml } from "./ssr";
+import type { render as RenderFn } from "../../client/src/entry-server";
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -21,31 +23,53 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  const clientTemplate = path.resolve(
+    import.meta.dirname,
+    "../..",
+    "client",
+    "index.html"
+  );
+
+  const loadTemplate = async (url: string) => {
+    // always reload index.html from disk in case it changes
+    let template = await fs.promises.readFile(clientTemplate, "utf-8");
+    template = template.replace(
+      `src="/src/entry-client.tsx"`,
+      `src="/src/entry-client.tsx?v=${nanoid()}"`
+    );
+    return vite.transformIndexHtml(url, template);
+  };
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "../..",
-        "client",
-        "index.html"
-      );
+      const template = await loadTemplate(url);
 
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/entry-client.tsx"`,
-        `src="/src/entry-client.tsx?v=${nanoid()}"`
-      );
-      let page = await vite.transformIndexHtml(url, template);
-      // Inject SEO meta tags based on route (article/category data)
-      page = applySeoToHtml(page, req);
+      // Load the SSR entry through Vite (transpiled + HMR-aware) and render.
+      const { render } = (await vite.ssrLoadModule(
+        "/src/entry-server.tsx"
+      )) as { render: typeof RenderFn };
+      const { html: appHtml } = await render(url, {
+        fetch: makeSsrFetch(req),
+      });
+
+      // head/state filled by steps 07/06; appHtml goes into #root.
+      const page = renderHtml(template, { appHtml });
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
+      // SSR failed — fall back to the SPA shell with string-injected SEO so the
+      // page still loads (client renders) instead of erroring.
       vite.ssrFixStacktrace(e as Error);
-      next(e);
+      console.error("[SSR] dev render failed, serving SPA fallback:", e);
+      try {
+        let page = await loadTemplate(url);
+        page = applySeoToHtml(page, req);
+        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      } catch (fallbackErr) {
+        next(fallbackErr);
+      }
     }
   });
 }
