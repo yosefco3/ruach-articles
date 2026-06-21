@@ -3,6 +3,7 @@ import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
 import path from "path";
+import { pathToFileURL } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { applySeoToHtml } from "../seo";
@@ -16,8 +17,14 @@ export async function setupVite(app: Express, server: Server) {
     allowedHosts: true as const,
   };
 
+  // vite.config now exports a function (command-aware); resolve it for serve.
+  const resolvedConfig =
+    typeof viteConfig === "function"
+      ? await viteConfig({ command: "serve", mode: "development" })
+      : viteConfig;
+
   const vite = await createViteServer({
-    ...viteConfig,
+    ...resolvedConfig,
     configFile: false,
     server: serverOptions,
     appType: "custom",
@@ -74,7 +81,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
-export function serveStatic(app: Express) {
+export async function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
       ? path.resolve(import.meta.dirname, "../..", "dist", "public")
@@ -85,18 +92,45 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  const indexPath = path.resolve(distPath, "index.html");
+  const entryServerPath = path.resolve(
+    distPath,
+    "..",
+    "server",
+    "entry-server.js"
+  );
 
-  // fall through to index.html if the file doesn't exist
-  // SEO: read the file, inject meta tags, then send
+  // Load the built SSR bundle once (not per request). file:// URL keeps the
+  // dynamic import portable; the literal-free path stays a runtime import so
+  // esbuild won't try to bundle the separately-built entry-server.js.
+  const { render } = (await import(pathToFileURL(entryServerPath).href)) as {
+    render: typeof RenderFn;
+  };
+
+  // Real static assets first, so /assets/*.js never hit the renderer.
+  // index:false so "/" falls through to the SSR handler instead of being
+  // served as the raw (empty-#root) index.html.
+  app.use(express.static(distPath, { index: false }));
+
   app.use("*", async (req, res) => {
     try {
-      const indexPath = path.resolve(distPath, "index.html");
-      let html = await fs.promises.readFile(indexPath, "utf-8");
-      html = applySeoToHtml(html, req);
-      res.status(200).set({ "Content-Type": "text/html" }).send(html);
-    } catch {
-      res.sendFile(path.resolve(distPath, "index.html"));
+      const template = await fs.promises.readFile(indexPath, "utf-8");
+      const { html: appHtml } = await render(req.originalUrl, {
+        fetch: makeSsrFetch(req),
+      });
+      // head/state filled by steps 07/06; appHtml goes into #root.
+      const page = renderHtml(template, { appHtml });
+      res.status(200).set({ "Content-Type": "text/html" }).send(page);
+    } catch (e) {
+      // SSR failed — serve the built SPA shell with string-injected SEO.
+      console.error("[SSR] prod render failed, serving SPA fallback:", e);
+      try {
+        let html = await fs.promises.readFile(indexPath, "utf-8");
+        html = applySeoToHtml(html, req);
+        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+      } catch {
+        res.sendFile(indexPath);
+      }
     }
   });
 }

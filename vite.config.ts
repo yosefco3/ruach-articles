@@ -149,10 +149,16 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin()];
-
-export default defineConfig({
-  plugins,
+export default defineConfig(({ command }) => ({
+  // jsxLocPlugin injects jsxDEV() source-location calls — a dev-only debug aid.
+  // In a production build those land in the SSR bundle, where React's
+  // jsx-dev-runtime has no jsxDEV under NODE_ENV=production (crashes at render).
+  // Keep it to `serve` (dev) only.
+  plugins: [
+    react(),
+    tailwindcss(),
+    ...(command === "serve" ? [jsxLocPlugin()] : []),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -184,4 +190,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
