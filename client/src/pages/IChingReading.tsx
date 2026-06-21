@@ -22,6 +22,15 @@ import {
   type Sel,
   type IChingContent,
 } from "@/pages/iching/model";
+import { runReveal } from "@/pages/iching/reveal";
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 type Phase = "intro" | "casting" | "result";
 
@@ -97,34 +106,11 @@ export default function IChingReading() {
   });
   const [sel, setSel] = useState<Sel>(DEFAULT_SEL);
 
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const clearTimers = () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-  };
-  useEffect(() => clearTimers, []);
-
-  function runThrow(i: number, r: Reading) {
-    if (i >= 6) {
-      setPhase("result");
-      return;
-    }
-    setThrowIndex(i);
-    setThrowSum(null);
-    setCoins({ faces: null, flipping: true });
-    timers.current.push(
-      setTimeout(() => {
-        const toss = r.tosses[i];
-        setCoins({ faces: toss.coins, flipping: false });
-        setRevealCount(i + 1);
-        setThrowSum(toss.sum);
-        timers.current.push(setTimeout(() => runThrow(i + 1, r), BETWEEN_MS));
-      }, FLIP_MS),
-    );
-  }
+  const cancelReveal = useRef<() => void>(() => {});
+  useEffect(() => () => cancelReveal.current(), []);
 
   function onCast() {
-    clearTimers();
+    cancelReveal.current();
     const r = cast();
     setReading(r);
     setQSaved(question);
@@ -132,11 +118,28 @@ export default function IChingReading() {
     setRevealCount(0);
     setCoins({ faces: null, flipping: false });
     setPhase("casting");
-    runThrow(0, r);
+
+    cancelReveal.current = runReveal(
+      {
+        onFlipStart: (i) => {
+          setThrowIndex(i);
+          setThrowSum(null);
+          setCoins({ faces: null, flipping: true });
+        },
+        onSettle: (i) => {
+          const toss = r.tosses[i];
+          setCoins({ faces: toss.coins, flipping: false });
+          setRevealCount(i + 1);
+          setThrowSum(toss.sum);
+        },
+        onDone: () => setPhase("result"),
+      },
+      { flipMs: FLIP_MS, betweenMs: BETWEEN_MS, reducedMotion: prefersReducedMotion() },
+    );
   }
 
   function onSkip() {
-    clearTimers();
+    cancelReveal.current();
     if (reading) {
       setRevealCount(6);
       setPhase("result");
@@ -144,7 +147,7 @@ export default function IChingReading() {
   }
 
   function onReset() {
-    clearTimers();
+    cancelReveal.current();
     setPhase("intro");
     setReading(null);
     setRevealCount(0);
@@ -162,6 +165,7 @@ export default function IChingReading() {
   return (
     <div
       dir="rtl"
+      className="iching-root"
       style={{
         minHeight: "100vh",
         background: "oklch(0.97 0.014 85)",
