@@ -73,6 +73,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 </Link>
               ))}
               <Link
+                href="/iching"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/iching" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                אִי צִ׳ינְג
+              </Link>
+              <Link
                 href="/about"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
                   location === "/about" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
@@ -193,6 +201,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               </Link>
             ))}
             <Link
+              href="/iching"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              אִי צִ׳ינְג
+            </Link>
+            <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -248,6 +263,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.name}
                 </Link>
               ))}
+              <Link
+                href="/iching"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                אִי צִ׳ינְג
+              </Link>
               <Link
                 href="/about"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
