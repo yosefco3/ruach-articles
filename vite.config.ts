@@ -166,6 +166,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Emit dist/public/.vite/manifest.json so the prod server (step 05) can map
+    // entry-client to its hashed <script>/<link> assets for injection.
+    manifest: true,
   },
   server: {
     host: true,
