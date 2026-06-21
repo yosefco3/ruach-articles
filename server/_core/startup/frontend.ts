@@ -10,6 +10,6 @@ export async function mountFrontend(
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    await serveStatic(app);
   }
 }

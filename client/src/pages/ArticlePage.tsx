@@ -1,8 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useParams, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Helmet } from "react-helmet-async";
-import { SITE_URL_PRODUCTION } from "@shared/const";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Button } from "@/components/ui/button";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Loader2, Calendar, User, MessageCircle, ArrowRight, Heart, Download, ImageDown } from "lucide-react";
@@ -19,6 +18,7 @@ export default function ArticlePage() {
 
   const { getCategoryLabel, getCategoryBadgeStyle } = useDynamicCategories();
   const { data: article, isLoading, error } = trpc.articles.bySlug.useQuery({ slug: params.slug });
+  useDocumentTitle(article ? `${article.title} – רוח חכמה` : undefined);
 
   const { data: comments, isLoading: commentsLoading } = trpc.comments.list.useQuery(
     { articleId: article?.id ?? 0 },
@@ -89,19 +89,6 @@ export default function ArticlePage() {
 
   return (
     <div>
-      <Helmet>
-        <title>{article.title} – רוח חכמה</title>
-        <meta name="description" content={article.excerpt || `מאמר מאת ${article.authorName || "יוסף כהן"} בנושא ${article.category}`} />
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.excerpt || `מאמר מאת ${article.authorName || "יוסף כהן"} בנושא ${article.category}`} />
-        <meta property="og:type" content="article" />
-        <meta property="og:url" content={`${SITE_URL_PRODUCTION}/article/${article.slug}`} />
-        <meta property="og:locale" content="he_IL" />
-        {article.coverImage && (
-          <meta property="og:image" content={article.coverImage} />
-        )}
-        <link rel="canonical" href={`${SITE_URL_PRODUCTION}/article/${article.slug}`} />
-      </Helmet>
       {/* Cover Image */}
       {article.coverImage && (
         <div className="w-full pt-6 pb-2">

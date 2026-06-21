@@ -1,8 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import ArticleCard from "@/components/ArticleCard";
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { SITE_URL_PRODUCTION } from "@shared/const";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Loader2, Feather, Mail, Send, BookOpen, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 export default function Home() {
+  useDocumentTitle("רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי");
   const [searchQuery, setSearchQuery] = useState("");
   const { data: settings } = trpc.settings.get.useQuery();
   const { data: categoriesWithCounts, isLoading: catsLoading } =
@@ -53,16 +53,6 @@ export default function Home() {
 
   return (
     <div>
-      <Helmet>
-        <title>רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי</title>
-        <meta name="description" content="האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי." />
-        <meta property="og:title" content="רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי" />
-        <meta property="og:description" content="האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={SITE_URL_PRODUCTION} />
-        <meta property="og:locale" content="he_IL" />
-        <link rel="canonical" href={SITE_URL_PRODUCTION} />
-      </Helmet>
       {/* ── Hero ── */}
       <section className="hero-gradient py-20 px-4">
         <div className="container text-center">

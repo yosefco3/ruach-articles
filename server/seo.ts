@@ -67,6 +67,25 @@ export function injectMetaTags(html: string, seo: SeoData): string {
   );
 }
 
+// ─── Static per-route SEO ───────────────────────────────────────────────────
+
+const ICHING_SEO: SeoData = {
+  title: "קריאת אי צ׳ינג — רוּחַ",
+  description:
+    "הטל מטבעות וקבל קריאת אי-צ'ינג חיה בעברית — סֵפֶר הַתְּמוּרוֹת, פרשנות מעמיקה לכל הקסגרמה וקו משתנה.",
+  ogTitle: "קריאת אי צ׳ינג — רוּחַ",
+  ogDescription:
+    "הטל מטבעות וקבל קריאת אי-צ'ינג חיה בעברית — סֵפֶר הַתְּמוּרוֹת.",
+  ogUrl: `${SITE_URL_PRODUCTION}/iching`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/iching`,
+};
+
+const STATIC_ROUTE_SEO: Record<string, SeoData> = {
+  "/iching": ICHING_SEO,
+};
+
 // ─── Route Matchers ─────────────────────────────────────────────────────────
 
 function matchArticleSlug(pathname: string): string | null {
@@ -161,12 +180,14 @@ export async function seoMiddleware(
     const articleSlug = matchArticleSlug(pathname);
     const categorySlug = matchCategorySlug(pathname);
 
-    if (articleSlug) {
+    if (STATIC_ROUTE_SEO[pathname]) {
+      seo = STATIC_ROUTE_SEO[pathname];
+    } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
     } else if (categorySlug) {
       seo = await resolveCategorySeo(categorySlug);
     }
-    // Home page, about, contact — use defaults (already in index.html)
+    // Home, about, contact — fall back to DEFAULT_SEO below.
   } catch (err) {
     console.warn("[SEO] Error resolving SEO data:", err);
   }

@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-21 18:06_
+_נוצר אוטומטית ב: 2026-06-21 20:24_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 182 |
-| מכוסים / covered | 16 |
-| ללא טסט / uncovered | 166 |
-| כיסוי / coverage | 8% →0% |
-| טסטים עוברים / passing | 184 ✅ |
+| קבצי קוד / source files | 188 |
+| מכוסים / covered | 19 |
+| ללא טסט / uncovered | 169 |
+| כיסוי / coverage | 10% ↑3% |
+| טסטים עוברים / passing | 193 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -33,8 +33,11 @@ _נוצר אוטומטית ב: 2026-06-21 18:06_
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
+| `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
+| `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
+| `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
@@ -139,14 +142,17 @@ _נוצר אוטומטית ב: 2026-06-21 18:06_
 | 🟡 MEDIUM | `client/src/components/ui/tooltip.tsx` |
 | 🟡 MEDIUM | `client/src/const.ts` |
 | 🟡 MEDIUM | `client/src/contexts/ThemeContext.tsx` |
+| 🟡 MEDIUM | `client/src/entry-client.tsx` |
 | 🟡 MEDIUM | `client/src/hooks/domain/useArticles.ts` |
 | 🟡 MEDIUM | `client/src/hooks/domain/useCategories.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useComposition.ts` |
+| 🟡 MEDIUM | `client/src/hooks/useDocumentTitle.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useDynamicCategories.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useMobile.tsx` |
 | 🟡 MEDIUM | `client/src/hooks/usePersistFn.ts` |
 | 🟡 MEDIUM | `client/src/lib/categories.ts` |
 | 🟡 MEDIUM | `client/src/lib/trpc.ts` |
+| 🟡 MEDIUM | `client/src/lib/trpcClient.ts` |
 | 🟡 MEDIUM | `client/src/lib/utils.ts` |
 | 🟡 MEDIUM | `client/src/pages/About.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleForm.tsx` |
@@ -177,6 +183,7 @@ _נוצר אוטומטית ב: 2026-06-21 18:06_
 | 🟡 MEDIUM | `server/_core/llm.ts` |
 | 🟡 MEDIUM | `server/_core/map.ts` |
 | 🟡 MEDIUM | `server/_core/oauth.ts` |
+| 🟡 MEDIUM | `server/_core/ssr.ts` |
 | 🟡 MEDIUM | `server/_core/startup/express.ts` |
 | 🟡 MEDIUM | `server/_core/startup/frontend.ts` |
 | 🟡 MEDIUM | `server/_core/startup/server.ts` |
@@ -211,7 +218,6 @@ _נוצר אוטומטית ב: 2026-06-21 18:06_
 | 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | ⚪ LOW | `client/src/hooks/domain/index.ts` |
-| ⚪ LOW | `client/src/main.tsx` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
 | ⚪ LOW | `server/_core/auth/types.ts` |
 | ⚪ LOW | `server/_core/index.ts` |

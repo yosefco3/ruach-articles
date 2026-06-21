@@ -5,6 +5,10 @@ const templateRoot = path.resolve(import.meta.dirname);
 
 export default defineConfig({
   root: templateRoot,
+  // App .tsx files rely on the automatic JSX runtime (Vite's React plugin in the
+  // app build); esbuild defaults to the classic runtime, which needs React in
+  // scope. Match the app so .tsx tests transform identically.
+  esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
       "@": path.resolve(templateRoot, "client", "src"),
@@ -21,6 +25,8 @@ export default defineConfig({
       "shared/**/*.spec.ts",
       "client/**/*.test.ts",
       "client/**/*.spec.ts",
+      "client/**/*.test.tsx",
+      "client/**/*.spec.tsx",
     ],
     setupFiles: ["./vitest.setup.ts"],
   },

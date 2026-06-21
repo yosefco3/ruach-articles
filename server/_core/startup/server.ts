@@ -30,6 +30,10 @@ export async function startListening(server: Server): Promise<void> {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Loopback origin for SSR-side tRPC fetches (makeSsrFetch), so prefetch hits
+  // this process directly instead of round-tripping through the public domain.
+  process.env.SSR_INTERNAL_ORIGIN = `http://127.0.0.1:${port}`;
+
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });

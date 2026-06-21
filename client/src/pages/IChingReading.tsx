@@ -5,6 +5,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   cast,
   SUM_NAMES,
@@ -95,6 +96,7 @@ function TrigramChips({
 
 export default function IChingReading() {
   const { data, isLoading } = trpc.iching.getContent.useQuery();
+  useDocumentTitle("קריאת אי צ׳ינג — רוּחַ");
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [question, setQuestion] = useState(""); // לעולם לא נשלח לשרת
