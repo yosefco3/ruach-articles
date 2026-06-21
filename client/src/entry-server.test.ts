@@ -24,4 +24,15 @@ describe("entry-server render", () => {
       expect(html.length).toBeGreaterThan(0);
     }
   });
+
+  it("renders deterministically (no hydration-mismatch sources)", async () => {
+    // Same route rendered twice must produce identical markup; a difference
+    // would mean a non-deterministic value (Math.random/new Date) in a public
+    // render path, which causes hydration mismatches.
+    for (const url of ["/", "/iching"]) {
+      const a = await render(url);
+      const b = await render(url);
+      expect(a.html).toEqual(b.html);
+    }
+  });
 });
