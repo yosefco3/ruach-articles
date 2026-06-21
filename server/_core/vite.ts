@@ -36,8 +36,8 @@ export async function setupVite(app: Express, server: Server) {
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`
+        `src="/src/entry-client.tsx"`,
+        `src="/src/entry-client.tsx?v=${nanoid()}"`
       );
       let page = await vite.transformIndexHtml(url, template);
       // Inject SEO meta tags based on route (article/category data)
