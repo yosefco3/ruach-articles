@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -150,6 +150,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                           <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
                             <User className="w-4 h-4" />
                             <span>ניהול משתמשים</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/iching" className="flex items-center gap-2 cursor-pointer">
+                            <Sparkles className="w-4 h-4" />
+                            <span>אִי צִ׳ינְג</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
