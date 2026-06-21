@@ -66,3 +66,10 @@ export {
   getNewsletterSubscribers, deleteNewsletterSubscriber,
   searchNewsletterSubscribers,
 } from "./db/newsletter";
+
+// I Ching
+export {
+  listHexagramTexts, getHexagramText, upsertHexagramText,
+  listTrigramTexts, upsertTrigramText,
+  getIchingIntro, updateIchingIntro,
+} from "./db/iching";
