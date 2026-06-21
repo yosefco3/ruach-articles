@@ -7,8 +7,6 @@ import { runSsrPrefetch } from "./routes/ssrData";
 
 export interface RenderResult {
   html: string;
-  // Populated by react-helmet-async during render; consumed in step 07.
-  helmetContext: Record<string, unknown>;
   // <script> that seeds window.__APP_STATE__ for client hydration.
   state: string;
 }
@@ -59,13 +57,10 @@ export async function render(
     console.error("[SSR] prefetch failed:", e);
   }
 
-  const helmetContext: Record<string, unknown> = {};
-
   const { prelude } = await prerenderToNodeStream(
     <AppTree
       queryClient={queryClient}
       trpcClient={trpcClient}
-      helmetContext={helmetContext}
       location={url}
     />,
     {
@@ -84,5 +79,5 @@ export async function render(
   ).replace(/</g, "\\u003c");
   const state = `<script>window.__APP_STATE__=${serialized}</script>`;
 
-  return { html, helmetContext, state };
+  return { html, state };
 }

@@ -29,7 +29,6 @@ describe("AppTree SSR-safety", () => {
       <AppTree
         queryClient={queryClient}
         trpcClient={trpcClient}
-        helmetContext={{}}
         location="/iching"
       />
     );
@@ -47,7 +46,6 @@ describe("AppTree SSR-safety", () => {
         <AppTree
           queryClient={queryClient}
           trpcClient={trpcClient}
-          helmetContext={{}}
           location={location}
         />
       );

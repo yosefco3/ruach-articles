@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HelmetProvider } from "react-helmet-async";
 import { Router } from "wouter";
 import { trpc } from "@/lib/trpc";
 import App from "./App";
@@ -7,31 +6,26 @@ import App from "./App";
 export interface AppTreeProps {
   queryClient: QueryClient;
   trpcClient: ReturnType<typeof trpc.createClient>;
-  /** `{}` on the server (helmet fills it); leave undefined on the client. */
-  helmetContext?: object;
   /** `ssrPath` for wouter on the server; undefined on the client (uses window.location). */
   location?: string;
 }
 
 /**
  * Single source of truth for the React tree + providers, rendered identically
- * on the server (`renderToString`) and the client (`hydrateRoot`). Providers are
+ * on the server (prerender) and the client (`hydrateRoot`). Providers are
  * injected so the same tree is reused without duplicating the provider stack.
+ *
+ * The document <head> is rendered server-side by seo.ts (applySeoToHtml) and
+ * kept current on the client via useDocumentTitle — react-helmet-async is not
+ * used because it does not populate its context under React 19 prerender.
  */
-export function AppTree({
-  queryClient,
-  trpcClient,
-  helmetContext,
-  location,
-}: AppTreeProps) {
+export function AppTree({ queryClient, trpcClient, location }: AppTreeProps) {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <HelmetProvider context={helmetContext}>
-          <Router ssrPath={location}>
-            <App />
-          </Router>
-        </HelmetProvider>
+        <Router ssrPath={location}>
+          <App />
+        </Router>
       </QueryClientProvider>
     </trpc.Provider>
   );

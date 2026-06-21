@@ -62,8 +62,10 @@ export async function setupVite(app: Express, server: Server) {
         fetch: makeSsrFetch(req),
       });
 
-      // head filled by step 07; appHtml goes into #root, state seeds the cache.
-      const page = renderHtml(template, { appHtml, state });
+      // appHtml -> #root, state seeds the cache; per-route <head> is injected
+      // by applySeoToHtml (the SSR head source — helmet is client-only).
+      let page = renderHtml(template, { appHtml, state });
+      page = applySeoToHtml(page, req);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       // SSR failed — fall back to the SPA shell with string-injected SEO so the
@@ -118,8 +120,10 @@ export async function serveStatic(app: Express) {
       const { html: appHtml, state } = await render(req.originalUrl, {
         fetch: makeSsrFetch(req),
       });
-      // head filled by step 07; appHtml goes into #root, state seeds the cache.
-      const page = renderHtml(template, { appHtml, state });
+      // appHtml -> #root, state seeds the cache; per-route <head> is injected
+      // by applySeoToHtml (the SSR head source — helmet is client-only).
+      let page = renderHtml(template, { appHtml, state });
+      page = applySeoToHtml(page, req);
       res.status(200).set({ "Content-Type": "text/html" }).send(page);
     } catch (e) {
       // SSR failed — serve the built SPA shell with string-injected SEO.
