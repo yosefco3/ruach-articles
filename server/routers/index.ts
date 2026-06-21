@@ -14,6 +14,7 @@ import { createProfilesRouter } from "./profiles.router";
 import { createUsersRouter } from "./users.router";
 import { createFeaturedRouter } from "./featured.router";
 import { createAuthRouter } from "./auth.router";
+import { createIchingRouter } from "./iching.router";
 import type { RouterDeps } from "./context";
 
 /**
@@ -36,6 +37,7 @@ export const createAppRouter = (deps: RouterDeps) => router({
   categories: createCategoriesRouter(deps),
   newsletter: createNewsletterRouter(deps),
   featured: createFeaturedRouter(deps),
+  iching: createIchingRouter(deps),
 });
 
 // Convenience: create with default deps for backward compatibility
