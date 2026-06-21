@@ -58,12 +58,12 @@ export async function setupVite(app: Express, server: Server) {
       const { render } = (await vite.ssrLoadModule(
         "/src/entry-server.tsx"
       )) as { render: typeof RenderFn };
-      const { html: appHtml } = await render(url, {
+      const { html: appHtml, state } = await render(url, {
         fetch: makeSsrFetch(req),
       });
 
-      // head/state filled by steps 07/06; appHtml goes into #root.
-      const page = renderHtml(template, { appHtml });
+      // head filled by step 07; appHtml goes into #root, state seeds the cache.
+      const page = renderHtml(template, { appHtml, state });
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       // SSR failed — fall back to the SPA shell with string-injected SEO so the
@@ -115,11 +115,11 @@ export async function serveStatic(app: Express) {
   app.use("*", async (req, res) => {
     try {
       const template = await fs.promises.readFile(indexPath, "utf-8");
-      const { html: appHtml } = await render(req.originalUrl, {
+      const { html: appHtml, state } = await render(req.originalUrl, {
         fetch: makeSsrFetch(req),
       });
-      // head/state filled by steps 07/06; appHtml goes into #root.
-      const page = renderHtml(template, { appHtml });
+      // head filled by step 07; appHtml goes into #root, state seeds the cache.
+      const page = renderHtml(template, { appHtml, state });
       res.status(200).set({ "Content-Type": "text/html" }).send(page);
     } catch (e) {
       // SSR failed — serve the built SPA shell with string-injected SEO.

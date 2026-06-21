@@ -1,14 +1,25 @@
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
-import { QueryClient } from "@tanstack/react-query";
+import { hydrate, QueryClient } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
 import { createRoot, hydrateRoot } from "react-dom/client";
+import superjson from "superjson";
 import { AppTree } from "./AppTree";
 import { getLoginUrl } from "./const";
 import { makeTrpcClient } from "./lib/trpcClient";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  // Match the server's QueryClient so hydrated data isn't refetched on mount.
+  defaultOptions: { queries: { staleTime: 60_000 } },
+});
+
+// Seed the cache from the server-dehydrated state before the first render so
+// hydration markup matches and no duplicate requests fire.
+const appState = (window as { __APP_STATE__?: unknown }).__APP_STATE__;
+if (appState) {
+  hydrate(queryClient, superjson.deserialize(appState as never));
+}
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
