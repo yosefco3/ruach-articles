@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -72,6 +72,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.name}
                 </Link>
               ))}
+              <Link
+                href="/iching"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/iching" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                אִי צִ׳ינְג
+              </Link>
               <Link
                 href="/about"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
@@ -144,6 +152,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                             <span>ניהול משתמשים</span>
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/iching" className="flex items-center gap-2 cursor-pointer">
+                            <Sparkles className="w-4 h-4" />
+                            <span>אִי צִ׳ינְג</span>
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
@@ -192,6 +206,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 {cat.name}
               </Link>
             ))}
+            <Link
+              href="/iching"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              אִי צִ׳ינְג
+            </Link>
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
@@ -248,6 +269,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.name}
                 </Link>
               ))}
+              <Link
+                href="/iching"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                אִי צִ׳ינְג
+              </Link>
               <Link
                 href="/about"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"

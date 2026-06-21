@@ -8,6 +8,7 @@ export const LazyAbout = lazy(() => import("../pages/About"));
 export const LazyContact = lazy(() => import("../pages/Contact"));
 export const LazyGuestPostForm = lazy(() => import("../pages/GuestPostForm"));
 export const LazyUserProfile = lazy(() => import("../pages/UserProfile"));
+export const LazyIChing = lazy(() => import("../pages/IChingReading"));
 
 // ── Admin pages (separate chunk) ──────────────────────────
 export const LazyAdminPage = lazy(() => import("../pages/AdminPage"));
@@ -18,3 +19,4 @@ export const LazyAdminGuestPosts = lazy(() => import("../pages/AdminGuestPosts")
 export const LazyAdminNewsletter = lazy(() => import("../pages/AdminNewsletter"));
 export const LazyAdminSettings = lazy(() => import("../pages/AdminSettings"));
 export const LazyAdminUsers = lazy(() => import("../pages/AdminUsers"));
+export const LazyAdminIChing = lazy(() => import("../pages/AdminIChing"));

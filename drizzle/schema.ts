@@ -159,3 +159,48 @@ export const featuredArticle = mysqlTable("featuredArticle", {
 
 export type FeaturedArticle = typeof featuredArticle.$inferSelect;
 export type InsertFeaturedArticle = typeof featuredArticle.$inferInsert;
+
+// ── I Ching ─────────────────────────────────────────────
+// טקסט פירוש בלבד. המבנה (טריגרמות/הקסגרמות/lookup) חי ב-shared/iching.
+
+// 3 אזורי העריכה של מסך האדמין (ראה STYLE_GUIDE.md). הכותרת (שם+מבנה טריגרמות)
+// נגזרת מ-shared/iching ואינה נשמרת כאן.
+export const ichingHexagramText = mysqlTable("ichingHexagramText", {
+  number: int("number").primaryKey(), // 1..64, תואם King Wen ב-shared
+  name: varchar("name", { length: 128 }).default("").notNull(), // override לשם המנוקד; ריק = ברירת המחדל מ-shared
+  trigramExplanation: text("trigramExplanation").notNull(), // "הטריגרמות" — ניתוח שתי הטריגרמות
+  interpretation: text("interpretation").notNull(), // "פירוש ההקסגרמה" — HTML עשיר (מסרים מרכזיים ככותרות + יישום מעשי)
+  changingLinesNote: text("changingLinesNote").default("").notNull(), // "קווים משתנים" — הערה אופציונלית
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IchingHexagramText = typeof ichingHexagramText.$inferSelect;
+export type InsertIchingHexagramText = typeof ichingHexagramText.$inferInsert;
+
+export const ichingTrigramText = mysqlTable("ichingTrigramText", {
+  trigramKey: varchar("trigramKey", { length: 16 }).primaryKey(), // qian, kun, ...
+  name: varchar("name", { length: 64 }).default("").notNull(), // override לשם; ריק = ברירת המחדל מ-shared
+  element: varchar("element", { length: 64 }).default("").notNull(), // override ליסוד (אֵשׁ/מַיִם…); מזין גם את תווית היחס
+  attr: varchar("attr", { length: 128 }).default("").notNull(), // override לתכונה
+  description: text("description").notNull(), // HTML עשיר (TipTap) — נערך ב-RichTextEditor כמו interpretation
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IchingTrigramText = typeof ichingTrigramText.$inferSelect;
+export type InsertIchingTrigramText = typeof ichingTrigramText.$inferInsert;
+
+// ברירות המחדל זהות לאב-טיפוס.
+export const ichingIntro = mysqlTable("ichingIntro", {
+  id: int("id").autoincrement().primaryKey(), // singleton
+  articleHtml: text("articleHtml").notNull(), // המאמר הקצר בראש הדף (HTML מ-TipTap)
+  questionPrompt: varchar("questionPrompt", { length: 512 })
+    .default("מה ברצונך לשאול?")
+    .notNull(),
+  questionHint: varchar("questionHint", { length: 512 })
+    .default("השאלה אישית ואינה נשמרת בשום מקום.")
+    .notNull(),
+  buttonLabel: varchar("buttonLabel", { length: 128 })
+    .default("הַטֵּל אֶת הַמַּטְבְּעוֹת")
+    .notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type IchingIntro = typeof ichingIntro.$inferSelect;
+export type InsertIchingIntro = typeof ichingIntro.$inferInsert;

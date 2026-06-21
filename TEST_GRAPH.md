@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-20 22:04_
+_נוצר אוטומטית ב: 2026-06-21 18:06_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 170 |
-| מכוסים / covered | 12 |
-| ללא טסט / uncovered | 158 |
-| כיסוי / coverage | 7% →0% |
-| טסטים עוברים / passing | 144 ✅ |
+| קבצי קוד / source files | 182 |
+| מכוסים / covered | 16 |
+| ללא טסט / uncovered | 166 |
+| כיסוי / coverage | 8% →0% |
+| טסטים עוברים / passing | 184 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -26,12 +26,15 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | `(no source found for docker-mysql.test.ts)` | `server/docker-mysql.test.ts` |
 | `(no source found for env-files.test.ts)` | `server/env-files.test.ts` |
 | `(no source found for featured-article.test.ts)` | `server/featured-article.test.ts` |
+| `(no source found for iching.test.ts)` | `shared/iching/iching.test.ts` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
+| `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
+| `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
@@ -39,11 +42,13 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
 | `server/routers/featured.router.ts` | `server/routers/featured.router.test.ts` |
 | `server/routers/guestPosts.router.ts` | `server/routers/guestPosts.router.test.ts` |
+| `server/routers/iching.router.ts` | `server/routers/iching.router.test.ts` |
 | `server/routers/likes.router.ts` | `server/routers/likes.router.test.ts` |
 | `server/routers/profiles.router.ts` | `server/routers/profiles.router.test.ts` |
 | `server/routers/settings.router.ts` | `server/routers/settings.router.test.ts` |
 | `server/seo.ts` | `server/seo.test.ts` |
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
+| `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
 
 ## קבצים ללא טסטים (לפי עדיפות) / Uncovered (by priority)
 
@@ -77,6 +82,8 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | 🟡 MEDIUM | `client/src/components/RichTextEditor.tsx` |
 | 🟡 MEDIUM | `client/src/components/ScrollToTop.tsx` |
 | 🟡 MEDIUM | `client/src/components/SiteLayout.tsx` |
+| 🟡 MEDIUM | `client/src/components/iching/Coins.tsx` |
+| 🟡 MEDIUM | `client/src/components/iching/Hexagram.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/accordion.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert-dialog.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert.tsx` |
@@ -146,6 +153,7 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | 🟡 MEDIUM | `client/src/pages/AdminArticleOrder.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminCategories.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminGuestPosts.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminIChing.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminNewsletter.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminSettings.tsx` |
@@ -156,6 +164,7 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | 🟡 MEDIUM | `client/src/pages/Contact.tsx` |
 | 🟡 MEDIUM | `client/src/pages/GuestPostForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
+| 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
 | 🟡 MEDIUM | `server/_core/auth/session.ts` |
@@ -186,6 +195,7 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | 🟡 MEDIUM | `server/db/featured.ts` |
 | 🟡 MEDIUM | `server/db/guest-posts.ts` |
 | 🟡 MEDIUM | `server/db/guest-writers.ts` |
+| 🟡 MEDIUM | `server/db/iching.ts` |
 | 🟡 MEDIUM | `server/db/likes.ts` |
 | 🟡 MEDIUM | `server/db/newsletter.ts` |
 | 🟡 MEDIUM | `server/db/profiles.ts` |
@@ -198,6 +208,8 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | 🟡 MEDIUM | `server/upload.ts` |
 | 🟡 MEDIUM | `shared/_core/errors.ts` |
 | 🟡 MEDIUM | `shared/const.ts` |
+| 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
+| 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | ⚪ LOW | `client/src/hooks/domain/index.ts` |
 | ⚪ LOW | `client/src/main.tsx` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
@@ -206,4 +218,5 @@ _נוצר אוטומטית ב: 2026-06-20 22:04_
 | ⚪ LOW | `server/_core/types/cookie.d.ts` |
 | ⚪ LOW | `server/_core/types/manusTypes.ts` |
 | ⚪ LOW | `server/db/index.ts` |
+| ⚪ LOW | `shared/iching/index.ts` |
 | ⚪ LOW | `shared/types.ts` |
