@@ -27,7 +27,11 @@ export function renderHtml(template: string, parts: HtmlParts): string {
  * rewrite to this server's real origin.
  */
 export function makeSsrFetch(req: Request): typeof fetch {
-  const origin = `${req.protocol}://${req.get("host")}`;
+  // Prefer the loopback origin captured at startup (avoids an external
+  // round-trip through the public domain in production); fall back to the
+  // request's own host.
+  const origin =
+    process.env.SSR_INTERNAL_ORIGIN ?? `${req.protocol}://${req.get("host")}`;
   const cookie = req.headers.cookie ?? "";
 
   return ((input: Parameters<typeof fetch>[0], init?: RequestInit) => {
