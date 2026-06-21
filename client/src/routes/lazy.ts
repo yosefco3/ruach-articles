@@ -19,3 +19,4 @@ export const LazyAdminGuestPosts = lazy(() => import("../pages/AdminGuestPosts")
 export const LazyAdminNewsletter = lazy(() => import("../pages/AdminNewsletter"));
 export const LazyAdminSettings = lazy(() => import("../pages/AdminSettings"));
 export const LazyAdminUsers = lazy(() => import("../pages/AdminUsers"));
+export const LazyAdminIChing = lazy(() => import("../pages/AdminIChing"));

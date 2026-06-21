@@ -8,6 +8,7 @@ import {
   LazyAdminNewsletter,
   LazyAdminSettings,
   LazyAdminUsers,
+  LazyAdminIChing,
 } from "./lazy";
 
 /**
@@ -24,4 +25,5 @@ export const adminRoutes = [
   <Route key="admin-categories" path="/admin/categories" component={LazyAdminCategories} />,
   <Route key="admin-newsletter" path="/admin/newsletter" component={LazyAdminNewsletter} />,
   <Route key="admin-article-order" path="/admin/article-order" component={LazyAdminArticleOrder} />,
+  <Route key="admin-iching" path="/admin/iching" component={LazyAdminIChing} />,
 ];
