@@ -186,23 +186,24 @@ export default function RichTextEditor({
     },
   });
 
-  // Populate editor when value arrives asynchronously (edit mode).
-  // Once real content is loaded, mark the editor as ready so onUpdate
-  // can safely call onChange without risk of writing an empty string.
+  // Sync the editor with the `value` prop. This runs both when content
+  // arrives asynchronously (edit mode) AND when the parent swaps `value`
+  // for a different record (e.g. switching trigram/hexagram in the admin):
+  // the same editor instance is reused, so we must reset its content to
+  // match the incoming value instead of leaving the previous record's text.
   useEffect(() => {
     if (!editor) return;
-    if (value && value !== "<p></p>") {
-      const current = editor.getHTML();
-      const isEmpty = current === "" || current === "<p></p>";
-      if (isEmpty) {
-        editor.commands.setContent(value, false as any);
-      }
-      // Mark ready regardless — value has arrived from the server.
-      readyRef.current = true;
-    } else if (!value) {
-      // No async value expected (new article) — allow typing immediately.
-      readyRef.current = true;
+    const norm = (s: string) => (s === "" || s === "<p></p>" ? "" : s);
+    const incoming = value ?? "";
+    const current = editor.getHTML();
+    // Replace content when it actually differs — but never while the user is
+    // typing in this editor (that diff is the user's own edit round-tripping
+    // back through onChange, and re-setting it would fight the cursor).
+    if (norm(incoming) !== norm(current) && !editor.isFocused) {
+      editor.commands.setContent(incoming, false as any);
     }
+    // value has been reconciled — onUpdate may now propagate user edits.
+    readyRef.current = true;
   }, [editor, value]);
 
   // Close dropdowns on outside click
