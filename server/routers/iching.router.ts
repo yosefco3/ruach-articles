@@ -20,6 +20,7 @@ export const createIchingRouter = (deps: RouterDeps) =>
       .input(
         z.object({
           number: z.number().int().min(1).max(64),
+          name: z.string().max(128).default(""), // override לשם; ריק = ברירת המחדל מ-shared
           trigramExplanation: z.string(),
           interpretation: z.string(),
           changingLinesNote: z.string().default(""),
@@ -34,6 +35,9 @@ export const createIchingRouter = (deps: RouterDeps) =>
       .input(
         z.object({
           trigramKey: z.enum(["qian", "kun", "zhen", "kan", "gen", "xun", "li", "dui"]),
+          name: z.string().max(64).default(""), // override לשם/יסוד/תכונה; ריק = ברירת המחדל מ-shared
+          element: z.string().max(64).default(""),
+          attr: z.string().max(128).default(""),
           description: z.string(),
         }),
       )

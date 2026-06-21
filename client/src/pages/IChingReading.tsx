@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import {
   cast,
-  TRIGRAMS,
   SUM_NAMES,
   type Reading,
   type CoinFace,
@@ -19,6 +18,8 @@ import {
   DEFAULT_SEL,
   resolvePanel,
   changingLabel,
+  effectiveTrigram,
+  effectiveHexName,
   type Sel,
   type IChingContent,
 } from "@/pages/iching/model";
@@ -68,17 +69,19 @@ function triChipStyle(selected: boolean): React.CSSProperties {
 
 function TrigramChips({
   values,
+  trigrams,
   selTri,
   onSelect,
 }: {
   values: number[];
+  trigrams: IChingContent["trigrams"];
   selTri: number | null;
   onSelect: (v: number) => void;
 }) {
   return (
     <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 14 }}>
       {values.map((v) => {
-        const t = TRIGRAMS[v];
+        const t = effectiveTrigram(v, trigrams);
         return (
           <div key={v} onClick={() => onSelect(v)} style={triChipStyle(selTri === v)}>
             <span style={{ fontSize: 21, lineHeight: 1, fontFamily: "serif" }}>{t.symbol}</span>
@@ -416,7 +419,7 @@ function ResultView({
   const hasChanging = reading.changing.length > 0 && !!reading.resulting;
   const selTri = sel.kind === "tri" ? sel.tri : null;
   const panel = resolvePanel(reading, sel, content);
-  const cLabel = changingLabel(reading);
+  const cLabel = changingLabel(reading, content);
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -452,10 +455,10 @@ function ResultView({
             </div>
           </div>
           <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontWeight: 900, fontSize: 25, color: "oklch(0.24 0.03 55)", marginTop: 16 }}>
-            {reading.primary.name}
+            {effectiveHexName(reading.primary.number, content.hexagrams)}
           </div>
           <div style={{ fontSize: 13, color: "oklch(0.52 0.03 60)", marginTop: 2 }}>הקסגרמה {reading.primary.number}</div>
-          <TrigramChips values={[reading.primary.upper, reading.primary.lower]} selTri={selTri} onSelect={(v) => setSel({ kind: "tri", tri: v })} />
+          <TrigramChips values={[reading.primary.upper, reading.primary.lower]} trigrams={content.trigrams} selTri={selTri} onSelect={(v) => setSel({ kind: "tri", tri: v })} />
         </div>
 
         {/* ── חץ + הקסגרמה נגזרת ── */}
@@ -475,10 +478,10 @@ function ResultView({
                 </div>
               </div>
               <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontWeight: 900, fontSize: 25, color: "oklch(0.32 0.03 55)", marginTop: 16 }}>
-                {reading.resulting.name}
+                {effectiveHexName(reading.resulting.number, content.hexagrams)}
               </div>
               <div style={{ fontSize: 13, color: "oklch(0.52 0.03 60)", marginTop: 2 }}>הקסגרמה {reading.resulting.number}</div>
-              <TrigramChips values={[reading.resulting.upper, reading.resulting.lower]} selTri={selTri} onSelect={(v) => setSel({ kind: "tri", tri: v })} />
+              <TrigramChips values={[reading.resulting.upper, reading.resulting.lower]} trigrams={content.trigrams} selTri={selTri} onSelect={(v) => setSel({ kind: "tri", tri: v })} />
             </div>
           </>
         )}

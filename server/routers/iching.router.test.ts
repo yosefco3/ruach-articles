@@ -27,6 +27,7 @@ describe("iching.upsertHexagram", () => {
     });
     const input = {
       number: 11,
+      name: "הַשָּׁלוֹם",
       trigramExplanation: "te",
       interpretation: "i",
       changingLinesNote: "",
@@ -49,7 +50,7 @@ describe("iching.upsertHexagram", () => {
     ).rejects.toBeDefined();
   });
 
-  it("defaults changingLinesNote to an empty string", async () => {
+  it("defaults name and changingLinesNote to empty strings", async () => {
     const { caller, db } = makeCaller(adminCtx());
     await caller.iching.upsertHexagram({
       number: 5,
@@ -58,6 +59,7 @@ describe("iching.upsertHexagram", () => {
     });
     expect(db.upsertHexagramText).toHaveBeenCalledWith({
       number: 5,
+      name: "",
       trigramExplanation: "te",
       interpretation: "i",
       changingLinesNote: "",
@@ -95,9 +97,15 @@ describe("iching admin guards", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("lets an admin upsert a trigram", async () => {
+  it("lets an admin upsert a trigram (name/element/attr default to empty)", async () => {
     const { caller, db } = makeCaller(adminCtx());
     await caller.iching.upsertTrigram({ trigramKey: "kun", description: "d" });
-    expect(db.upsertTrigramText).toHaveBeenCalledWith({ trigramKey: "kun", description: "d" });
+    expect(db.upsertTrigramText).toHaveBeenCalledWith({
+      trigramKey: "kun",
+      name: "",
+      element: "",
+      attr: "",
+      description: "d",
+    });
   });
 });

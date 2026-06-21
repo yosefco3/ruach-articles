@@ -167,6 +167,7 @@ export type InsertFeaturedArticle = typeof featuredArticle.$inferInsert;
 // נגזרת מ-shared/iching ואינה נשמרת כאן.
 export const ichingHexagramText = mysqlTable("ichingHexagramText", {
   number: int("number").primaryKey(), // 1..64, תואם King Wen ב-shared
+  name: varchar("name", { length: 128 }).default("").notNull(), // override לשם המנוקד; ריק = ברירת המחדל מ-shared
   trigramExplanation: text("trigramExplanation").notNull(), // "הטריגרמות" — ניתוח שתי הטריגרמות
   interpretation: text("interpretation").notNull(), // "פירוש ההקסגרמה" — HTML עשיר (מסרים מרכזיים ככותרות + יישום מעשי)
   changingLinesNote: text("changingLinesNote").default("").notNull(), // "קווים משתנים" — הערה אופציונלית
@@ -177,6 +178,9 @@ export type InsertIchingHexagramText = typeof ichingHexagramText.$inferInsert;
 
 export const ichingTrigramText = mysqlTable("ichingTrigramText", {
   trigramKey: varchar("trigramKey", { length: 16 }).primaryKey(), // qian, kun, ...
+  name: varchar("name", { length: 64 }).default("").notNull(), // override לשם; ריק = ברירת המחדל מ-shared
+  element: varchar("element", { length: 64 }).default("").notNull(), // override ליסוד (אֵשׁ/מַיִם…); מזין גם את תווית היחס
+  attr: varchar("attr", { length: 128 }).default("").notNull(), // override לתכונה
   description: text("description").notNull(), // HTML עשיר (TipTap) — נערך ב-RichTextEditor כמו interpretation
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -8,6 +8,9 @@ import {
   lineRenderOrder,
   resolvePanel,
   changingLabel,
+  effectiveTrigram,
+  effectiveHexName,
+  relationForEffective,
   type IChingContent,
 } from "./model";
 
@@ -23,10 +26,10 @@ const stableReading: Reading = cast(seqRng([0, 0, 0.9]));
 
 const content: IChingContent = {
   hexagrams: [
-    { number: 2, trigramExplanation: "te2", interpretation: "<p>kabbala</p>", changingLinesNote: "" },
-    { number: 1, trigramExplanation: "te1", interpretation: "<p>yetzira</p>", changingLinesNote: "" },
+    { number: 2, name: "", trigramExplanation: "te2", interpretation: "<p>kabbala</p>", changingLinesNote: "" },
+    { number: 1, name: "", trigramExplanation: "te1", interpretation: "<p>yetzira</p>", changingLinesNote: "" },
   ],
-  trigrams: [{ trigramKey: "kun", description: "<p>kun desc</p>" }],
+  trigrams: [{ trigramKey: "kun", name: "", element: "", attr: "", description: "<p>kun desc</p>" }],
   intro: { articleHtml: "<p>a</p>", questionPrompt: "q", questionHint: "h", buttonLabel: "b" },
 };
 
@@ -77,14 +80,48 @@ describe("resolvePanel — merge structure + DB text", () => {
 
 describe("changing-lines label", () => {
   it("describes the movement when there are changing lines", () => {
-    const label = changingLabel(changingReading);
+    const label = changingLabel(changingReading, content);
     expect(label).toContain("קווים משתנים");
     expect(label).toContain(changingReading.primary.name);
     expect(label).toContain(changingReading.resulting!.name);
   });
   it("returns null for a stable reading (no derived hexagram)", () => {
     expect(stableReading.changing).toEqual([]);
-    expect(changingLabel(stableReading)).toBeNull();
+    expect(changingLabel(stableReading, content)).toBeNull();
+  });
+});
+
+describe("editable name overrides (DB override → fallback to shared)", () => {
+  const kunValue = TRIGRAMS.findIndex((t) => t.key === "kun");
+
+  it("effectiveHexName uses the DB override when present, else the shared name", () => {
+    expect(effectiveHexName(2, content.hexagrams)).toBe("הַקַּבָּלָה"); // ריק ב-DB → ברירת מחדל מ-shared
+    const overridden = [{ ...content.hexagrams[0], name: "שֵׁם חָדָשׁ" }, content.hexagrams[1]];
+    expect(effectiveHexName(2, overridden)).toBe("שֵׁם חָדָשׁ");
+  });
+
+  it("effectiveTrigram overrides name/element/attr, keeping the fixed symbol", () => {
+    const base = effectiveTrigram(kunValue, content.trigrams);
+    expect(base.name).toBe(TRIGRAMS[kunValue].name); // ריק ב-DB → ברירת מחדל
+    const overridden = [{ trigramKey: "kun", name: "אֵם", element: "קַרְקַע", attr: "נְשִׂיאָה", description: "" }];
+    const eff = effectiveTrigram(kunValue, overridden);
+    expect(eff.name).toBe("אֵם");
+    expect(eff.element).toBe("קַרְקַע");
+    expect(eff.symbol).toBe(TRIGRAMS[kunValue].symbol); // הסמל קבוע
+  });
+
+  it("relationForEffective reflects an overridden element", () => {
+    const overridden = [{ trigramKey: "kun", name: "", element: "קַרְקַע", attr: "", description: "" }];
+    // kun מול kun → "<element> כְּפוּלָה"
+    expect(relationForEffective(kunValue, kunValue, overridden)).toBe("קַרְקַע כְּפוּלָה");
+  });
+
+  it("the panel title follows the hexagram name override", () => {
+    const overridden: IChingContent = {
+      ...content,
+      hexagrams: [{ ...content.hexagrams[0], name: "שֵׁם עָרוּךְ" }, content.hexagrams[1]],
+    };
+    expect(resolvePanel(changingReading, DEFAULT_SEL, overridden).title).toBe("שֵׁם עָרוּךְ");
   });
 });
 

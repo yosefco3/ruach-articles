@@ -13,13 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
+import { HEXAGRAMS, TRIGRAMS, type TrigramKey } from "@shared/iching";
 import {
-  HEXAGRAMS,
-  TRIGRAMS,
-  relationFor,
-  type TrigramKey,
-} from "@shared/iching";
-import { findHexText, findTriText, type IChingContent } from "@/pages/iching/model";
+  findHexText,
+  findTriText,
+  effectiveHexName,
+  relationForEffective,
+  type IChingContent,
+} from "@/pages/iching/model";
 
 type Area = "intro" | "trigrams" | "hexagrams";
 
@@ -94,20 +95,31 @@ export default function AdminIChing() {
 
   // ── טריגרמה נבחרת ──
   const [triValue, setTriValue] = useState(0);
+  const [triName, setTriName] = useState("");
+  const [triElement, setTriElement] = useState("");
+  const [triAttr, setTriAttr] = useState("");
   const [triDesc, setTriDesc] = useState("");
   useEffect(() => {
-    if (content) setTriDesc(findTriText(content.trigrams, triValue)?.description ?? "");
+    if (content) {
+      const t = findTriText(content.trigrams, triValue);
+      setTriName(t?.name ?? "");
+      setTriElement(t?.element ?? "");
+      setTriAttr(t?.attr ?? "");
+      setTriDesc(t?.description ?? "");
+    }
   }, [content, triValue]);
 
   // ── הקסגרמה נבחרת ──
   const [hexNumber, setHexNumber] = useState(1);
   const [search, setSearch] = useState("");
+  const [hexName, setHexName] = useState("");
   const [trigramExplanation, setTrigramExplanation] = useState("");
   const [interpretation, setInterpretation] = useState("");
   const [changingLinesNote, setChangingLinesNote] = useState("");
   useEffect(() => {
     if (content) {
       const t = findHexText(content.hexagrams, hexNumber);
+      setHexName(t?.name ?? "");
       setTrigramExplanation(t?.trigramExplanation ?? "");
       setInterpretation(t?.interpretation ?? "");
       setChangingLinesNote(t?.changingLinesNote ?? "");
@@ -272,13 +284,36 @@ export default function AdminIChing() {
                 </button>
               ))}
             </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={SECTION_LABEL}>שם</label>
+                <Input value={triName} onChange={(e) => setTriName(e.target.value)} placeholder={tri.name} dir="rtl" className="text-right" />
+              </div>
+              <div>
+                <label className={SECTION_LABEL}>יסוד</label>
+                <Input value={triElement} onChange={(e) => setTriElement(e.target.value)} placeholder={tri.element} dir="rtl" className="text-right" />
+              </div>
+              <div>
+                <label className={SECTION_LABEL}>תכונה</label>
+                <Input value={triAttr} onChange={(e) => setTriAttr(e.target.value)} placeholder={tri.attr} dir="rtl" className="text-right" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">השאר ריק כדי להשתמש בברירת המחדל (המוצגת כ-placeholder).</p>
             <div>
-              <label className={SECTION_LABEL}>תיאור {tri.name} ({tri.element})</label>
+              <label className={SECTION_LABEL}>תיאור {triName.trim() || tri.name} ({triElement.trim() || tri.element})</label>
               <RichTextEditor value={triDesc} onChange={setTriDesc} />
             </div>
             <div className="flex justify-end pt-2">
               <Button
-                onClick={() => upsertTrigram.mutate({ trigramKey: tri.key as TrigramKey, description: triDesc })}
+                onClick={() =>
+                  upsertTrigram.mutate({
+                    trigramKey: tri.key as TrigramKey,
+                    name: triName,
+                    element: triElement,
+                    attr: triAttr,
+                    description: triDesc,
+                  })
+                }
                 disabled={upsertTrigram.isPending}
                 className="gap-2"
               >
@@ -290,7 +325,13 @@ export default function AdminIChing() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground mb-2">תצוגה מקדימה</p>
-            <DetailPanel kicker="פֵּרוּשׁ הַטְּרִיגְרַמָה" symbol={tri.symbol} title={tri.name} sub={`${tri.element} · ${tri.attr}`} html={triDesc} />
+            <DetailPanel
+              kicker="פֵּרוּשׁ הַטְּרִיגְרַמָה"
+              symbol={tri.symbol}
+              title={triName.trim() || tri.name}
+              sub={`${triElement.trim() || tri.element} · ${triAttr.trim() || tri.attr}`}
+              html={triDesc}
+            />
           </div>
         </div>
       )}
@@ -316,9 +357,9 @@ export default function AdminIChing() {
                   <span style={{ fontFamily: "serif", fontSize: 22 }}>{h.glyph}</span>
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
-                      {h.number}. {h.name}
+                      {h.number}. {effectiveHexName(h.number, content.hexagrams)}
                     </span>
-                    <span className="block text-xs text-muted-foreground">{relationFor(h.lower, h.upper)}</span>
+                    <span className="block text-xs text-muted-foreground">{relationForEffective(h.lower, h.upper, content.trigrams)}</span>
                   </span>
                   {hexMissing.has(h.number) && <span className="text-[10px] text-amber-600 font-medium">חסר</span>}
                 </button>
@@ -332,9 +373,16 @@ export default function AdminIChing() {
               <div className="flex items-center gap-3">
                 <span style={{ fontFamily: "serif", fontSize: 34 }}>{hex.glyph}</span>
                 <div>
-                  <div className="font-display font-bold text-xl text-foreground">{hex.number}. {hex.name}</div>
-                  <div className="text-sm text-muted-foreground">{relationFor(hex.lower, hex.upper)}</div>
+                  <div className="font-display font-bold text-xl text-foreground">
+                    {hex.number}. {hexName.trim() || hex.name}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{relationForEffective(hex.lower, hex.upper, content.trigrams)}</div>
                 </div>
+              </div>
+              <div>
+                <label className={SECTION_LABEL}>שם ההקסגרמה</label>
+                <Input value={hexName} onChange={(e) => setHexName(e.target.value)} placeholder={hex.name} dir="rtl" className="text-right" />
+                <p className="text-xs text-muted-foreground mt-1">השאר ריק כדי להשתמש בשם ברירת המחדל ({hex.name}).</p>
               </div>
               <div>
                 <label className={SECTION_LABEL}>הטריגרמות</label>
@@ -351,7 +399,7 @@ export default function AdminIChing() {
               <div className="flex justify-end pt-2">
                 <Button
                   onClick={() =>
-                    upsertHexagram.mutate({ number: hex.number, trigramExplanation, interpretation, changingLinesNote })
+                    upsertHexagram.mutate({ number: hex.number, name: hexName, trigramExplanation, interpretation, changingLinesNote })
                   }
                   disabled={upsertHexagram.isPending}
                   className="gap-2"
@@ -368,8 +416,8 @@ export default function AdminIChing() {
               <DetailPanel
                 kicker="פֵּרוּשׁ הַהֶקְסַגְרַמָה"
                 symbol={hex.glyph}
-                title={hex.name}
-                sub={`${relationFor(hex.lower, hex.upper)} · הקסגרמה ${hex.number}`}
+                title={hexName.trim() || hex.name}
+                sub={`${relationForEffective(hex.lower, hex.upper, content.trigrams)} · הקסגרמה ${hex.number}`}
                 html={interpretation}
               />
             </div>

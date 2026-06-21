@@ -71,6 +71,13 @@
       "when": 1782049519531,
       "tag": "0009_vengeful_spirit",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1782053798794,
+      "tag": "0010_shiny_bromley",
+      "breakpoints": true
     }
   ]
 }
