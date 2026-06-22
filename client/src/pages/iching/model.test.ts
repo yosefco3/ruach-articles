@@ -11,6 +11,8 @@ import {
   effectiveTrigram,
   effectiveHexName,
   relationForEffective,
+  htmlToPlainText,
+  buildAiContext,
   type IChingContent,
 } from "./model";
 
@@ -125,13 +127,42 @@ describe("editable name overrides (DB override → fallback to shared)", () => {
   });
 });
 
-describe("the question is never sent to the server", () => {
-  it("exposes only a content query + admin mutations — no procedure receives a question", () => {
+describe("AI context injection", () => {
+  it("htmlToPlainText strips tags and collapses whitespace", () => {
+    expect(htmlToPlainText("<p>שלום <b>עולם</b></p>")).toBe("שלום עולם");
+    expect(htmlToPlainText("<p>a&nbsp;&nbsp;b</p>\n  <p>c</p>")).toBe("a b c");
+  });
+
+  it("buildAiContext fills base + result from the static content (changing reading)", () => {
+    const ctx = buildAiContext(changingReading, content);
+    expect(ctx.baseName).toBe(effectiveHexName(2, content.hexagrams));
+    expect(ctx.baseText).toBe("kabbala");
+    expect(ctx.resultName).toBe(effectiveHexName(1, content.hexagrams));
+    expect(ctx.resultText).toBe("yetzira");
+  });
+
+  it("buildAiContext leaves result fields empty for a stable reading", () => {
+    const ctx = buildAiContext(stableReading, content);
+    expect(ctx.resultName).toBe("");
+    expect(ctx.resultText).toBe("");
+  });
+});
+
+describe("the question only leaves the browser on an explicit AI request", () => {
+  it("routes a question through exactly one procedure — the interpret mutation", () => {
     const ichingKeys = Object.keys(appRouter._def.procedures).filter((k) => k.startsWith("iching."));
     expect(ichingKeys.sort()).toEqual(
-      ["iching.getContent", "iching.updateIntro", "iching.upsertHexagram", "iching.upsertTrigram"].sort(),
+      [
+        "iching.getContent",
+        "iching.interpret",
+        "iching.updateIntro",
+        "iching.upsertHexagram",
+        "iching.upsertTrigram",
+      ].sort(),
     );
-    // הקריאה הציבורית היחידה היא query ללא קלט שאלה.
+    // טעינת הדף משתמשת רק ב-query הזה — ללא קלט שאלה.
     expect(appRouter._def.procedures["iching.getContent"]._def.type).toBe("query");
+    // השאלה נשלחת אך ורק דרך mutation מפורש (לחיצה על כפתור ה-AI); השרת לעולם לא שומר אותה.
+    expect(appRouter._def.procedures["iching.interpret"]._def.type).toBe("mutation");
   });
 });

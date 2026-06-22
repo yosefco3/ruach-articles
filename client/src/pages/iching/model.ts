@@ -126,3 +126,37 @@ export function changingLabel(reading: Reading, content: IChingContent): string 
   const to = effectiveHexName(reading.resulting.number, content.hexagrams);
   return `קווים משתנים: ${lines} — הקריאה נעה מ«${from}» אל «${to}».`;
 }
+
+// ── הזרקת קונטקסט לפירוש ה-AI: מחלצים מהתוכן הסטטי שכבר בעמוד ──
+
+/** הופך HTML לטקסט נקי (להזרקה לפרומפט). מוריד תגיות ומכווץ רווחים. */
+export function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export interface AiContext {
+  baseName: string;
+  baseText: string;
+  resultName: string;
+  resultText: string;
+}
+
+/** מרכיב את הקונטקסט להזרקה מתוך הקריאה + התוכן הסטטי שכבר בעמוד. */
+export function buildAiContext(reading: Reading, content: IChingContent): AiContext {
+  const base = findHexText(content.hexagrams, reading.primary.number);
+  const result = reading.resulting
+    ? findHexText(content.hexagrams, reading.resulting.number)
+    : undefined;
+  return {
+    baseName: effectiveHexName(reading.primary.number, content.hexagrams),
+    baseText: htmlToPlainText(base?.interpretation ?? ""),
+    resultName: reading.resulting
+      ? effectiveHexName(reading.resulting.number, content.hexagrams)
+      : "",
+    resultText: htmlToPlainText(result?.interpretation ?? ""),
+  };
+}

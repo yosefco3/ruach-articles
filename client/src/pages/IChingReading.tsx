@@ -1,7 +1,8 @@
 /**
  * דף הקריאה הציבורי באי-צ'ינג — פורט מהאב-טיפוס (`קריאת-אי-צינג-עצמאי.html`).
  * שלוש פאזות: intro → casting → result. המבנה מגיע מ-`shared/iching` (cast/TRIGRAMS),
- * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה רק ב-state ולעולם אינה נשלחת לשרת.
+ * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה ב-state; היא עוזבת את הדפדפן רק
+ * בלחיצה מפורשת על כפתור פירוש ה-AI (`IChingAiPanel`), ולעולם אינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -21,10 +22,13 @@ import {
   changingLabel,
   effectiveTrigram,
   effectiveHexName,
+  buildAiContext,
   type Sel,
   type IChingContent,
 } from "@/pages/iching/model";
 import { runReveal } from "@/pages/iching/reveal";
+import { IChingAiPanel } from "@/components/iching/IChingAiPanel";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -422,6 +426,8 @@ function ResultView({
   const selTri = sel.kind === "tri" ? sel.tri : null;
   const panel = resolvePanel(reading, sel, content);
   const cLabel = changingLabel(reading, content);
+  const { isAuthenticated } = useAuth();
+  const aiContext = buildAiContext(reading, content);
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -512,6 +518,11 @@ function ResultView({
             בקריאה זו לא נפלו קווים משתנים, ולכן אין הקסגרמה נגזרת. התמונה עומדת כמות שהיא.
           </div>
         </div>
+      )}
+
+      {/* ── פירוש AI מותאם אישית — תמיד מעל הפירוש הסטטי, לעולם לא מחביא אותו ── */}
+      {qSaved.trim() && (
+        <IChingAiPanel question={qSaved} context={aiContext} isAuthenticated={isAuthenticated} />
       )}
 
       <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>

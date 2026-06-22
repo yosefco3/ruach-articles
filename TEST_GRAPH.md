@@ -1,17 +1,17 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-21 21:22_
+_נוצר אוטומטית ב: 2026-06-22 08:08_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 188 |
-| מכוסים / covered | 19 |
-| ללא טסט / uncovered | 169 |
+| קבצי קוד / source files | 185 |
+| מכוסים / covered | 20 |
+| ללא טסט / uncovered | 165 |
 | כיסוי / coverage | 10% →0% |
-| טסטים עוברים / passing | 193 ✅ |
-| טסטים נכשלים / failing | 0 ❌ |
+| טסטים עוברים / passing | 0 ✅ |
+| טסטים נכשלים / failing | 1 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
 
@@ -27,6 +27,7 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | `(no source found for env-files.test.ts)` | `server/env-files.test.ts` |
 | `(no source found for featured-article.test.ts)` | `server/featured-article.test.ts` |
 | `(no source found for iching.test.ts)` | `shared/iching/iching.test.ts` |
+| `(no source found for ichingUsage.test.ts)` | `server/ichingUsage.test.ts` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
@@ -40,6 +41,7 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
+| `server/ichingAi.ts` | `server/ichingAi.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
 | `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
@@ -80,13 +82,13 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | 🟡 MEDIUM | `client/src/components/DashboardLayoutSkeleton.tsx` |
 | 🟡 MEDIUM | `client/src/components/ErrorBoundary.tsx` |
 | 🟡 MEDIUM | `client/src/components/ManusDialog.tsx` |
-| 🟡 MEDIUM | `client/src/components/Map.tsx` |
 | 🟡 MEDIUM | `client/src/components/NextArticleCard.tsx` |
 | 🟡 MEDIUM | `client/src/components/RichTextEditor.tsx` |
 | 🟡 MEDIUM | `client/src/components/ScrollToTop.tsx` |
 | 🟡 MEDIUM | `client/src/components/SiteLayout.tsx` |
 | 🟡 MEDIUM | `client/src/components/iching/Coins.tsx` |
 | 🟡 MEDIUM | `client/src/components/iching/Hexagram.tsx` |
+| 🟡 MEDIUM | `client/src/components/iching/IChingAiPanel.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/accordion.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert-dialog.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert.tsx` |
@@ -177,11 +179,7 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | 🟡 MEDIUM | `server/_core/auth/strategies/oauth.ts` |
 | 🟡 MEDIUM | `server/_core/context.ts` |
 | 🟡 MEDIUM | `server/_core/cookies.ts` |
-| 🟡 MEDIUM | `server/_core/dataApi.ts` |
 | 🟡 MEDIUM | `server/_core/env.ts` |
-| 🟡 MEDIUM | `server/_core/imageGeneration.ts` |
-| 🟡 MEDIUM | `server/_core/llm.ts` |
-| 🟡 MEDIUM | `server/_core/map.ts` |
 | 🟡 MEDIUM | `server/_core/oauth.ts` |
 | 🟡 MEDIUM | `server/_core/ssr.ts` |
 | 🟡 MEDIUM | `server/_core/startup/express.ts` |
@@ -190,7 +188,6 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | 🟡 MEDIUM | `server/_core/systemRouter.ts` |
 | 🟡 MEDIUM | `server/_core/trpc.ts` |
 | 🟡 MEDIUM | `server/_core/vite.ts` |
-| 🟡 MEDIUM | `server/_core/voiceTranscription.ts` |
 | 🟡 MEDIUM | `server/articleDocxRoute.ts` |
 | 🟡 MEDIUM | `server/db.ts` |
 | 🟡 MEDIUM | `server/db/about.ts` |
@@ -203,6 +200,7 @@ _נוצר אוטומטית ב: 2026-06-21 21:22_
 | 🟡 MEDIUM | `server/db/guest-posts.ts` |
 | 🟡 MEDIUM | `server/db/guest-writers.ts` |
 | 🟡 MEDIUM | `server/db/iching.ts` |
+| 🟡 MEDIUM | `server/db/ichingUsage.ts` |
 | 🟡 MEDIUM | `server/db/likes.ts` |
 | 🟡 MEDIUM | `server/db/newsletter.ts` |
 | 🟡 MEDIUM | `server/db/profiles.ts` |

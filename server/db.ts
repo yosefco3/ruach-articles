@@ -73,3 +73,8 @@ export {
   listTrigramTexts, upsertTrigramText,
   getIchingIntro, updateIchingIntro,
 } from "./db/iching";
+
+// I Ching — AI usage quota
+export {
+  currentMonthYear, getMonthlyUsage, incrementMonthlyUsage,
+} from "./db/ichingUsage";

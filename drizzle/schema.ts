@@ -5,6 +5,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  unique,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -204,3 +205,23 @@ export const ichingIntro = mysqlTable("ichingIntro", {
 });
 export type IchingIntro = typeof ichingIntro.$inferSelect;
 export type InsertIchingIntro = typeof ichingIntro.$inferInsert;
+
+// מונה שימושי AI חודשיים לכל משתמש. שומר *רק* מונה — לעולם לא שאלה/תשובה.
+export const ichingAiUsage = mysqlTable(
+  "ichingAiUsage",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(), // → users.id
+    monthYear: varchar("monthYear", { length: 7 }).notNull(), // "YYYY-MM"
+    usageCount: int("usageCount").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    // המפתח שמאפשר upsert אטומי (ON DUPLICATE KEY) ב-increment — צעד 03.
+    uniqUserMonth: unique("uniq_iching_usage_user_month").on(t.userId, t.monthYear),
+  }),
+);
+
+export type IchingAiUsage = typeof ichingAiUsage.$inferSelect;
+export type InsertIchingAiUsage = typeof ichingAiUsage.$inferInsert;

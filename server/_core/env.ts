@@ -37,9 +37,10 @@ const envSchema = z.object({
   // Contact form recipient — optional
   CONTACT_EMAIL_TO: z.string().optional(),
 
-  // Autodesk Forge (voice transcription) — optional
-  FORGE_API_KEY: z.string().optional(),
-  FORGE_API_URL: z.string().optional(),
+  // Gemini AI — פירוש אי-צ'ינג מותאם-אישית
+  GEMINI_API_KEY: z.string().optional(), // optional כדי לא להפיל את השרת בלי המפתח
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+  ICHING_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
 });
 
 function loadEnv() {
