@@ -28,6 +28,8 @@ export interface IChingContent {
   hexagrams: HexText[];
   trigrams: TriText[];
   intro: IChingIntro;
+  /** מכסת פירושי ה-AI החודשית למשתמש רשום (מוגדרת ע"י ICHING_AI_MONTHLY_LIMIT). */
+  aiMonthlyLimit: number;
 }
 
 /** בחירת התצוגה: הקסגרמה ראשית/נגזרת, או טריגרמה לפי ערך 0..7. */

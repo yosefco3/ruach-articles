@@ -48,6 +48,7 @@ most important variables:
 | `ICHING_AI_PROVIDER`                    | no       | I Ching AI provider: `deepseek` (default) or `gemini`    |
 | `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` / `DEEPSEEK_TEMPERATURE` | no | DeepSeek (OpenAI-compatible) config         |
 | `GEMINI_API_KEY` / `GEMINI_MODEL`       | no       | Gemini config (fallback provider)                        |
+| `ICHING_AI_MONTHLY_LIMIT`               | no       | Monthly AI-interpretation quota per registered user (default `5`) |
 
 \* Required for auth to work; the app boots without it but login will fail.
 

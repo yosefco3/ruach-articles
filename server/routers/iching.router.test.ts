@@ -12,7 +12,7 @@ describe("iching.getContent", () => {
       getIchingIntro: async () => intro,
     });
     const result = await caller.iching.getContent();
-    expect(result).toEqual({ hexagrams, trigrams, intro });
+    expect(result).toEqual({ hexagrams, trigrams, intro, aiMonthlyLimit: 5 });
     expect(db.listHexagramTexts).toHaveBeenCalledOnce();
     expect(db.listTrigramTexts).toHaveBeenCalledOnce();
     expect(db.getIchingIntro).toHaveBeenCalledOnce();

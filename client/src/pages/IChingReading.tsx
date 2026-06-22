@@ -522,7 +522,12 @@ function ResultView({
 
       {/* ── פירוש AI מותאם אישית — תמיד מעל הפירוש הסטטי, לעולם לא מחביא אותו ── */}
       {qSaved.trim() && (
-        <IChingAiPanel question={qSaved} context={aiContext} isAuthenticated={isAuthenticated} />
+        <IChingAiPanel
+          question={qSaved}
+          context={aiContext}
+          isAuthenticated={isAuthenticated}
+          monthlyLimit={content.aiMonthlyLimit}
+        />
       )}
 
       <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
