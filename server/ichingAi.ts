@@ -62,8 +62,8 @@ async function generateWithDeepSeek(prompt: string): Promise<string> {
     body: JSON.stringify({
       model: env.DEEPSEEK_MODEL,
       messages: [{ role: "user", content: prompt }],
-      // 0.7 — טמפרטורה גבוהה (1.3) מפרקת את העברית של DeepSeek לג'יבריש; 0.7 שומר על קוהרנטיות.
-      temperature: 0.7,
+      // ניתן לכוונן ב-env; ברירת מחדל 0.7 — טמפרטורה גבוהה (1.3) מפרקת את העברית של DeepSeek לג'יבריש.
+      temperature: env.DEEPSEEK_TEMPERATURE,
       max_tokens: 3000,
     }),
   });
