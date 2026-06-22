@@ -125,13 +125,21 @@ describe("editable name overrides (DB override → fallback to shared)", () => {
   });
 });
 
-describe("the question is never sent to the server", () => {
-  it("exposes only a content query + admin mutations — no procedure receives a question", () => {
+describe("the question only leaves the browser on an explicit AI request", () => {
+  it("routes a question through exactly one procedure — the interpret mutation", () => {
     const ichingKeys = Object.keys(appRouter._def.procedures).filter((k) => k.startsWith("iching."));
     expect(ichingKeys.sort()).toEqual(
-      ["iching.getContent", "iching.updateIntro", "iching.upsertHexagram", "iching.upsertTrigram"].sort(),
+      [
+        "iching.getContent",
+        "iching.interpret",
+        "iching.updateIntro",
+        "iching.upsertHexagram",
+        "iching.upsertTrigram",
+      ].sort(),
     );
-    // הקריאה הציבורית היחידה היא query ללא קלט שאלה.
+    // טעינת הדף משתמשת רק ב-query הזה — ללא קלט שאלה.
     expect(appRouter._def.procedures["iching.getContent"]._def.type).toBe("query");
+    // השאלה נשלחת אך ורק דרך mutation מפורש (לחיצה על כפתור ה-AI); השרת לעולם לא שומר אותה.
+    expect(appRouter._def.procedures["iching.interpret"]._def.type).toBe("mutation");
   });
 });

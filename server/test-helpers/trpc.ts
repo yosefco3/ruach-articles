@@ -41,7 +41,13 @@ export const writerCtx = (o: Partial<AuthUser> = {}) =>
  * vi.fn() for any method a router touches, so tests never need the full method list —
  * they pass overrides only for the methods whose return value matters.
  */
-export function makeDeps(dbOverrides: Record<string, unknown> = {}) {
+/** Non-db deps that some routers consume. Tests override only what they assert on. */
+export interface ExtraDeps {
+  generateIchingInterpretation?: (...args: unknown[]) => unknown;
+  ichingAiMonthlyLimit?: number;
+}
+
+export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: ExtraDeps = {}) {
   // Wrap each override implementation in a vi.fn() so tests can assert call counts/args.
   const seeded: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(dbOverrides)) {
@@ -54,13 +60,30 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}) {
     },
   });
   const sendArticleNewsletter = vi.fn().mockResolvedValue({ sent: 0, failed: 0 });
-  const deps = { db, sendArticleNewsletter } as unknown as RouterDeps;
-  return { deps, db: db as Record<string, ReturnType<typeof vi.fn>>, sendArticleNewsletter };
+  const generateIchingInterpretation = vi.fn(
+    extra.generateIchingInterpretation ?? (async () => "פירוש לדוגמה"),
+  );
+  const deps = {
+    db,
+    sendArticleNewsletter,
+    generateIchingInterpretation,
+    ichingAiMonthlyLimit: extra.ichingAiMonthlyLimit ?? 5,
+  } as unknown as RouterDeps;
+  return {
+    deps,
+    db: db as Record<string, ReturnType<typeof vi.fn>>,
+    sendArticleNewsletter,
+    generateIchingInterpretation,
+  };
 }
 
 /** A tRPC caller for a given context + db overrides, plus the spies to assert on. */
-export function makeCaller(ctx: TrpcContext, dbOverrides: Record<string, unknown> = {}) {
-  const { deps, db, sendArticleNewsletter } = makeDeps(dbOverrides);
+export function makeCaller(
+  ctx: TrpcContext,
+  dbOverrides: Record<string, unknown> = {},
+  extra: ExtraDeps = {},
+) {
+  const { deps, db, sendArticleNewsletter, generateIchingInterpretation } = makeDeps(dbOverrides, extra);
   const caller = createAppRouter(deps).createCaller(ctx);
-  return { caller, db, sendArticleNewsletter };
+  return { caller, db, sendArticleNewsletter, generateIchingInterpretation };
 }

@@ -4,8 +4,11 @@
 
 import type * as db from "../db";
 import type { ArticleEmailPayload } from "../newsletterEmail";
+import type { IchingAiContext } from "../ichingAi";
 
 export interface RouterDeps {
   db: typeof db;
   sendArticleNewsletter: (article: ArticleEmailPayload) => Promise<{ sent: number; failed: number }>;
+  generateIchingInterpretation: (c: IchingAiContext) => Promise<string>;
+  ichingAiMonthlyLimit: number;
 }

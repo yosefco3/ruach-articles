@@ -109,3 +109,73 @@ describe("iching admin guards", () => {
     });
   });
 });
+
+describe("iching.interpret", () => {
+  const input = {
+    question: "האם כדאי לי להחליף עבודה?",
+    baseName: "היצירה",
+    baseText: "כוח יוצר טהור.",
+  };
+
+  it("rejects an anonymous caller with UNAUTHORIZED", async () => {
+    await expect(
+      makeCaller(publicCtx()).caller.iching.interpret(input),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("returns an interpretation and increments usage when under the quota", async () => {
+    const { caller, db, generateIchingInterpretation } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getMonthlyUsage: async () => 0, incrementMonthlyUsage: async () => 1 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    const result = await caller.iching.interpret(input);
+    expect(result.interpretation).toBe("פירוש לדוגמה");
+    expect(result.usage).toEqual({ used: 1, limit: 5, remaining: 4 });
+    expect(generateIchingInterpretation).toHaveBeenCalledOnce();
+    expect(db.getMonthlyUsage).toHaveBeenCalledWith(7);
+    expect(db.incrementMonthlyUsage).toHaveBeenCalledOnce();
+  });
+
+  it("throws FORBIDDEN at the quota and never calls Gemini or increments", async () => {
+    const { caller, db, generateIchingInterpretation } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getMonthlyUsage: async () => 5 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    await expect(caller.iching.interpret(input)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "QUOTA_EXCEEDED",
+    });
+    expect(generateIchingInterpretation).not.toHaveBeenCalled();
+    expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
+  });
+
+  it("lets an admin bypass the quota without incrementing", async () => {
+    const { caller, db, generateIchingInterpretation } = makeCaller(
+      adminCtx(),
+      { getMonthlyUsage: async () => 999 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    const result = await caller.iching.interpret(input);
+    expect(result.interpretation).toBe("פירוש לדוגמה");
+    expect(generateIchingInterpretation).toHaveBeenCalledOnce();
+    expect(db.getMonthlyUsage).not.toHaveBeenCalled();
+    expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
+  });
+
+  it("propagates a Gemini failure and does not increment usage", async () => {
+    const { caller, db } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getMonthlyUsage: async () => 0 },
+      {
+        ichingAiMonthlyLimit: 5,
+        generateIchingInterpretation: async () => {
+          throw new Error("Gemini down");
+        },
+      },
+    );
+    await expect(caller.iching.interpret(input)).rejects.toThrow("Gemini down");
+    expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
+  });
+});

@@ -43,10 +43,14 @@ export const createAppRouter = (deps: RouterDeps) => router({
 // Convenience: create with default deps for backward compatibility
 import * as db from "../db";
 import { sendArticleNewsletter } from "../newsletterEmail";
+import { generateIchingInterpretation } from "../ichingAi";
+import { env } from "../_core/env";
 
 const defaultDeps: RouterDeps = {
   db,
   sendArticleNewsletter,
+  generateIchingInterpretation,
+  ichingAiMonthlyLimit: env.ICHING_AI_MONTHLY_LIMIT,
 };
 
 export const appRouter = createAppRouter(defaultDeps);
