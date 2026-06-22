@@ -13,6 +13,7 @@ import {
   relationForEffective,
   htmlToPlainText,
   buildAiContext,
+  hexLines,
   type IChingContent,
 } from "./model";
 
@@ -28,8 +29,8 @@ const stableReading: Reading = cast(seqRng([0, 0, 0.9]));
 
 const content: IChingContent = {
   hexagrams: [
-    { number: 2, name: "", trigramExplanation: "te2", interpretation: "<p>kabbala</p>", changingLinesNote: "" },
-    { number: 1, name: "", trigramExplanation: "te1", interpretation: "<p>yetzira</p>", changingLinesNote: "" },
+    { number: 2, name: "", trigramExplanation: "te2", interpretation: "<p>kabbala</p>", line1: "", line2: "שינוי בקו 2", line3: "", line4: "", line5: "", line6: "" },
+    { number: 1, name: "", trigramExplanation: "te1", interpretation: "<p>yetzira</p>", line1: "", line2: "", line3: "", line4: "", line5: "", line6: "" },
   ],
   trigrams: [{ trigramKey: "kun", name: "", element: "", attr: "", description: "<p>kun desc</p>" }],
   intro: { articleHtml: "<p>a</p>", questionPrompt: "q", questionHint: "h", buttonLabel: "b" },
@@ -38,6 +39,13 @@ const content: IChingContent = {
 describe("line ordering", () => {
   it("renders bottom-up: line 1 (index 5..0)", () => {
     expect(lineRenderOrder(6)).toEqual([5, 4, 3, 2, 1, 0]);
+  });
+});
+
+describe("hexLines", () => {
+  it("returns the six line texts in order 1..6 (index 0 = bottom line)", () => {
+    expect(hexLines(content.hexagrams[0])).toEqual(["", "שינוי בקו 2", "", "", "", ""]);
+    expect(hexLines(content.hexagrams[0])).toHaveLength(6);
   });
 });
 

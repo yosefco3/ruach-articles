@@ -67,7 +67,12 @@ export const createIchingRouter = (deps: RouterDeps) =>
           name: z.string().max(128).default(""), // override לשם; ריק = ברירת המחדל מ-shared
           trigramExplanation: z.string(),
           interpretation: z.string(),
-          changingLinesNote: z.string().default(""),
+          line1: z.string().default(""),
+          line2: z.string().default(""),
+          line3: z.string().default(""),
+          line4: z.string().default(""),
+          line5: z.string().default(""),
+          line6: z.string().default(""),
         }),
       )
       .mutation(async ({ input }) => {

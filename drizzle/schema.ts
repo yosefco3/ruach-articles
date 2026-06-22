@@ -171,7 +171,13 @@ export const ichingHexagramText = mysqlTable("ichingHexagramText", {
   name: varchar("name", { length: 128 }).default("").notNull(), // override לשם המנוקד; ריק = ברירת המחדל מ-shared
   trigramExplanation: text("trigramExplanation").notNull(), // "הטריגרמות" — ניתוח שתי הטריגרמות
   interpretation: text("interpretation").notNull(), // "פירוש ההקסגרמה" — HTML עשיר (מסרים מרכזיים ככותרות + יישום מעשי)
-  changingLinesNote: text("changingLinesNote").default("").notNull(), // "קווים משתנים" — הערה אופציונלית
+  // "קווים משתנים" — טקסט אופציונלי לכל קו, קו 1 = הקו התחתון (תואם reading.changing)
+  line1: text("line1").default("").notNull(),
+  line2: text("line2").default("").notNull(),
+  line3: text("line3").default("").notNull(),
+  line4: text("line4").default("").notNull(),
+  line5: text("line5").default("").notNull(),
+  line6: text("line6").default("").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type IchingHexagramText = typeof ichingHexagramText.$inferSelect;

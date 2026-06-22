@@ -9,7 +9,18 @@ export interface HexText {
   name: string; // override לשם; ריק = ברירת המחדל מ-shared
   trigramExplanation: string;
   interpretation: string;
-  changingLinesNote: string;
+  // טקסט אופציונלי לכל קו, קו 1 = הקו התחתון (תואם reading.changing)
+  line1: string;
+  line2: string;
+  line3: string;
+  line4: string;
+  line5: string;
+  line6: string;
+}
+
+/** ששת טקסטי הקווים לפי הסדר 1..6 (אינדקס 0 = קו 1 התחתון). */
+export function hexLines(h: HexText): string[] {
+  return [h.line1, h.line2, h.line3, h.line4, h.line5, h.line6];
 }
 export interface TriText {
   trigramKey: string;

@@ -17,6 +17,7 @@ import { HEXAGRAMS, TRIGRAMS, type TrigramKey } from "@shared/iching";
 import {
   findHexText,
   findTriText,
+  hexLines,
   effectiveHexName,
   relationForEffective,
   type IChingContent,
@@ -115,14 +116,14 @@ export default function AdminIChing() {
   const [hexName, setHexName] = useState("");
   const [trigramExplanation, setTrigramExplanation] = useState("");
   const [interpretation, setInterpretation] = useState("");
-  const [changingLinesNote, setChangingLinesNote] = useState("");
+  const [lines, setLines] = useState<string[]>(["", "", "", "", "", ""]);
   useEffect(() => {
     if (content) {
       const t = findHexText(content.hexagrams, hexNumber);
       setHexName(t?.name ?? "");
       setTrigramExplanation(t?.trigramExplanation ?? "");
       setInterpretation(t?.interpretation ?? "");
-      setChangingLinesNote(t?.changingLinesNote ?? "");
+      setLines(t ? hexLines(t) : ["", "", "", "", "", ""]);
     }
   }, [content, hexNumber]);
 
@@ -393,13 +394,28 @@ export default function AdminIChing() {
                 <RichTextEditor value={interpretation} onChange={setInterpretation} />
               </div>
               <div>
-                <label className={SECTION_LABEL}>קווים משתנים (אופציונלי)</label>
-                <Textarea value={changingLinesNote} onChange={(e) => setChangingLinesNote(e.target.value)} dir="rtl" className="text-right min-h-[80px]" />
+                <label className={SECTION_LABEL}>קווים משתנים (אופציונלי) — קו 1 הוא הקו התחתון</label>
+                <div className="space-y-2">
+                  {lines.map((val, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="w-12 shrink-0 pt-2 text-sm text-muted-foreground text-center">קו {i + 1}</span>
+                      <Textarea
+                        value={val}
+                        onChange={(e) => setLines((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
+                        dir="rtl"
+                        className="text-right min-h-[56px]"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="flex justify-end pt-2">
                 <Button
                   onClick={() =>
-                    upsertHexagram.mutate({ number: hex.number, name: hexName, trigramExplanation, interpretation, changingLinesNote })
+                    upsertHexagram.mutate({
+                      number: hex.number, name: hexName, trigramExplanation, interpretation,
+                      line1: lines[0], line2: lines[1], line3: lines[2], line4: lines[3], line5: lines[4], line6: lines[5],
+                    })
                   }
                   disabled={upsertHexagram.isPending}
                   className="gap-2"
