@@ -59,11 +59,11 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               ))}
               <Link
                 href="/iching"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                  location === "/iching" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors bg-violet-600 text-white hover:bg-violet-700 ${
+                  location === "/iching" ? "ring-2 ring-violet-300 dark:ring-violet-500" : ""
                 }`}
               >
-                אִי צִ׳ינְג
+                קריאה באי צינג
               </Link>
               <Link
                 href="/about"
@@ -194,9 +194,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <Link
               href="/iching"
               onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="block px-3 py-2 rounded-md text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors"
             >
-              אִי צִ׳ינְג
+              קריאה באי צינג
             </Link>
             <Link
               href="/about"
@@ -256,9 +256,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               ))}
               <Link
                 href="/iching"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
               >
-                אִי צִ׳ינְג
+                קריאה באי צינג
               </Link>
               <Link
                 href="/about"
