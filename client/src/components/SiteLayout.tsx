@@ -44,6 +44,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
+              <Link
+                href="/iching"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 me-1 rounded-full text-sm font-semibold border transition-colors ${
+                  location === "/iching"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                קריאה באי צינג
+              </Link>
               {(categories ?? []).map((cat) => (
                 <Link
                   key={cat.slug}
@@ -57,14 +68,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   {cat.name}
                 </Link>
               ))}
-              <Link
-                href="/iching"
-                className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors bg-violet-600 text-white hover:bg-violet-700 ${
-                  location === "/iching" ? "ring-2 ring-violet-300 dark:ring-violet-500" : ""
-                }`}
-              >
-                קריאה באי צינג
-              </Link>
               <Link
                 href="/about"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
@@ -181,6 +184,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {/* Mobile Nav */}
         {mobileOpen && (
           <div className="md:hidden border-t border-border bg-card px-4 py-3 flex flex-col gap-1">
+            <Link
+              href="/iching"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 mb-1 rounded-full text-sm font-semibold border border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              קריאה באי צינג
+            </Link>
             {(categories ?? []).map((cat) => (
               <Link
                 key={cat.slug}
@@ -191,13 +202,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 {cat.name}
               </Link>
             ))}
-            <Link
-              href="/iching"
-              onClick={() => setMobileOpen(false)}
-              className="block px-3 py-2 rounded-md text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-            >
-              קריאה באי צינג
-            </Link>
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
@@ -256,7 +260,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               ))}
               <Link
                 href="/iching"
-                className="text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors"
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 קריאה באי צינג
               </Link>
