@@ -156,6 +156,8 @@ export interface AiContext {
   baseText: string;
   resultName: string;
   resultText: string;
+  /** רק קווים שבאמת נפלו כמשתנים (1=תחתון) ויש להם טקסט. ריק → לא מוזרק. */
+  changingLines: { line: number; text: string }[];
 }
 
 /** מרכיב את הקונטקסט להזרקה מתוך הקריאה + התוכן הסטטי שכבר בעמוד. */
@@ -164,6 +166,10 @@ export function buildAiContext(reading: Reading, content: IChingContent): AiCont
   const result = reading.resulting
     ? findHexText(content.hexagrams, reading.resulting.number)
     : undefined;
+  const baseLines = base ? hexLines(base) : [];
+  const changingLines = reading.changing
+    .map((n) => ({ line: n, text: (baseLines[n - 1] ?? "").trim() }))
+    .filter((l) => l.text.length > 0);
   return {
     baseName: effectiveHexName(reading.primary.number, content.hexagrams),
     baseText: htmlToPlainText(base?.interpretation ?? ""),
@@ -171,5 +177,6 @@ export function buildAiContext(reading: Reading, content: IChingContent): AiCont
       ? effectiveHexName(reading.resulting.number, content.hexagrams)
       : "",
     resultText: htmlToPlainText(result?.interpretation ?? ""),
+    changingLines,
   };
 }

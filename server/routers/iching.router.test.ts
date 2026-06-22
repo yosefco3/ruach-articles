@@ -136,6 +136,21 @@ describe("iching.interpret", () => {
     expect(db.incrementMonthlyUsage).toHaveBeenCalledOnce();
   });
 
+  it("forwards the changing lines to the generator", async () => {
+    const { caller, generateIchingInterpretation } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getMonthlyUsage: async () => 0, incrementMonthlyUsage: async () => 1 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    await caller.iching.interpret({
+      ...input,
+      changingLines: [{ line: 3, text: "מעבר" }],
+    });
+    expect(generateIchingInterpretation).toHaveBeenCalledWith(
+      expect.objectContaining({ changingLines: [{ line: 3, text: "מעבר" }] }),
+    );
+  });
+
   it("throws FORBIDDEN at the quota and never calls Gemini or increments", async () => {
     const { caller, db, generateIchingInterpretation } = makeCaller(
       userCtx({ dbId: 7 }),

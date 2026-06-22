@@ -149,10 +149,17 @@ describe("AI context injection", () => {
     expect(ctx.resultText).toBe("yetzira");
   });
 
+  it("buildAiContext collects only changing lines that have text (line 1 = bottom)", () => {
+    // changingReading: כל ששת הקווים משתנים; להקסגרמה #2 יש טקסט רק בקו 2.
+    const ctx = buildAiContext(changingReading, content);
+    expect(ctx.changingLines).toEqual([{ line: 2, text: "שינוי בקו 2" }]);
+  });
+
   it("buildAiContext leaves result fields empty for a stable reading", () => {
     const ctx = buildAiContext(stableReading, content);
     expect(ctx.resultName).toBe("");
     expect(ctx.resultText).toBe("");
+    expect(ctx.changingLines).toEqual([]);
   });
 });
 
