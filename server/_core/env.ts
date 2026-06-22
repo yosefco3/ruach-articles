@@ -37,9 +37,18 @@ const envSchema = z.object({
   // Contact form recipient — optional
   CONTACT_EMAIL_TO: z.string().optional(),
 
-  // Gemini AI — פירוש אי-צ'ינג מותאם-אישית
+  // פירוש אי-צ'ינג מותאם-אישית — בחירת ספק ה-AI ('deepseek' כברירת מחדל)
+  ICHING_AI_PROVIDER: z.enum(['deepseek', 'gemini']).default('deepseek'),
+
+  // Gemini AI
   GEMINI_API_KEY: z.string().optional(), // optional כדי לא להפיל את השרת בלי המפתח
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+
+  // DeepSeek AI (API תואם-OpenAI) — pay-per-use, ללא חסמי free-tier
+  DEEPSEEK_API_KEY: z.string().optional(),
+  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  DEEPSEEK_BASE_URL: z.string().default('https://api.deepseek.com'),
+
   ICHING_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
 });
 
