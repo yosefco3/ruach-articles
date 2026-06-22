@@ -13,7 +13,7 @@ export const createIchingRouter = (deps: RouterDeps) =>
         deps.db.listTrigramTexts(),
         deps.db.getIchingIntro(),
       ]);
-      return { hexagrams, trigrams, intro };
+      return { hexagrams, trigrams, intro, aiMonthlyLimit: deps.ichingAiMonthlyLimit };
     }),
 
     // ── מחובר: פירוש AI מותאם-אישית, מוגבל במכסה חודשית ──

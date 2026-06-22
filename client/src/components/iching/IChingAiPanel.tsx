@@ -92,10 +92,12 @@ export function IChingAiPanel({
   question,
   context,
   isAuthenticated,
+  monthlyLimit,
 }: {
   question: string;
   context: AiContext;
   isAuthenticated: boolean;
+  monthlyLimit: number;
 }) {
   // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
   const [failures, setFailures] = useState(0);
@@ -128,7 +130,7 @@ export function IChingAiPanel({
       <div dir="rtl" style={cardStyle}>
         <PanelHeader />
         <p style={{ margin: "0 0 18px", fontSize: 16.5, lineHeight: 1.85, color: "oklch(0.34 0.03 55)" }}>
-          לקבלת פירוש AI מותאם לשאלתך, אנא התחבר עם חשבון גוגל (מוגבל ל-5 קריאות חינם בחודש).
+          לקבלת פירוש AI מותאם לשאלתך, אנא התחבר עם חשבון גוגל (מוגבל ל-{monthlyLimit} קריאות חינם בחודש).
         </p>
         <a
           href={getLoginUrl()}
@@ -192,7 +194,7 @@ export function IChingAiPanel({
         </div>
       ) : isQuotaError ? (
         <p style={errorTextStyle}>
-          ניצלת את 5 הקריאות החינמיות שלך לחודש זה. תוכל להמשיך ליהנות מהפירושים הסטטיים באתר.
+          ניצלת את {monthlyLimit} הקריאות החינמיות שלך לחודש זה. תוכל להמשיך ליהנות מהפירושים הסטטיים באתר.
         </p>
       ) : mutation.error && failures >= MAX_FAILURES ? (
         // ── אחרי 3 כשלים רצופים: מתנצלים, מפנים לפירוש הסטטי, ומבהירים שהמכסה לא נפגעה ──
