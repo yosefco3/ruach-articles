@@ -1,6 +1,15 @@
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -25,6 +34,30 @@ export default function AdminPage() {
 
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ all: true });
   const { data: featuredArticle } = trpc.featured.get.useQuery();
+
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  const filteredArticles = useMemo(() => {
+    if (!articles) return [];
+    const q = search.trim().toLowerCase();
+    return articles.filter((a) => {
+      if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
+      if (!q) return true;
+      const haystack = [
+        a.title,
+        a.excerpt ?? "",
+        getCategoryLabel(a.category),
+        Array.isArray(a.tags) ? a.tags.join(" ") : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      // match every whitespace-separated word, in any order
+      return q.split(/\s+/).every((word) => haystack.includes(word));
+    });
+  }, [articles, search, categoryFilter, getCategoryLabel]);
+
+  const hasFilters = search.trim() !== "" || categoryFilter !== "all";
 
   const deleteArticle = trpc.articles.delete.useMutation({
     onSuccess: () => {
@@ -135,6 +168,48 @@ export default function AdminPage() {
         ))}
       </div>
 
+      {/* Search & filters */}
+      {articles && articles.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="חיפוש לפי כותרת, תקציר, תגיות..."
+              className="pr-10 text-right"
+              dir="rtl"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-56 text-right" dir="rtl">
+              <SelectValue placeholder="כל הקטגוריות" />
+            </SelectTrigger>
+            <SelectContent dir="rtl">
+              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.slug} value={cat.slug}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearch("");
+                setCategoryFilter("all");
+              }}
+              className="gap-2"
+            >
+              <X className="w-4 h-4" />
+              נקה
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Articles Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
@@ -147,8 +222,27 @@ export default function AdminPage() {
             <Link href="/admin/new">צרו את המאמר הראשון</Link>
           </Button>
         </div>
+      ) : filteredArticles.length === 0 ? (
+        <div className="text-center py-16 bg-card border border-border rounded-xl">
+          <p className="text-muted-foreground mb-4">לא נמצאו מאמרים התואמים את החיפוש</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearch("");
+              setCategoryFilter("all");
+            }}
+          >
+            נקה סינון
+          </Button>
+        </div>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {hasFilters && (
+            <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border bg-secondary/30">
+              נמצאו {filteredArticles.length} מתוך {articles.length} מאמרים
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -161,7 +255,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {articles.map((article, idx) => (
+                {filteredArticles.map((article, idx) => (
                   <tr
                     key={article.id}
                     className={`border-b border-border last:border-0 hover:bg-secondary/30 transition-colors ${
