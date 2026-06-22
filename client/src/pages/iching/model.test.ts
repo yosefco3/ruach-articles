@@ -11,6 +11,8 @@ import {
   effectiveTrigram,
   effectiveHexName,
   relationForEffective,
+  htmlToPlainText,
+  buildAiContext,
   type IChingContent,
 } from "./model";
 
@@ -122,6 +124,27 @@ describe("editable name overrides (DB override → fallback to shared)", () => {
       hexagrams: [{ ...content.hexagrams[0], name: "שֵׁם עָרוּךְ" }, content.hexagrams[1]],
     };
     expect(resolvePanel(changingReading, DEFAULT_SEL, overridden).title).toBe("שֵׁם עָרוּךְ");
+  });
+});
+
+describe("AI context injection", () => {
+  it("htmlToPlainText strips tags and collapses whitespace", () => {
+    expect(htmlToPlainText("<p>שלום <b>עולם</b></p>")).toBe("שלום עולם");
+    expect(htmlToPlainText("<p>a&nbsp;&nbsp;b</p>\n  <p>c</p>")).toBe("a b c");
+  });
+
+  it("buildAiContext fills base + result from the static content (changing reading)", () => {
+    const ctx = buildAiContext(changingReading, content);
+    expect(ctx.baseName).toBe(effectiveHexName(2, content.hexagrams));
+    expect(ctx.baseText).toBe("kabbala");
+    expect(ctx.resultName).toBe(effectiveHexName(1, content.hexagrams));
+    expect(ctx.resultText).toBe("yetzira");
+  });
+
+  it("buildAiContext leaves result fields empty for a stable reading", () => {
+    const ctx = buildAiContext(stableReading, content);
+    expect(ctx.resultName).toBe("");
+    expect(ctx.resultText).toBe("");
   });
 });
 

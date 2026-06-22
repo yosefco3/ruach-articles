@@ -415,6 +415,9 @@
   0%, 100% { opacity: 0.65; }
   50% { opacity: 1; }
 }
+@keyframes ichingSpin {
+  to { transform: rotate(360deg); }
+}
 
 /* כיבוד העדפת תנועה מופחתת — ביטול אנימציות הקריאה */
 @media (prefers-reduced-motion: reduce) {
