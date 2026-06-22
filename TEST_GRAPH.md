@@ -1,6 +1,6 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-22 09:40_
+_נוצר אוטומטית ב: 2026-06-22 09:56_
 
 ## סיכום / Summary
 
@@ -27,6 +27,7 @@ _נוצר אוטומטית ב: 2026-06-22 09:40_
 | `(no source found for env-files.test.ts)` | `server/env-files.test.ts` |
 | `(no source found for featured-article.test.ts)` | `server/featured-article.test.ts` |
 | `(no source found for iching.test.ts)` | `shared/iching/iching.test.ts` |
+| `(no source found for ichingAi.provider.test.ts)` | `server/ichingAi.provider.test.ts` |
 | `(no source found for ichingUsage.test.ts)` | `server/ichingUsage.test.ts` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
