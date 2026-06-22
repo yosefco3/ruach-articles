@@ -48,6 +48,8 @@ const envSchema = z.object({
   DEEPSEEK_API_KEY: z.string().optional(),
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
   DEEPSEEK_BASE_URL: z.string().default('https://api.deepseek.com'),
+  // 0.7 שמרני — עברית של DeepSeek מתפרקת בטמפרטורות גבוהות (1.3 → ג'יבריש). ניתן לכוונן עד ~1.0.
+  DEEPSEEK_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
 
   ICHING_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
 });

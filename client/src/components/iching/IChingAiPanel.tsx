@@ -31,6 +31,29 @@ const cardStyle: React.CSSProperties = {
   boxShadow: "0 10px 36px oklch(0.3 0.04 55 / 0.07)",
 };
 
+/** מספר הכשלים הרצופים שאחריו מוצגת הודעת ההתנצלות במקום ניסיון חוזר. */
+const MAX_FAILURES = 3;
+
+const actionButtonStyle: React.CSSProperties = {
+  padding: "13px 30px",
+  fontFamily: "'Frank Ruhl Libre',serif",
+  fontWeight: 700,
+  fontSize: 18,
+  color: "oklch(0.98 0.008 80)",
+  background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
+  border: "none",
+  borderRadius: 10,
+  cursor: "pointer",
+  boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
+};
+
+const errorTextStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: 16.5,
+  lineHeight: 1.85,
+  color: "oklch(0.42 0.08 45)",
+};
+
 function PanelHeader() {
   return (
     <>
@@ -74,7 +97,16 @@ export function IChingAiPanel({
   context: AiContext;
   isAuthenticated: boolean;
 }) {
-  const mutation = trpc.iching.interpret.useMutation();
+  // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
+  const [failures, setFailures] = useState(0);
+  const mutation = trpc.iching.interpret.useMutation({
+    onError: (err) => {
+      const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
+      if (!quota) setFailures((n) => n + 1);
+    },
+    onSuccess: () => setFailures(0),
+  });
+  const runInterpret = () => mutation.mutate({ question, ...context });
   const [loadingLine, setLoadingLine] = useState(0);
 
   const reduced = useRef(false);
@@ -159,29 +191,42 @@ export function IChingAiPanel({
           </span>
         </div>
       ) : isQuotaError ? (
-        <p style={{ margin: 0, fontSize: 16.5, lineHeight: 1.85, color: "oklch(0.42 0.08 45)" }}>
+        <p style={errorTextStyle}>
           ניצלת את 5 הקריאות החינמיות שלך לחודש זה. תוכל להמשיך ליהנות מהפירושים הסטטיים באתר.
         </p>
-      ) : mutation.error ? (
-        <p style={{ margin: 0, fontSize: 16.5, lineHeight: 1.85, color: "oklch(0.42 0.08 45)" }}>
-          אירעה שגיאה בקבלת הפירוש. נסה שוב בעוד רגע.
+      ) : mutation.error && failures >= MAX_FAILURES ? (
+        // ── אחרי 3 כשלים רצופים: מתנצלים, מפנים לפירוש הסטטי, ומבהירים שהמכסה לא נפגעה ──
+        <p style={errorTextStyle}>
+          לא הצלחנו להפיק פירוש גם לאחר מספר ניסיונות — נראה ששירות ה-AI עמוס או חווה תקלה זמנית.
+          בינתיים תוכל להבין את הקריאה דרך הפירושים הסטטיים שמתחת. אנו מתנצלים על התקלה,
+          ומכסת השאלות שלך <strong>לא נפגעה</strong>.{" "}
+          <button
+            onClick={runInterpret}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              font: "inherit",
+              color: "oklch(0.46 0.09 58)",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            נסה שוב בכל זאת
+          </button>
         </p>
+      ) : mutation.error ? (
+        // ── שגיאה זמנית: הודעה + כפתור ניסיון חוזר (המכסה נספרת רק בהצלחה) ──
+        <div>
+          <p style={{ ...errorTextStyle, marginBottom: 16 }}>
+            אירעה שגיאה בקבלת הפירוש. נסה שוב בעוד רגע.
+          </p>
+          <button onClick={runInterpret} style={actionButtonStyle}>
+            נסה שוב
+          </button>
+        </div>
       ) : (
-        <button
-          onClick={() => mutation.mutate({ question, ...context })}
-          style={{
-            padding: "13px 30px",
-            fontFamily: "'Frank Ruhl Libre',serif",
-            fontWeight: 700,
-            fontSize: 18,
-            color: "oklch(0.98 0.008 80)",
-            background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
-            border: "none",
-            borderRadius: 10,
-            cursor: "pointer",
-            boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
-          }}
-        >
+        <button onClick={runInterpret} style={actionButtonStyle}>
           קבל פירוש AI מותאם אישית
         </button>
       )}
