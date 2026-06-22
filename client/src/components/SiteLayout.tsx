@@ -16,8 +16,9 @@ import { useState } from "react";
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { data: settings } = trpc.settings.get.useQuery();
-  const { data: categories } = trpc.categories.list.useQuery();
+  const { data: categories } = trpc.categories.listWithCounts.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [catsOpen, setCatsOpen] = useState(false);
   const [location] = useLocation();
 
   const isAdmin = user?.role === "admin";
@@ -55,19 +56,43 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <Sparkles className="w-3.5 h-3.5" />
                 קריאה באי צינג
               </Link>
-              {(categories ?? []).map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/category/${cat.slug}`}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                    location === `/category/${cat.slug}`
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {cat.name}
-                </Link>
-              ))}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                      location.startsWith("/category/")
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    מאמרים
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[24rem] p-2">
+                  <div className="grid grid-cols-2 gap-0.5">
+                    {(categories ?? []).map((cat) => (
+                      <DropdownMenuItem key={cat.slug} asChild>
+                        <Link
+                          href={`/category/${cat.slug}`}
+                          className="flex items-center justify-between gap-2 cursor-pointer rounded-md"
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: cat.color ?? "#8B6914" }}
+                            />
+                            <span className="truncate">{cat.name}</span>
+                          </span>
+                          <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                            {cat.articleCount}
+                          </span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Link
                 href="/about"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
@@ -192,16 +217,33 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <Sparkles className="w-4 h-4" />
               קריאה באי צינג
             </Link>
-            {(categories ?? []).map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
-                onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                {cat.name}
-              </Link>
-            ))}
+            <button
+              onClick={() => setCatsOpen(!catsOpen)}
+              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <span>מאמרים</span>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${catsOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {catsOpen && (
+              <div className="grid grid-cols-2 gap-0.5 pb-1 ps-2">
+                {(categories ?? []).map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    href={`/category/${cat.slug}`}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: cat.color ?? "#8B6914" }}
+                    />
+                    <span className="truncate">{cat.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
