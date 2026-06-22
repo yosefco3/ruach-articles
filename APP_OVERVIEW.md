@@ -64,7 +64,8 @@
 tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, contact, …),
 מוגשים תחת `/api` דרך Vite middleware. _TODO: לרשום את הפרוצדורות העיקריות per router._
 - **`iching`** — `getContent` (ציבורי: מחזיר hexagrams+trigrams+intro ממוזגים);
-  `interpret` (`protectedProcedure`: פירוש AI אישי דרך Gemini; בודק מכסה חודשית →
+  `interpret` (`protectedProcedure`: פירוש AI אישי דרך ספק נבחר — DeepSeek כברירת מחדל,
+  Gemini כ-fallback (`ICHING_AI_PROVIDER`), עם retry/backoff על 429/5xx; בודק מכסה חודשית →
   `FORBIDDEN`/403 בחריגה, מקדם מונה רק בהצלחה, אדמין פטור; השאלה נשלחת רק בלחיצה מפורשת
   ואינה נשמרת); `upsertHexagram`/`upsertTrigram`/`updateIntro` (`adminProcedure` בלבד).
   ה-AI מוזרק דרך `RouterDeps` (`generateIchingInterpretation`, `ichingAiMonthlyLimit`).
@@ -93,7 +94,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 חלון פירוט יחיד עם הפירוש **הממוזג**: מבנה מ-`shared/iching` + טקסט מה-DB.
 **פירוש AI אישי:** משתמש מחובר יכול ללחוץ "קבל פירוש AI מותאם אישית" (`IChingAiPanel`,
 **מעל** הפירוש הסטטי) → הלקוח מזריק את שם+טקסט ההקסגרמות הסטטיות + השאלה ל-`iching.interpret`
-→ השרת בונה פרומפט Tao Oracle (`server/ichingAi.ts`) ושולח ל-Gemini → תשובת Markdown מוצגת
+→ השרת בונה פרומפט Tao Oracle (`server/ichingAi.ts`) ושולח לספק ה-AI (DeepSeek כברירת מחדל) → תשובת Markdown מוצגת
 בתיבה ייעודית. מכסה 5/חודש (`ICHING_AI_MONTHLY_LIMIT`), נספרת ב-`ichingAiUsage`; אורח רואה
 כפתור חסום עם הזמנה להתחברות. השאלה/התשובה לעולם אינן נשמרות.
 
@@ -107,3 +108,4 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | 2026-06-21 | I Ching: `/iching` linked from site nav/footer/admin menu; editable hexagram/trigram names (DB override, fallback to shared defaults) | `client/src/components/SiteLayout.tsx`, `drizzle/schema.ts` (`name`/`element`/`attr`), `client/src/pages/iching/model.ts`, `IChingReading.tsx`, `AdminIChing.tsx` |
 | 2026-06-21 | **Full SSR migration** (SPA→SSR): injectable `AppTree`, `entry-client`/`entry-server` (`prerenderToNodeStream`), Vite SSR build (manifest + `--ssr` bundle), server render in dev+prod, per-route tRPC prefetch+dehydrate→`__APP_STATE__`→hydrate (auth-aware via cookie-forwarding loopback fetch), seo.ts as single SSR head source (+`/iching`), react-helmet-async removed (→`useDocumentTitle`), deterministic dark theme, Railway loopback origin | `client/src/AppTree.tsx`, `client/src/entry-{client,server}.tsx`, `client/src/lib/trpcClient.ts`, `client/src/routes/ssrData.ts`, `client/src/hooks/useDocumentTitle.ts`, `server/_core/ssr.ts`, `server/_core/vite.ts`, `server/_core/startup/{frontend,server}.ts`, `server/seo.ts`, `vite.config.ts`, `package.json`, `client/index.html` |
 | 2026-06-22 | **I Ching personal AI interpretation** (Gemini): protected `iching.interpret` endpoint with monthly quota (`ICHING_AI_MONTHLY_LIMIT`=5, admins exempt, count-on-success, 403 on exceed), `ichingAiUsage` counter table (stores only a count — never the question/answer), Tao-Oracle prompt builder, client context-injection + `IChingAiPanel` shown above the static interpretation. New env: `GEMINI_API_KEY`, `GEMINI_MODEL` (`gemini-2.5-flash`), `ICHING_AI_MONTHLY_LIMIT`. Built on a clean base — the old Forge/Manus LLM infra (`server/_core/llm.ts`, `imageGeneration.ts`, `voiceTranscription.ts`, `map.ts`, `dataApi.ts`, `client Map.tsx`, `FORGE_*` env) was removed. | `server/ichingAi.ts`, `server/db/ichingUsage.ts`, `server/routers/iching.router.ts`, `server/routers/{context,index}.ts`, `drizzle/schema.ts` + `0011_*.sql`, `client/src/components/iching/IChingAiPanel.tsx`, `client/src/pages/iching/model.ts`, `client/src/pages/IChingReading.tsx`, `server/_core/env.ts` |
+| 2026-06-22 | **I Ching AI → DeepSeek provider**: replaced the default AI provider with DeepSeek (OpenAI-compatible API via `fetch`, no new dep) because the Gemini free tier surfaced intermittent 503/429 (overload/rate-limit, *not* content blocks) as generic errors. `generateIchingInterpretation` is now provider-agnostic (`ICHING_AI_PROVIDER` = `deepseek` default \| `gemini`), with `withRetry` exponential backoff on transient 429/5xx/network. `temperature: 0.7` — DeepSeek's Hebrew degrades to gibberish at 1.3. New env: `ICHING_AI_PROVIDER`, `DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL` (`deepseek-chat`), `DEEPSEEK_BASE_URL`. `buildIchingPrompt` unchanged. | `server/ichingAi.ts`, `server/_core/env.ts`, `.env.example` |
