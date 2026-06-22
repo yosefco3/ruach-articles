@@ -39,4 +39,23 @@ describe("buildIchingPrompt (pure)", () => {
     const prompt = buildIchingPrompt({ ...base, resultName: "   " });
     expect(prompt).toContain("קריאה יציבה ללא קווים משתנים");
   });
+
+  it("injects only the changing lines that were passed, numbered from the bottom", () => {
+    const prompt = buildIchingPrompt({
+      ...base,
+      changingLines: [
+        { line: 2, text: "פתיחות לשינוי" },
+        { line: 5, text: "הנהגה ברורה" },
+      ],
+    });
+    expect(prompt).toContain("קו 1 = הקו התחתון");
+    expect(prompt).toContain("- קו 2: פתיחות לשינוי");
+    expect(prompt).toContain("- קו 5: הנהגה ברורה");
+    expect(prompt).toContain("שלב את משמעות הקווים המשתנים בניתוח");
+  });
+
+  it("omits the changing-lines block entirely when none are passed", () => {
+    expect(buildIchingPrompt(base)).not.toContain("הקווים המשתנים בקריאה זו");
+    expect(buildIchingPrompt({ ...base, changingLines: [] })).not.toContain("קו 1 = הקו התחתון");
+  });
 });

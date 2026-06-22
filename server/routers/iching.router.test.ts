@@ -30,7 +30,7 @@ describe("iching.upsertHexagram", () => {
       name: "הַשָּׁלוֹם",
       trigramExplanation: "te",
       interpretation: "i",
-      changingLinesNote: "",
+      line1: "", line2: "", line3: "", line4: "", line5: "", line6: "",
     };
     const result = await caller.iching.upsertHexagram(input);
     expect(db.upsertHexagramText).toHaveBeenCalledWith(input);
@@ -45,12 +45,11 @@ describe("iching.upsertHexagram", () => {
         number: 99,
         trigramExplanation: "te",
         interpretation: "i",
-        changingLinesNote: "",
       }),
     ).rejects.toBeDefined();
   });
 
-  it("defaults name and changingLinesNote to empty strings", async () => {
+  it("defaults name and the six line texts to empty strings", async () => {
     const { caller, db } = makeCaller(adminCtx());
     await caller.iching.upsertHexagram({
       number: 5,
@@ -62,14 +61,14 @@ describe("iching.upsertHexagram", () => {
       name: "",
       trigramExplanation: "te",
       interpretation: "i",
-      changingLinesNote: "",
+      line1: "", line2: "", line3: "", line4: "", line5: "", line6: "",
     });
   });
 });
 
 describe("iching admin guards", () => {
   it("upsertHexagram rejects public (UNAUTHORIZED) and users (FORBIDDEN)", async () => {
-    const input = { number: 1, trigramExplanation: "t", interpretation: "i", changingLinesNote: "" };
+    const input = { number: 1, trigramExplanation: "t", interpretation: "i" };
     await expect(
       makeCaller(publicCtx()).caller.iching.upsertHexagram(input),
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
@@ -135,6 +134,21 @@ describe("iching.interpret", () => {
     expect(generateIchingInterpretation).toHaveBeenCalledOnce();
     expect(db.getMonthlyUsage).toHaveBeenCalledWith(7);
     expect(db.incrementMonthlyUsage).toHaveBeenCalledOnce();
+  });
+
+  it("forwards the changing lines to the generator", async () => {
+    const { caller, generateIchingInterpretation } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getMonthlyUsage: async () => 0, incrementMonthlyUsage: async () => 1 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    await caller.iching.interpret({
+      ...input,
+      changingLines: [{ line: 3, text: "מעבר" }],
+    });
+    expect(generateIchingInterpretation).toHaveBeenCalledWith(
+      expect.objectContaining({ changingLines: [{ line: 3, text: "מעבר" }] }),
+    );
   });
 
   it("throws FORBIDDEN at the quota and never calls Gemini or increments", async () => {

@@ -25,6 +25,10 @@ export const createIchingRouter = (deps: RouterDeps) =>
           baseText: z.string().max(8000),
           resultName: z.string().max(128).default(""),
           resultText: z.string().max(8000).default(""),
+          changingLines: z
+            .array(z.object({ line: z.number().int().min(1).max(6), text: z.string().max(2000) }))
+            .max(6)
+            .default([]),
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -46,6 +50,7 @@ export const createIchingRouter = (deps: RouterDeps) =>
           baseText: input.baseText,
           resultName: input.resultName,
           resultText: input.resultText,
+          changingLines: input.changingLines,
         });
 
         let used = 0;
@@ -67,7 +72,12 @@ export const createIchingRouter = (deps: RouterDeps) =>
           name: z.string().max(128).default(""), // override לשם; ריק = ברירת המחדל מ-shared
           trigramExplanation: z.string(),
           interpretation: z.string(),
-          changingLinesNote: z.string().default(""),
+          line1: z.string().default(""),
+          line2: z.string().default(""),
+          line3: z.string().default(""),
+          line4: z.string().default(""),
+          line5: z.string().default(""),
+          line6: z.string().default(""),
         }),
       )
       .mutation(async ({ input }) => {

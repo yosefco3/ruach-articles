@@ -9,7 +9,18 @@ export interface HexText {
   name: string; // override לשם; ריק = ברירת המחדל מ-shared
   trigramExplanation: string;
   interpretation: string;
-  changingLinesNote: string;
+  // טקסט אופציונלי לכל קו, קו 1 = הקו התחתון (תואם reading.changing)
+  line1: string;
+  line2: string;
+  line3: string;
+  line4: string;
+  line5: string;
+  line6: string;
+}
+
+/** ששת טקסטי הקווים לפי הסדר 1..6 (אינדקס 0 = קו 1 התחתון). */
+export function hexLines(h: HexText): string[] {
+  return [h.line1, h.line2, h.line3, h.line4, h.line5, h.line6];
 }
 export interface TriText {
   trigramKey: string;
@@ -145,6 +156,8 @@ export interface AiContext {
   baseText: string;
   resultName: string;
   resultText: string;
+  /** רק קווים שבאמת נפלו כמשתנים (1=תחתון) ויש להם טקסט. ריק → לא מוזרק. */
+  changingLines: { line: number; text: string }[];
 }
 
 /** מרכיב את הקונטקסט להזרקה מתוך הקריאה + התוכן הסטטי שכבר בעמוד. */
@@ -153,6 +166,10 @@ export function buildAiContext(reading: Reading, content: IChingContent): AiCont
   const result = reading.resulting
     ? findHexText(content.hexagrams, reading.resulting.number)
     : undefined;
+  const baseLines = base ? hexLines(base) : [];
+  const changingLines = reading.changing
+    .map((n) => ({ line: n, text: (baseLines[n - 1] ?? "").trim() }))
+    .filter((l) => l.text.length > 0);
   return {
     baseName: effectiveHexName(reading.primary.number, content.hexagrams),
     baseText: htmlToPlainText(base?.interpretation ?? ""),
@@ -160,5 +177,6 @@ export function buildAiContext(reading: Reading, content: IChingContent): AiCont
       ? effectiveHexName(reading.resulting.number, content.hexagrams)
       : "",
     resultText: htmlToPlainText(result?.interpretation ?? ""),
+    changingLines,
   };
 }
