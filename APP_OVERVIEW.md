@@ -51,7 +51,7 @@
 מוגדרים ב-`drizzle/schema.ts` (Drizzle). ישויות מרכזיות: מאמרים, קטגוריות, תגיות,
 תגובות, משתמשים/אדמין, ניוזלטר. _TODO: למפות שדות ויחסים מדויקים מ-schema.ts._
 - **I Ching (טקסט ערוך בלבד):** `ichingHexagramText` (number 1..64 + `name` override +
-  `trigramExplanation`/`interpretation`/`changingLinesNote`), `ichingTrigramText`
+  `trigramExplanation`/`interpretation` + `line1..line6` — טקסט קו משתנה לכל קו, קו 1=תחתון), `ichingTrigramText`
   (`trigramKey` + `name`/`element`/`attr` overrides + `description` HTML),
   `ichingIntro` (singleton: מאמר + תוויות). המבנה הקבוע (lookup/גליפים/מנוע ההטלה)
   **אינו** ב-DB — הוא ב-`shared/iching/`. השמות הם override: ריק ב-DB → נופלים לברירת
@@ -93,7 +93,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 משתנים) נבנית מלמטה למעלה → בחירה אינטראקטיבית (הקסגרמה ראשית/נגזרת/טריגרמה) →
 חלון פירוט יחיד עם הפירוש **הממוזג**: מבנה מ-`shared/iching` + טקסט מה-DB.
 **פירוש AI אישי:** משתמש מחובר יכול ללחוץ "קבל פירוש AI מותאם אישית" (`IChingAiPanel`,
-**מעל** הפירוש הסטטי) → הלקוח מזריק את שם+טקסט ההקסגרמות הסטטיות + השאלה ל-`iching.interpret`
+**מעל** הפירוש הסטטי) → הלקוח מזריק את שם+טקסט ההקסגרמות הסטטיות + השאלה + טקסט הקווים שבאמת נפלו כמשתנים (`line1..6`) ל-`iching.interpret`
 → השרת בונה פרומפט Tao Oracle (`server/ichingAi.ts`) ושולח לספק ה-AI (DeepSeek כברירת מחדל) → תשובת Markdown מוצגת
 בתיבה ייעודית. מכסה חודשית הניתנת להגדרה (`ICHING_AI_MONTHLY_LIMIT`, ברירת מחדל 5), נספרת
 ב-`ichingAiUsage`. הערך נחשף ללקוח דרך `iching.getContent` כדי שהפרומפטים למשתמש יציגו את
@@ -112,3 +112,4 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | 2026-06-22 | **I Ching AI → DeepSeek provider**: replaced the default AI provider with DeepSeek (OpenAI-compatible API via `fetch`, no new dep) because the Gemini free tier surfaced intermittent 503/429 (overload/rate-limit, *not* content blocks) as generic errors. `generateIchingInterpretation` is now provider-agnostic (`ICHING_AI_PROVIDER` = `deepseek` default \| `gemini`), with `withRetry` exponential backoff on transient 429/5xx/network. `temperature: 0.7` — DeepSeek's Hebrew degrades to gibberish at 1.3. New env: `ICHING_AI_PROVIDER`, `DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL` (`deepseek-chat`), `DEEPSEEK_BASE_URL`. `buildIchingPrompt` unchanged. | `server/ichingAi.ts`, `server/_core/env.ts`, `.env.example` |
 | 2026-06-22 | **Configurable monthly AI quota end-to-end**: `iching.getContent` now returns `aiMonthlyLimit` (from `ICHING_AI_MONTHLY_LIMIT`) so the client renders the configured number instead of a hardcoded "5" in both user prompts (guest login invite + quota-exceeded message). The limit was already env-driven server-side; this wires it through to the UI. README env table documents the var. | `server/routers/iching.router.ts`, `client/src/pages/iching/model.ts`, `client/src/pages/IChingReading.tsx`, `client/src/components/iching/IChingAiPanel.tsx`, `README.md`, `.env.example` |
 | 2026-06-22 | **I Ching AI error UX + tunable temperature**: `IChingAiPanel` now shows a "נסה שוב" retry button on transient errors and, after 3 consecutive non-quota failures, an apology that points to the static interpretations and confirms the quota was not consumed (count-on-success); quota errors are excluded from the failure counter. `DEEPSEEK_TEMPERATURE` env (default 0.7) makes Hebrew creativity tunable without a code change. Added unit tests for provider selection + `withRetry` (retry-on-503, no-retry-on-400, give-up-after-3, empty/missing-key, Gemini routing). | `client/src/components/iching/IChingAiPanel.tsx`, `server/ichingAi.ts`, `server/ichingAi.provider.test.ts`, `server/_core/env.ts`, `.env.example` |
+| 2026-06-22 | **I Ching per-line changing-lines → AI prompt**: replaced the single free-text `changingLinesNote` column with six per-line columns `line1..line6` (line 1 = bottom), edited as numbered fields in the admin. `buildAiContext` collects only the lines that actually fell as changing (`reading.changing`) **and** have text; `iching.interpret` forwards them; `buildIchingPrompt` injects a "קו N: …" block. Closes a latent gap — the old note was never sent to the model. Migration `0012` (added columns + dropped `changingLinesNote`); applied to dev DB via docker exec. | `drizzle/schema.ts` + `0012_*.sql`, `server/ichingAi.ts`, `server/routers/iching.router.ts`, `client/src/pages/iching/model.ts`, `client/src/pages/AdminIChing.tsx` (+ tests) |
