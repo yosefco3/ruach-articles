@@ -65,9 +65,6 @@ function loadEnv() {
 
 export const env = loadEnv();
 
-/** @deprecated Use `env` (lowercase) */
-export const ENV = env;
-
 export type Env = z.infer<typeof envSchema>;
 
 // Helper to check if R2 is configured

@@ -1,14 +1,9 @@
 import type { Request } from 'express';
-import { TRPCError } from '@trpc/server';
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
-import type { AuthUser, AuthService } from './types';
+import type { AuthUser } from './types';
 
 /**
- * Default AuthService implementation.
- *
  * Reads the authenticated user from Passport's express-session
- * (populated after OAuth callback).  This is the production strategy;
- * tests can swap in a stub via the AuthService interface.
+ * (populated after OAuth callback).
  */
 
 function extractUser(req: Request): AuthUser | null {
@@ -27,27 +22,7 @@ function extractUser(req: Request): AuthUser | null {
     : null;
 }
 
-export const passportAuthService: AuthService = {
-  async getSession(req: Request): Promise<AuthUser | null> {
-    return extractUser(req);
-  },
-
-  async requireAuth(req: Request): Promise<AuthUser> {
-    const user = extractUser(req);
-    if (!user) {
-      throw new TRPCError({ code: 'UNAUTHORIZED', message: UNAUTHED_ERR_MSG });
-    }
-    return user;
-  },
-
-  async requireAdmin(req: Request): Promise<AuthUser> {
-    const user = extractUser(req);
-    if (!user) {
-      throw new TRPCError({ code: 'UNAUTHORIZED', message: UNAUTHED_ERR_MSG });
-    }
-    if (user.role !== 'admin') {
-      throw new TRPCError({ code: 'FORBIDDEN', message: NOT_ADMIN_ERR_MSG });
-    }
-    return user;
-  },
-};
+/** Resolve the authenticated user from the Passport session (null = anonymous). */
+export async function getSession(req: Request): Promise<AuthUser | null> {
+  return extractUser(req);
+}
