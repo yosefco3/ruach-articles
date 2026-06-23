@@ -1,8 +1,7 @@
 /**
- * Auth module — pluggable authentication service.
+ * Auth module — Passport session-based user resolution.
  *
- * Re-exports the AuthService interface, the default Passport-based
- * implementation, and the canonical AuthUser type.
+ * Re-exports the session reader and the canonical AuthUser type.
  */
-export { passportAuthService } from './session';
-export type { AuthService, AuthUser } from './types';
+export { getSession } from './session';
+export type { AuthUser } from './types';
