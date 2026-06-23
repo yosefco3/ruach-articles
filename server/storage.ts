@@ -208,38 +208,10 @@ export async function downloadFile(
   await pipeline(response.Body as NodeJS.ReadableStream, createWriteStream(localFilePath));
 }
 
-// ────────────────────────────────────────
-// Legacy compatibility — re-export a simple client getter
-// for use in upload middleware that expects an S3-like interface.
-// ────────────────────────────────────────
-
-export { createR2Client as createS3Client };
-
-/**
- * Get the configured bucket name (R2 only — throws in local mode).
- * @deprecated Use getStorageMode() to check which backend is active.
- */
-export function getBucket(): string {
-  if (!isR2Configured()) {
-    return 'local';
-  }
-  return env.R2_BUCKET!;
-}
-
 /**
  * Returns the active storage backend: `"r2"` or `"local"`.
  * Useful for diagnostics and admin endpoints.
  */
 export function getStorageMode(): "r2" | "local" {
   return isR2Configured() ? "r2" : "local";
-}
-
-/** @deprecated Use uploadBuffer() directly */
-export async function storagePut(
-  key: string,
-  buffer: Buffer,
-  contentType?: string,
-): Promise<{ url: string }> {
-  const url = await uploadBuffer(buffer, key, contentType);
-  return { url };
 }

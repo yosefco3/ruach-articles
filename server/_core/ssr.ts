@@ -3,8 +3,6 @@ import type { Request } from "express";
 export interface HtmlParts {
   /** The app markup to place inside #root. */
   appHtml: string;
-  /** Head tags (helmet) injected at the <!--ssr-head--> anchor (step 07). */
-  head?: string;
   /** Serialized dehydrated state injected at <!--ssr-state--> (step 06). */
   state?: string;
 }
@@ -15,7 +13,7 @@ export interface HtmlParts {
  */
 export function renderHtml(template: string, parts: HtmlParts): string {
   return template
-    .replace("<!--ssr-head-->", parts.head ?? "")
+    .replace("<!--ssr-head-->", "")
     .replace('<div id="root"></div>', `<div id="root">${parts.appHtml}</div>`)
     .replace("<!--ssr-state-->", parts.state ?? "");
 }
