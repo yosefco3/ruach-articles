@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-22 16:32_
+_נוצר אוטומטית ב: 2026-06-23 20:44_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 185 |
+| קבצי קוד / source files | 186 |
 | מכוסים / covered | 20 |
-| ללא טסט / uncovered | 165 |
+| ללא טסט / uncovered | 166 |
 | כיסוי / coverage | 10% →0% |
-| טסטים עוברים / passing | 221 ✅ |
+| טסטים עוברים / passing | 222 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -216,6 +216,7 @@ _נוצר אוטומטית ב: 2026-06-22 16:32_
 | 🟡 MEDIUM | `shared/const.ts` |
 | 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
+| 🟡 MEDIUM | `shared/slug.ts` |
 | ⚪ LOW | `client/src/hooks/domain/index.ts` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
 | ⚪ LOW | `server/_core/auth/types.ts` |

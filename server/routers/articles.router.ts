@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import slugify from "slugify";
+import { generateSlug } from "@shared/slug";
 import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure, writerProcedure } from "./middleware";
 import type { RouterDeps } from "./context";
@@ -61,7 +61,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
     .input(
       z.object({
         title: z.string().min(1),
-        slug: z.string(),
+        slug: z.string().optional(),
         excerpt: z.string().optional(),
         body: z.string().min(1),
         coverImage: z.string().optional(),
@@ -70,19 +70,14 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Server-side slug normalization using slugify with Hebrew support
-      let slug = slugify(input.slug, {
-        lower: true,
-        strict: true,
-        locale: 'he',
-        remove: /[*+~.()'"!:@]/g,
-      });
-      
-      // Fallback to timestamp-based slug if slugify produces empty result
-      if (!slug || slug === "-") {
+      // Auto-generate an English-letters-and-digits slug. Prefer the supplied
+      // slug, fall back to the title (Hebrew is transliterated to Latin), and
+      // finally to a timestamp so the slug is never empty.
+      let slug = generateSlug(input.slug ?? "") || generateSlug(input.title);
+      if (!slug) {
         slug = "article-" + Date.now().toString(36);
       }
-      
+
       // Ensure slug uniqueness by appending a suffix if needed
       const existing = await deps.db.getArticleBySlug(slug);
       if (existing) {
