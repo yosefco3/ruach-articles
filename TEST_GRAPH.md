@@ -1,15 +1,15 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-23 20:44_
+_נוצר אוטומטית ב: 2026-06-23 21:17_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 186 |
+| קבצי קוד / source files | 178 |
 | מכוסים / covered | 20 |
-| ללא טסט / uncovered | 166 |
-| כיסוי / coverage | 10% →0% |
+| ללא טסט / uncovered | 158 |
+| כיסוי / coverage | 11% ↑1% |
 | טסטים עוברים / passing | 222 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
@@ -76,13 +76,11 @@ _נוצר אוטומטית ב: 2026-06-23 20:44_
 | 🔴 HIGH | `server/routers/users.router.ts` |
 | 🟡 MEDIUM | `client/src/App.tsx` |
 | 🟡 MEDIUM | `client/src/_core/hooks/useAuth.ts` |
-| 🟡 MEDIUM | `client/src/components/AIChatBox.tsx` |
 | 🟡 MEDIUM | `client/src/components/ArticleCard.tsx` |
 | 🟡 MEDIUM | `client/src/components/CommentsSection.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayout.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayoutSkeleton.tsx` |
 | 🟡 MEDIUM | `client/src/components/ErrorBoundary.tsx` |
-| 🟡 MEDIUM | `client/src/components/ManusDialog.tsx` |
 | 🟡 MEDIUM | `client/src/components/NextArticleCard.tsx` |
 | 🟡 MEDIUM | `client/src/components/RichTextEditor.tsx` |
 | 🟡 MEDIUM | `client/src/components/ScrollToTop.tsx` |
@@ -146,14 +144,11 @@ _נוצר אוטומטית ב: 2026-06-23 20:44_
 | 🟡 MEDIUM | `client/src/const.ts` |
 | 🟡 MEDIUM | `client/src/contexts/ThemeContext.tsx` |
 | 🟡 MEDIUM | `client/src/entry-client.tsx` |
-| 🟡 MEDIUM | `client/src/hooks/domain/useArticles.ts` |
-| 🟡 MEDIUM | `client/src/hooks/domain/useCategories.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useComposition.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useDocumentTitle.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useDynamicCategories.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useMobile.tsx` |
 | 🟡 MEDIUM | `client/src/hooks/usePersistFn.ts` |
-| 🟡 MEDIUM | `client/src/lib/categories.ts` |
 | 🟡 MEDIUM | `client/src/lib/trpc.ts` |
 | 🟡 MEDIUM | `client/src/lib/trpcClient.ts` |
 | 🟡 MEDIUM | `client/src/lib/utils.ts` |
@@ -169,7 +164,6 @@ _נוצר אוטומטית ב: 2026-06-23 20:44_
 | 🟡 MEDIUM | `client/src/pages/AdminUsers.tsx` |
 | 🟡 MEDIUM | `client/src/pages/ArticlePage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/CategoryPage.tsx` |
-| 🟡 MEDIUM | `client/src/pages/ComponentShowcase.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Contact.tsx` |
 | 🟡 MEDIUM | `client/src/pages/GuestPostForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
@@ -212,12 +206,10 @@ _נוצר אוטומטית ב: 2026-06-23 20:44_
 | 🟡 MEDIUM | `server/storage.ts` |
 | 🟡 MEDIUM | `server/test-helpers/trpc.ts` |
 | 🟡 MEDIUM | `server/upload.ts` |
-| 🟡 MEDIUM | `shared/_core/errors.ts` |
 | 🟡 MEDIUM | `shared/const.ts` |
 | 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | 🟡 MEDIUM | `shared/slug.ts` |
-| ⚪ LOW | `client/src/hooks/domain/index.ts` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
 | ⚪ LOW | `server/_core/auth/types.ts` |
 | ⚪ LOW | `server/_core/index.ts` |
