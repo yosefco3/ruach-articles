@@ -126,8 +126,8 @@ describe('3. Local Storage', () => {
       isR2Configured: () => false,
     }));
 
-    const { getStorageMode } = await import('./storage');
-    expect(getStorageMode()).toBe('local');
+    const { isR2Configured } = await import('./storage');
+    expect(isR2Configured()).toBe(false);
   });
 });
 

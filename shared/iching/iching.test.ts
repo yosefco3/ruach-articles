@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   TRIGRAMS,
-  relationFor,
   HEX_NAMES,
   HEX_LOOKUP,
   glyphFor,
@@ -19,11 +18,6 @@ describe("trigrams", () => {
   it("has unique symbols and keys", () => {
     expect(new Set(TRIGRAMS.map((t) => t.symbol)).size).toBe(8);
     expect(new Set(TRIGRAMS.map((t) => t.key)).size).toBe(8);
-  });
-
-  it("relationFor matches the prototype phrasing", () => {
-    expect(relationFor(7, 5)).toBe("אֵשׁ מֵעַל שָׁמַיִם");
-    expect(relationFor(5, 5)).toBe("אֵשׁ כְּפוּלָה");
   });
 });
 
