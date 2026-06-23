@@ -7,7 +7,8 @@ vi.mock("./db", () => ({
   getCategoryBySlug: vi.fn(),
 }));
 
-import { injectMetaTags } from "./seo";
+import { injectMetaTags, toAbsoluteImageUrl } from "./seo";
+import { SITE_URL_PRODUCTION } from "@shared/const";
 
 describe("SEO Meta Injection", () => {
   const baseHtml = `<!doctype html>
@@ -101,6 +102,32 @@ describe("SEO Meta Injection", () => {
 
     expect(result).toContain('property="og:image"');
     expect(result).toContain("cover.jpg");
+  });
+
+  describe("toAbsoluteImageUrl", () => {
+    it("prefixes relative upload paths with the production origin", () => {
+      expect(toAbsoluteImageUrl("/uploads/attachments/abc.jpg")).toBe(
+        `${SITE_URL_PRODUCTION}/uploads/attachments/abc.jpg`
+      );
+    });
+
+    it("adds a missing leading slash", () => {
+      expect(toAbsoluteImageUrl("uploads/abc.jpg")).toBe(
+        `${SITE_URL_PRODUCTION}/uploads/abc.jpg`
+      );
+    });
+
+    it("passes absolute http(s) URLs through unchanged", () => {
+      expect(toAbsoluteImageUrl("https://cdn.example.com/abc.jpg")).toBe(
+        "https://cdn.example.com/abc.jpg"
+      );
+    });
+
+    it("returns undefined for empty values", () => {
+      expect(toAbsoluteImageUrl(null)).toBeUndefined();
+      expect(toAbsoluteImageUrl(undefined)).toBeUndefined();
+      expect(toAbsoluteImageUrl("")).toBeUndefined();
+    });
   });
 
   it("omits og:image when not provided", () => {

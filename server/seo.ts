@@ -16,6 +16,19 @@ interface SeoData {
   canonicalUrl: string;
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * OG crawlers (WhatsApp, Facebook, Twitter…) require absolute image URLs.
+ * Locally-stored covers come back as relative paths (e.g. "/uploads/…"), so
+ * prefix them with the production origin; absolute (R2/CDN) URLs pass through.
+ */
+export function toAbsoluteImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${SITE_URL_PRODUCTION}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 // ─── Default SEO (fallback) ─────────────────────────────────────────────────
 
 const DEFAULT_SEO: SeoData = {
@@ -113,7 +126,7 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
     description,
     ogTitle: article.title,
     ogDescription: description,
-    ogImage: article.coverImage || undefined,
+    ogImage: toAbsoluteImageUrl(article.coverImage),
     ogUrl: articleUrl,
     ogType: "article",
     ogLocale: "he_IL",
@@ -138,7 +151,7 @@ async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
     description,
     ogTitle: title,
     ogDescription: description,
-    ogImage: articles[0]?.coverImage || undefined,
+    ogImage: toAbsoluteImageUrl(articles[0]?.coverImage),
     ogUrl: categoryUrl,
     ogType: "website",
     ogLocale: "he_IL",
