@@ -35,10 +35,6 @@ export const TRIGRAMS: Trigram[] = [
   { value: 7, key: "qian", name: "הַיּוֹצֵר", element: "שָׁמַיִם", attr: "כוח יוצר", symbol: "☰" },
 ];
 
-export const TRIGRAM_BY_KEY: Record<TrigramKey, Trigram> = Object.fromEntries(
-  TRIGRAMS.map((t) => [t.key, t]),
-) as Record<TrigramKey, Trigram>;
-
 /** "אֵשׁ מֵעַל שָׁמַיִם" / "אֵשׁ כְּפוּלָה" — כמו relationFor באב-טיפוס. */
 export function relationFor(lowerValue: number, upperValue: number): string {
   if (lowerValue === upperValue) return TRIGRAMS[upperValue].element + " כְּפוּלָה";
