@@ -19,25 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
-
-// Temporary client-side slugify - will be properly handled by server
-function slugify(text: string) {
-  // Generate a simple readable slug for display purposes
-  // The server will handle proper transliteration with the slugify package
-  const simple = text
-    .toLowerCase()
-    .replace(/[^\w\s\u0590-\u05FF-]/g, "") // Keep Hebrew characters temporarily
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-  
-  // If empty after cleanup, use timestamp
-  if (!simple || simple === "-") {
-    return "article-" + Date.now().toString(36);
-  }
-  
-  return simple;
-}
+import { generateSlug } from "@shared/slug";
 
 interface PendingFile {
   /** Temp local ID before the article is saved */
@@ -155,7 +137,7 @@ export default function AdminArticleForm() {
     setForm((prev) => ({
       ...prev,
       title: value,
-      slug: slugManuallyEdited ? prev.slug : slugify(value),
+      slug: slugManuallyEdited ? prev.slug : generateSlug(value),
     }));
   };
 
@@ -307,8 +289,8 @@ export default function AdminArticleForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.body.trim() || !form.slug.trim()) {
-      toast.error("יש למלא כותרת, תוכן וכתובת URL");
+    if (!form.title.trim() || !form.body.trim()) {
+      toast.error("יש למלא כותרת ותוכן");
       return;
     }
     if (!form.category) {
@@ -410,21 +392,21 @@ export default function AdminArticleForm() {
         {/* Slug */}
         <div className="space-y-2">
           <Label htmlFor="slug" className="text-sm font-medium">
-            כתובת URL <span className="text-destructive">*</span>
+            כתובת URL
           </Label>
           <Input
             id="slug"
             value={form.slug}
             onChange={(e) => {
               setSlugManuallyEdited(true);
-              setForm((prev) => ({ ...prev, slug: e.target.value }));
+              setForm((prev) => ({ ...prev, slug: generateSlug(e.target.value) }));
             }}
             placeholder="article-url-slug"
             className="text-left"
             dir="ltr"
           />
           <p className="text-xs text-muted-foreground">
-            /article/{form.slug || "..."}
+            נוצרת אוטומטית מהכותרת (אותיות אנגליות ומספרים). /article/{form.slug || "..."}
           </p>
         </div>
 

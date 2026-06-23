@@ -86,9 +86,20 @@ describe("articles.create behaviour", () => {
       getArticleBySlug: async () => null,
       createArticle: async (a: Record<string, unknown>) => a,
     });
-    await caller.articles.create({ title: "t", slug: "***", body: "b", category: "c" });
+    await caller.articles.create({ title: "***", slug: "***", body: "b", category: "c" });
     const storedSlug = db.createArticle.mock.calls[0][0].slug as string;
     expect(storedSlug.startsWith("article-")).toBe(true);
+  });
+
+  it("transliterates a Hebrew title into an English slug when none is supplied", async () => {
+    const { caller, db } = makeCaller(writerCtx(), {
+      getArticleBySlug: async () => null,
+      createArticle: async (a: Record<string, unknown>) => a,
+    });
+    await caller.articles.create({ title: "שלום עולם", body: "b", category: "c" });
+    const storedSlug = db.createArticle.mock.calls[0][0].slug as string;
+    expect(storedSlug).toBe("shlvm-avlm");
+    expect(storedSlug).toMatch(/^[a-z0-9-]+$/);
   });
 });
 
