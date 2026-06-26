@@ -2,7 +2,15 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
+import { rateLimit } from "../_core/rateLimit";
 import type { RouterDeps } from "./context";
+
+/** מזהה ה-IP של הבקשה לצורך הגבלת-קצב; נופל ל-x-forwarded-for ואז ל-"unknown". */
+function clientIp(req: { ip?: string; headers?: Record<string, unknown> }): string {
+  const fwd = req.headers?.["x-forwarded-for"];
+  const fromHeader = Array.isArray(fwd) ? fwd[0] : typeof fwd === "string" ? fwd.split(",")[0] : "";
+  return req.ip || fromHeader.trim() || "unknown";
+}
 
 export const createIchingRouter = (deps: RouterDeps) =>
   router({
@@ -15,6 +23,18 @@ export const createIchingRouter = (deps: RouterDeps) =>
       ]);
       return { hexagrams, trigrams, intro, aiMonthlyLimit: deps.ichingAiMonthlyLimit };
     }),
+
+    // ── ציבורי: שכלול ניסוח השאלה לפני ההטלה (חופשי, מוגבל-קצב פר-IP) ──
+    refineQuestion: publicProcedure
+      .input(z.object({ question: z.string().trim().min(1).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        // Fail-open: מעבר לתקרה לא חוסם הטלה — פשוט מפסיק לבזבז קריאות AI.
+        const key = `iching-refine:${clientIp(ctx.req)}`;
+        if (!rateLimit(key, deps.refineRatePerHour, 3_600_000)) {
+          return { problematic: false, suggestions: [] };
+        }
+        return await deps.evaluateIchingQuestion(input.question);
+      }),
 
     // ── מחובר: פירוש AI מותאם-אישית, מוגבל במכסה חודשית ──
     interpret: protectedProcedure

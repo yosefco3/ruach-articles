@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { makeCaller, publicCtx, userCtx, adminCtx } from "../test-helpers/trpc";
+import { __resetRateLimit } from "../_core/rateLimit";
 
 describe("iching.getContent", () => {
   it("is public and merges hexagrams, trigrams and intro", async () => {
@@ -191,5 +192,55 @@ describe("iching.interpret", () => {
     );
     await expect(caller.iching.interpret(input)).rejects.toThrow("Gemini down");
     expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
+  });
+});
+
+describe("iching.refineQuestion", () => {
+  beforeEach(() => __resetRateLimit());
+
+  it("is public and returns the evaluator's suggestions", async () => {
+    const evaluate = async () => ({
+      problematic: true,
+      suggestions: ["מהי הדינמיקה של הקשר?", "כיצד נכון לפעול בקשר?"],
+    });
+    const { caller, evaluateIchingQuestion } = makeCaller(publicCtx(), {}, {
+      evaluateIchingQuestion: evaluate,
+    });
+
+    const res = await caller.iching.refineQuestion({ question: "האם הוא אוהב אותי?" });
+    expect(res).toEqual({
+      problematic: true,
+      suggestions: ["מהי הדינמיקה של הקשר?", "כיצד נכון לפעול בקשר?"],
+    });
+    expect(evaluateIchingQuestion).toHaveBeenCalledWith("האם הוא אוהב אותי?");
+  });
+
+  it("fail-open once the per-IP hourly limit is exceeded, and stops calling the evaluator", async () => {
+    const { caller, evaluateIchingQuestion } = makeCaller(publicCtx(), {}, {
+      refineRatePerHour: 2,
+      evaluateIchingQuestion: async () => ({ problematic: true, suggestions: ["x"] }),
+    });
+
+    // שתי הקריאות הראשונות עוברות (בתוך התקרה)…
+    await caller.iching.refineQuestion({ question: "שאלה אחת" });
+    await caller.iching.refineQuestion({ question: "שאלה שתיים" });
+    expect(evaluateIchingQuestion).toHaveBeenCalledTimes(2);
+
+    // …השלישית חוצה את התקרה → fail-open בלי קריאת AI נוספת.
+    const res = await caller.iching.refineQuestion({ question: "שאלה שלוש" });
+    expect(res).toEqual({ problematic: false, suggestions: [] });
+    expect(evaluateIchingQuestion).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects an empty question (zod)", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(caller.iching.refineQuestion({ question: "  " })).rejects.toBeDefined();
+  });
+
+  it("rejects a question longer than 500 chars (zod)", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(
+      caller.iching.refineQuestion({ question: "א".repeat(501) }),
+    ).rejects.toBeDefined();
   });
 });

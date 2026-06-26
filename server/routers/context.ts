@@ -4,11 +4,15 @@
 
 import type * as db from "../db";
 import type { ArticleEmailPayload } from "../newsletterEmail";
-import type { IchingAiContext } from "../ichingAi";
+import type { IchingAiContext, QuestionRefineResult } from "../ichingAi";
 
 export interface RouterDeps {
   db: typeof db;
   sendArticleNewsletter: (article: ArticleEmailPayload) => Promise<{ sent: number; failed: number }>;
   generateIchingInterpretation: (c: IchingAiContext) => Promise<string>;
   ichingAiMonthlyLimit: number;
+  /** בודק שאלה לפני ההטלה ומציע ניסוחים חלופיים (fail-open, לעולם לא זורק). */
+  evaluateIchingQuestion: (question: string) => Promise<QuestionRefineResult>;
+  /** תקרת קריאות שכלול-שאלה לכל IP בשעה. */
+  refineRatePerHour: number;
 }

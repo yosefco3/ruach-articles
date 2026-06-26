@@ -52,6 +52,9 @@ const envSchema = z.object({
   DEEPSEEK_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
 
   ICHING_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
+
+  // שכלול ניסוח השאלה לפני ההטלה — חופשי לכולם, מוגן רק בהגבלת-קצב פר-IP (לשעה).
+  ICHING_REFINE_RATE_PER_HOUR: z.coerce.number().int().positive().default(30),
 });
 
 function loadEnv() {
