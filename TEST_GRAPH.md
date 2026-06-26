@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-26 13:48_
+_נוצר אוטומטית ב: 2026-06-26 14:38_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 180 |
-| מכוסים / covered | 23 |
-| ללא טסט / uncovered | 157 |
-| כיסוי / coverage | 12% ↑1% |
-| טסטים עוברים / passing | 238 ✅ |
+| קבצי קוד / source files | 182 |
+| מכוסים / covered | 24 |
+| ללא טסט / uncovered | 158 |
+| כיסוי / coverage | 13% ↑1% |
+| טסטים עוברים / passing | 255 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -28,6 +28,7 @@ _נוצר אוטומטית ב: 2026-06-26 13:48_
 | `(no source found for featured-article.test.ts)` | `server/featured-article.test.ts` |
 | `(no source found for iching.test.ts)` | `shared/iching/iching.test.ts` |
 | `(no source found for ichingAi.provider.test.ts)` | `server/ichingAi.provider.test.ts` |
+| `(no source found for ichingAi.refine.test.ts)` | `server/ichingAi.refine.test.ts` |
 | `(no source found for ichingUsage.test.ts)` | `server/ichingUsage.test.ts` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
@@ -36,6 +37,7 @@ _נוצר אוטומטית ב: 2026-06-26 13:48_
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
+| `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
@@ -179,6 +181,7 @@ _נוצר אוטומטית ב: 2026-06-26 13:48_
 | 🟡 MEDIUM | `server/_core/cookies.ts` |
 | 🟡 MEDIUM | `server/_core/env.ts` |
 | 🟡 MEDIUM | `server/_core/oauth.ts` |
+| 🟡 MEDIUM | `server/_core/rateLimit.ts` |
 | 🟡 MEDIUM | `server/_core/ssr.ts` |
 | 🟡 MEDIUM | `server/_core/startup/express.ts` |
 | 🟡 MEDIUM | `server/_core/startup/frontend.ts` |

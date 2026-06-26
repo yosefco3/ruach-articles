@@ -21,6 +21,7 @@ function ctxWith(user: AuthUser | null): TrpcContext {
   const res = { clearCookie: () => {}, cookie: () => {} };
   const req = {
     protocol: "https",
+    ip: "test-ip",
     headers: {},
     logout: (cb: (err?: unknown) => void) => cb(),
     session: { destroy: (cb: (err?: unknown) => void) => cb() },
@@ -45,6 +46,8 @@ export const writerCtx = (o: Partial<AuthUser> = {}) =>
 export interface ExtraDeps {
   generateIchingInterpretation?: (...args: unknown[]) => unknown;
   ichingAiMonthlyLimit?: number;
+  evaluateIchingQuestion?: (...args: unknown[]) => unknown;
+  refineRatePerHour?: number;
 }
 
 export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: ExtraDeps = {}) {
@@ -63,17 +66,23 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   const generateIchingInterpretation = vi.fn(
     extra.generateIchingInterpretation ?? (async () => "פירוש לדוגמה"),
   );
+  const evaluateIchingQuestion = vi.fn(
+    extra.evaluateIchingQuestion ?? (async () => ({ problematic: false, suggestions: [] })),
+  );
   const deps = {
     db,
     sendArticleNewsletter,
     generateIchingInterpretation,
     ichingAiMonthlyLimit: extra.ichingAiMonthlyLimit ?? 5,
+    evaluateIchingQuestion,
+    refineRatePerHour: extra.refineRatePerHour ?? 30,
   } as unknown as RouterDeps;
   return {
     deps,
     db: db as Record<string, ReturnType<typeof vi.fn>>,
     sendArticleNewsletter,
     generateIchingInterpretation,
+    evaluateIchingQuestion,
   };
 }
 
@@ -83,7 +92,8 @@ export function makeCaller(
   dbOverrides: Record<string, unknown> = {},
   extra: ExtraDeps = {},
 ) {
-  const { deps, db, sendArticleNewsletter, generateIchingInterpretation } = makeDeps(dbOverrides, extra);
+  const { deps, db, sendArticleNewsletter, generateIchingInterpretation, evaluateIchingQuestion } =
+    makeDeps(dbOverrides, extra);
   const caller = createAppRouter(deps).createCaller(ctx);
-  return { caller, db, sendArticleNewsletter, generateIchingInterpretation };
+  return { caller, db, sendArticleNewsletter, generateIchingInterpretation, evaluateIchingQuestion };
 }

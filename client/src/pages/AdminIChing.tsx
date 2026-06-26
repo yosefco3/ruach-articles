@@ -12,6 +12,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import RichTextEditor from "@/components/RichTextEditor";
 import { HEXAGRAMS, TRIGRAMS, type TrigramKey } from "@shared/iching";
 import {
@@ -85,12 +86,14 @@ export default function AdminIChing() {
   const [questionPrompt, setQuestionPrompt] = useState("");
   const [questionHint, setQuestionHint] = useState("");
   const [buttonLabel, setButtonLabel] = useState("");
+  const [refineEnabled, setRefineEnabled] = useState(true);
   useEffect(() => {
     if (content) {
       setArticleHtml(content.intro.articleHtml);
       setQuestionPrompt(content.intro.questionPrompt);
       setQuestionHint(content.intro.questionHint);
       setButtonLabel(content.intro.buttonLabel);
+      setRefineEnabled(content.intro.refineEnabled);
     }
   }, [content]);
 
@@ -238,9 +241,20 @@ export default function AdminIChing() {
               <label className={SECTION_LABEL}>תווית כפתור ההטלה</label>
               <Input value={buttonLabel} onChange={(e) => setButtonLabel(e.target.value)} dir="rtl" className="text-right" />
             </div>
+            <div className="flex items-center justify-between bg-secondary/50 rounded-xl p-4" dir="rtl">
+              <div>
+                <p className="font-medium text-sm text-foreground">שכלול ניסוח השאלה (לפני ההטלה)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {refineEnabled
+                    ? "ה-AI יציע ניסוחים חלופיים כשהשאלה אינה מתאימה לאי צ'ינג"
+                    : "השלב מכובה — ההטלה תתבצע ישירות ללא בדיקת השאלה"}
+                </p>
+              </div>
+              <Switch checked={refineEnabled} onCheckedChange={setRefineEnabled} />
+            </div>
             <div className="flex justify-end pt-2">
               <Button
-                onClick={() => updateIntro.mutate({ articleHtml, questionPrompt, questionHint, buttonLabel })}
+                onClick={() => updateIntro.mutate({ articleHtml, questionPrompt, questionHint, buttonLabel, refineEnabled })}
                 disabled={updateIntro.isPending}
                 className="gap-2"
               >

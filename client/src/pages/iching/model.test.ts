@@ -163,12 +163,13 @@ describe("AI context injection", () => {
   });
 });
 
-describe("the question only leaves the browser on an explicit AI request", () => {
-  it("routes a question through exactly one procedure — the interpret mutation", () => {
+describe("the question only leaves the browser on explicit user actions", () => {
+  it("routes a question through exactly two mutations — refineQuestion (pre-cast) and interpret", () => {
     const ichingKeys = Object.keys(appRouter._def.procedures).filter((k) => k.startsWith("iching."));
     expect(ichingKeys.sort()).toEqual(
       [
         "iching.getContent",
+        "iching.refineQuestion",
         "iching.interpret",
         "iching.updateIntro",
         "iching.upsertHexagram",
@@ -177,7 +178,8 @@ describe("the question only leaves the browser on an explicit AI request", () =>
     );
     // טעינת הדף משתמשת רק ב-query הזה — ללא קלט שאלה.
     expect(appRouter._def.procedures["iching.getContent"]._def.type).toBe("query");
-    // השאלה נשלחת אך ורק דרך mutation מפורש (לחיצה על כפתור ה-AI); השרת לעולם לא שומר אותה.
+    // השאלה נשלחת רק דרך mutations מפורשים שהמשתמש יוזם (הטלה / כפתור ה-AI); השרת לא שומר אותה.
+    expect(appRouter._def.procedures["iching.refineQuestion"]._def.type).toBe("mutation");
     expect(appRouter._def.procedures["iching.interpret"]._def.type).toBe("mutation");
   });
 });
