@@ -130,6 +130,41 @@ describe("SEO Meta Injection", () => {
     });
   });
 
+  it("emits JSON-LD script tags from the jsonLd payload", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogUrl: "https://ruachwisdom.org",
+      ogType: "website",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org",
+      jsonLd: [{ "@type": "WebSite" }, { "@type": "Organization" }],
+    });
+
+    expect(result).toContain('<script type="application/ld+json">');
+    expect(result).toContain('"@type":"WebSite"');
+    expect(result).toContain('"@type":"Organization"');
+  });
+
+  it("escapes </script> inside JSON-LD to prevent breakout", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogUrl: "https://ruachwisdom.org",
+      ogType: "website",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org",
+      jsonLd: { name: "</script><img src=x>" },
+    });
+
+    expect(result).not.toContain("</script><img");
+    expect(result).toContain("\\u003c/script");
+  });
+
   it("omits og:image when not provided", () => {
     const result = injectMetaTags(baseHtml, {
       title: "Test",

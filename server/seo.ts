@@ -1,6 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getArticleBySlug, getArticles, getCategoryBySlug } from "./db";
 import { SITE_URL_PRODUCTION } from "@shared/const";
+import { siteLd, articleLd, breadcrumbLd, jsonLdToScript } from "./jsonld";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,6 +15,7 @@ interface SeoData {
   ogType: string;
   ogLocale: string;
   canonicalUrl: string;
+  jsonLd?: object | object[];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ const DEFAULT_SEO: SeoData = {
   ogType: "website",
   ogLocale: "he_IL",
   canonicalUrl: SITE_URL_PRODUCTION,
+  jsonLd: siteLd(),
 };
 
 // ─── HTML Injection ─────────────────────────────────────────────────────────
@@ -69,6 +72,12 @@ function buildSeoTags(data: SeoData): string {
   );
   if (data.ogImage) {
     tags.push(`<meta name="twitter:image" content="${escapeHtml(data.ogImage)}" />`);
+  }
+
+  // Structured data (schema.org) — one <script> per payload.
+  const lds = Array.isArray(data.jsonLd) ? data.jsonLd : data.jsonLd ? [data.jsonLd] : [];
+  for (const ld of lds) {
+    tags.push(`<script type="application/ld+json">${jsonLdToScript(ld)}</script>`);
   }
 
   return `    <!-- SEO_HEAD_START -->\n${tags.join("\n")}\n    <!-- SEO_HEAD_END -->`;
@@ -104,6 +113,7 @@ const ICHING_SEO: SeoData = {
   ogType: "website",
   ogLocale: "he_IL",
   canonicalUrl: `${SITE_URL_PRODUCTION}/iching`,
+  jsonLd: siteLd(),
 };
 
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
@@ -131,18 +141,48 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
   const articleUrl = `${SITE_URL_PRODUCTION}/article/${article.slug}`;
   const title = `${article.title} – רוח חכמה`;
   const description = article.excerpt || `מאמר מאת ${article.authorName || "יוסף כהן"} בנושא ${article.category}`;
+  const image = toAbsoluteImageUrl(article.coverImage);
+
+  // Human-readable category name for the breadcrumb (article.category is a slug).
+  const category = await getCategoryBySlug(article.category).catch(() => null);
+  const categoryName = category?.name || article.category;
+  const categoryUrl = `${SITE_URL_PRODUCTION}/category/${encodeURIComponent(article.category)}`;
 
   return {
     title,
     description,
     ogTitle: article.title,
     ogDescription: description,
-    ogImage: toAbsoluteImageUrl(article.coverImage),
+    ogImage: image,
     ogUrl: articleUrl,
     ogType: "article",
     ogLocale: "he_IL",
     canonicalUrl: articleUrl,
+    jsonLd: [
+      articleLd({
+        title: article.title,
+        url: articleUrl,
+        description,
+        image,
+        authorName: article.authorName,
+        datePublished: toIsoDateTime(article.createdAt),
+        dateModified: toIsoDateTime(article.updatedAt || article.createdAt),
+      }),
+      breadcrumbLd([
+        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: categoryName, url: categoryUrl },
+        { name: article.title, url: articleUrl },
+      ]),
+    ],
   };
+}
+
+/** ISO-8601 timestamp for schema.org date fields; undefined if unparseable. */
+function toIsoDateTime(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
+  const d = typeof date === "string" ? new Date(date) : date;
+  const t = d.getTime();
+  return Number.isNaN(t) ? undefined : d.toISOString();
 }
 
 async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
