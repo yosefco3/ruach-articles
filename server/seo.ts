@@ -36,6 +36,7 @@ const DEFAULT_SEO: SeoData = {
   description: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
   ogTitle: "רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי",
   ogDescription: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
+  ogImage: `${SITE_URL_PRODUCTION}/og-image.jpg`,
   ogUrl: SITE_URL_PRODUCTION,
   ogType: "website",
   ogLocale: "he_IL",
@@ -58,6 +59,16 @@ function buildSeoTags(data: SeoData): string {
 
   if (data.ogImage) {
     tags.push(`<meta property="og:image" content="${escapeHtml(data.ogImage)}" />`);
+  }
+
+  // Twitter / X card — mirrors the OG tags so shared links render a rich preview.
+  tags.push(
+    `<meta name="twitter:card" content="${data.ogImage ? "summary_large_image" : "summary"}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(data.ogTitle)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(data.ogDescription)}" />`,
+  );
+  if (data.ogImage) {
+    tags.push(`<meta name="twitter:image" content="${escapeHtml(data.ogImage)}" />`);
   }
 
   return `    <!-- SEO_HEAD_START -->\n${tags.join("\n")}\n    <!-- SEO_HEAD_END -->`;
