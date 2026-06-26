@@ -97,6 +97,12 @@ describe("iching admin guards", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("lets an admin toggle refineEnabled and forwards it to updateIchingIntro", async () => {
+    const { caller, db } = makeCaller(adminCtx(), { getIchingIntro: async () => ({}) });
+    await caller.iching.updateIntro({ refineEnabled: false });
+    expect(db.updateIchingIntro).toHaveBeenCalledWith({ refineEnabled: false });
+  });
+
   it("lets an admin upsert a trigram (name/element/attr default to empty)", async () => {
     const { caller, db } = makeCaller(adminCtx());
     await caller.iching.upsertTrigram({ trigramKey: "kun", description: "d" });

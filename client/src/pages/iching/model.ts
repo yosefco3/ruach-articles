@@ -34,6 +34,8 @@ export interface IChingIntro {
   questionPrompt: string;
   questionHint: string;
   buttonLabel: string;
+  /** האם להפעיל את שכלול ניסוח השאלה לפני ההטלה (toggle מפאנל האדמין). */
+  refineEnabled: boolean;
 }
 export interface IChingContent {
   hexagrams: HexText[];

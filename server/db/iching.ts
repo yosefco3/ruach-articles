@@ -14,6 +14,7 @@ const DEFAULT_INTRO = {
   questionPrompt: "מה ברצונך לשאול?",
   questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
   buttonLabel: "הַטֵּל אֶת הַמַּטְבְּעוֹת",
+  refineEnabled: true,
 };
 
 // ── Hexagram text ──

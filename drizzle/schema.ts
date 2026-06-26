@@ -207,6 +207,8 @@ export const ichingIntro = mysqlTable("ichingIntro", {
   buttonLabel: varchar("buttonLabel", { length: 128 })
     .default("הַטֵּל אֶת הַמַּטְבְּעוֹת")
     .notNull(),
+  // שכלול ניסוח השאלה לפני ההטלה — כיבוי/הדלקה מפאנל האדמין.
+  refineEnabled: boolean("refineEnabled").default(true).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type IchingIntro = typeof ichingIntro.$inferSelect;

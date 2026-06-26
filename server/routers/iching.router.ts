@@ -126,6 +126,7 @@ export const createIchingRouter = (deps: RouterDeps) =>
           questionPrompt: z.string().max(512).optional(),
           questionHint: z.string().max(512).optional(),
           buttonLabel: z.string().max(128).optional(),
+          refineEnabled: z.boolean().optional(),
         }),
       )
       .mutation(async ({ input }) => {
