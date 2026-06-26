@@ -16,7 +16,16 @@ interface SeoData {
   ogLocale: string;
   canonicalUrl: string;
   jsonLd?: object | object[];
+  ogImageAlt?: string;
+  articleMeta?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    author?: string;
+    section?: string;
+  };
 }
+
+const SITE_NAME = "רוח חכמה";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -57,11 +66,28 @@ function buildSeoTags(data: SeoData): string {
     `<meta property="og:url" content="${escapeHtml(data.ogUrl)}" />`,
     `<meta property="og:type" content="${escapeHtml(data.ogType)}" />`,
     `<meta property="og:locale" content="${escapeHtml(data.ogLocale)}" />`,
+    `<meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />`,
     `<link rel="canonical" href="${escapeHtml(data.canonicalUrl)}" />`,
   ];
 
   if (data.ogImage) {
     tags.push(`<meta property="og:image" content="${escapeHtml(data.ogImage)}" />`);
+    if (data.ogImageAlt) {
+      tags.push(`<meta property="og:image:alt" content="${escapeHtml(data.ogImageAlt)}" />`);
+    }
+  }
+
+  // article:* Open Graph properties — only the ones we actually have.
+  if (data.articleMeta) {
+    const m = data.articleMeta;
+    if (m.publishedTime)
+      tags.push(`<meta property="article:published_time" content="${escapeHtml(m.publishedTime)}" />`);
+    if (m.modifiedTime)
+      tags.push(`<meta property="article:modified_time" content="${escapeHtml(m.modifiedTime)}" />`);
+    if (m.author)
+      tags.push(`<meta property="article:author" content="${escapeHtml(m.author)}" />`);
+    if (m.section)
+      tags.push(`<meta property="article:section" content="${escapeHtml(m.section)}" />`);
   }
 
   // Twitter / X card — mirrors the OG tags so shared links render a rich preview.
@@ -72,6 +98,9 @@ function buildSeoTags(data: SeoData): string {
   );
   if (data.ogImage) {
     tags.push(`<meta name="twitter:image" content="${escapeHtml(data.ogImage)}" />`);
+    if (data.ogImageAlt) {
+      tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(data.ogImageAlt)}" />`);
+    }
   }
 
   // Structured data (schema.org) — one <script> per payload.
@@ -154,10 +183,17 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
     ogTitle: article.title,
     ogDescription: description,
     ogImage: image,
+    ogImageAlt: image ? article.title : undefined,
     ogUrl: articleUrl,
     ogType: "article",
     ogLocale: "he_IL",
     canonicalUrl: articleUrl,
+    articleMeta: {
+      publishedTime: toIsoDateTime(article.createdAt),
+      modifiedTime: toIsoDateTime(article.updatedAt || article.createdAt),
+      author: article.authorName || "יוסף כהן",
+      section: categoryName,
+    },
     jsonLd: [
       articleLd({
         title: article.title,
