@@ -1,8 +1,8 @@
 /**
  * דף הקריאה הציבורי באי-צ'ינג — פורט מהאב-טיפוס (`קריאת-אי-צינג-עצמאי.html`).
  * שלוש פאזות: intro → casting → result. המבנה מגיע מ-`shared/iching` (cast/TRIGRAMS),
- * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה ב-state; היא עוזבת את הדפדפן רק
- * בלחיצה מפורשת על כפתור פירוש ה-AI (`IChingAiPanel`), ולעולם אינה נשמרת בשרת.
+ * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה ב-state; היא נשלחת לשרת רק לבדיקת
+ * הניסוח לפני ההטלה (כשהפיצר דלוק) ולפירוש ה-AI (`IChingAiPanel`) — ואינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -28,6 +28,7 @@ import {
 } from "@/pages/iching/model";
 import { runReveal } from "@/pages/iching/reveal";
 import { IChingAiPanel } from "@/components/iching/IChingAiPanel";
+import { QuestionRefine } from "@/components/iching/QuestionRefine";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 function prefersReducedMotion(): boolean {
@@ -114,15 +115,21 @@ export default function IChingReading() {
     flipping: false,
   });
   const [sel, setSel] = useState<Sel>(DEFAULT_SEL);
+  // שכלול ניסוח השאלה לפני ההטלה
+  const [checking, setChecking] = useState(false);
+  const [refine, setRefine] = useState<{ original: string; suggestions: string[] } | null>(null);
+  const refineMut = trpc.iching.refineQuestion.useMutation();
 
   const cancelReveal = useRef<() => void>(() => {});
   useEffect(() => () => cancelReveal.current(), []);
 
-  function onCast() {
+  /** ההטלה בפועל — מקבלת את השאלה הסופית (מקורית או ניסוח מוצע). */
+  function doCast(finalQuestion: string) {
+    setRefine(null);
     cancelReveal.current();
     const r = cast();
     setReading(r);
-    setQSaved(question);
+    setQSaved(finalQuestion);
     setSel(DEFAULT_SEL);
     setRevealCount(0);
     setCoins({ faces: null, flipping: false });
@@ -145,6 +152,44 @@ export default function IChingReading() {
       },
       { flipMs: FLIP_MS, betweenMs: BETWEEN_MS, reducedMotion: prefersReducedMotion() },
     );
+  }
+
+  /**
+   * לחיצה על "הטל": אם הפיצר דלוק ויש שאלה — בודקים את ניסוחה תחילה; אם בעייתית בבירור
+   * מציגים ניסוחים חלופיים, אחרת מטילים ישר. Fail-open: שגיאה/השהיה > 6 שניות → להטיל.
+   */
+  async function onCast() {
+    const refineEnabled = (data as IChingContent | undefined)?.intro.refineEnabled;
+    if (!refineEnabled || !question.trim()) {
+      doCast(question);
+      return;
+    }
+
+    let done = false;
+    const proceed = () => {
+      if (done) return;
+      done = true;
+      setChecking(false);
+      doCast(question);
+    };
+    const timer = setTimeout(proceed, 6000); // fail-open אם ה-AI איטי
+
+    setChecking(true);
+    try {
+      const res = await refineMut.mutateAsync({ question });
+      if (done) return; // ה-timeout כבר הטיל
+      clearTimeout(timer);
+      done = true;
+      setChecking(false);
+      if (res.problematic && res.suggestions.length > 0) {
+        setRefine({ original: question, suggestions: res.suggestions });
+      } else {
+        doCast(question);
+      }
+    } catch {
+      clearTimeout(timer);
+      proceed(); // fail-open על שגיאה
+    }
   }
 
   function onSkip() {
@@ -300,6 +345,7 @@ export default function IChingReading() {
               </div>
               <button
                 onClick={onCast}
+                disabled={checking}
                 style={{
                   marginTop: 24,
                   width: "100%",
@@ -312,12 +358,24 @@ export default function IChingReading() {
                   background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
                   border: "none",
                   borderRadius: 10,
-                  cursor: "pointer",
+                  cursor: checking ? "wait" : "pointer",
+                  opacity: checking ? 0.75 : 1,
                   boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
                 }}
               >
-                {content.intro.buttonLabel}
+                {checking ? "בּוֹדֵק אֶת הַשְּׁאֵלָה…" : content.intro.buttonLabel}
               </button>
+
+              {refine && (
+                <QuestionRefine
+                  original={refine.original}
+                  suggestions={refine.suggestions}
+                  onPick={(chosen) => {
+                    setQuestion(chosen);
+                    doCast(chosen);
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
