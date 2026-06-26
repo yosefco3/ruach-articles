@@ -58,4 +58,29 @@ describe("buildIchingPrompt (pure)", () => {
     expect(buildIchingPrompt(base)).not.toContain("הקווים המשתנים בקריאה זו");
     expect(buildIchingPrompt({ ...base, changingLines: [] })).not.toContain("קו 1 = הקו התחתון");
   });
+
+  it("asks for a verdict line that classifies the omen as yes / no / mixed", () => {
+    const prompt = buildIchingPrompt(base);
+    expect(prompt).toContain("שורת הכרעה");
+    expect(prompt).toContain("**כן**");
+    expect(prompt).toContain("**לא, ככל הנראה**");
+    expect(prompt).toContain("מעורב");
+  });
+
+  it("bases the verdict on the result hexagram when the reading transforms", () => {
+    const prompt = buildIchingPrompt({
+      ...base,
+      resultName: "הקסגרמה 2 — הקבלה",
+      resultText: "התמסרות, היענות.",
+    });
+    expect(prompt).toContain("הקסגרמת התוצאה");
+  });
+
+  it("bases the verdict on the base hexagram for a stable reading", () => {
+    expect(buildIchingPrompt(base)).toContain("בסס את ההכרעה בעיקר על הקסגרמת הבסיס");
+  });
+
+  it("tells the model not to parrot the source vocabulary", () => {
+    expect(buildIchingPrompt(base)).toContain("אל תצטט אותם");
+  });
 });

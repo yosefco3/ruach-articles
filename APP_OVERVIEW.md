@@ -105,7 +105,8 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 **פירוש AI אישי:** משתמש מחובר יכול ללחוץ "קבל פירוש AI מותאם אישית" (`IChingAiPanel`,
 **מעל** הפירוש הסטטי) → הלקוח מזריק את שם+טקסט ההקסגרמות הסטטיות + השאלה + טקסט הקווים שבאמת נפלו כמשתנים (`line1..6`) ל-`iching.interpret`
 → השרת בונה פרומפט Tao Oracle (`server/ichingAi.ts`) ושולח לספק ה-AI (DeepSeek כברירת מחדל) → תשובת Markdown מוצגת
-בתיבה ייעודית. מכסה חודשית הניתנת להגדרה (`ICHING_AI_MONTHLY_LIMIT`, ברירת מחדל 5), נספרת
+בתיבה ייעודית. הפרומפט מורה ל-AI לפתוח ב**שורת הכרעה** שמסווגת את הקריאה כ"כן"/"לא, ככל הנראה"/"מעורב" (לפי הקסגרמת התוצאה, או הבסיס בקריאה יציבה), לנמק, ולהמליץ על דרך פעולה — ובמפורש לא לחקות את אוצר-המילים של הטקסטים המוזרקים.
+מכסה חודשית הניתנת להגדרה (`ICHING_AI_MONTHLY_LIMIT`, ברירת מחדל 5), נספרת
 ב-`ichingAiUsage`. הערך נחשף ללקוח דרך `iching.getContent` כדי שהפרומפטים למשתמש יציגו את
 המספר המעודכן ולא מספר מקובע. אורח רואה כפתור חסום עם הזמנה להתחברות. השאלה/התשובה לעולם אינן נשמרות.
 
@@ -113,6 +114,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
 | 2026-06-20 | Initial overview created (dev-kit bootstrap) | — |
+| 2026-06-26 | פרומפט הפירוש פותח בשורת הכרעה (כן/לא/מעורב) + סיווג חיובי/שלילי, ואיסור על חיקוי שפת הטקסטים המוזרקים | `server/ichingAi.ts`, `server/ichingAi.test.ts` |
 | 2026-06-20 | Vitest now loads `.env.local` so env-validated app modules no longer crash test files; repaired failing suite | `vitest.setup.ts`, `vitest.config.ts` |
 | 2026-06-20 | Added behavioural test layer for tRPC routers via a fake-deps harness over `createAppRouter` (coverage 2%→7%, 0→146 passing) | `server/test-helpers/trpc.ts`, `server/routers/*.router.test.ts` |
 | 2026-06-21 | I Ching reading feature: pure structure+casting engine, text tables + router, public reading page with coin/build animations, admin editor. (Content: trigrams + intro + hexagrams 1/2/11 seeded; 8 Gemini + remaining 53 pending source text.) | `shared/iching/`, `drizzle/schema.ts` (`iching*`), `server/db/iching.ts`, `server/routers/iching.router.ts`, `client/src/pages/IChingReading.tsx`, `client/src/pages/AdminIChing.tsx`, `client/src/pages/iching/`, `client/src/components/iching/`, `scripts/seed-iching.ts` |
