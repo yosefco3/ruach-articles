@@ -130,6 +130,83 @@ describe("SEO Meta Injection", () => {
     });
   });
 
+  it("always emits og:site_name", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogUrl: "https://ruachwisdom.org",
+      ogType: "website",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org",
+    });
+    expect(result).toContain('property="og:site_name"');
+    expect(result).not.toContain('property="article:');
+  });
+
+  it("emits article:* meta and image:alt for articles, skipping absent fields", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogImage: "https://ruachwisdom.org/cover.jpg",
+      ogImageAlt: "כותרת המאמר",
+      ogUrl: "https://ruachwisdom.org/article/test",
+      ogType: "article",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org/article/test",
+      articleMeta: {
+        publishedTime: "2026-01-01T00:00:00.000Z",
+        author: "יוסף כהן",
+        section: "רמב\"ם",
+      },
+    });
+    expect(result).toContain('property="article:published_time" content="2026-01-01T00:00:00.000Z"');
+    expect(result).toContain('property="article:author"');
+    expect(result).toContain('property="article:section"');
+    expect(result).toContain('property="og:image:alt"');
+    expect(result).toContain('name="twitter:image:alt"');
+    // modifiedTime was not supplied → no tag
+    expect(result).not.toContain('property="article:modified_time"');
+  });
+
+  it("emits JSON-LD script tags from the jsonLd payload", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogUrl: "https://ruachwisdom.org",
+      ogType: "website",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org",
+      jsonLd: [{ "@type": "WebSite" }, { "@type": "Organization" }],
+    });
+
+    expect(result).toContain('<script type="application/ld+json">');
+    expect(result).toContain('"@type":"WebSite"');
+    expect(result).toContain('"@type":"Organization"');
+  });
+
+  it("escapes </script> inside JSON-LD to prevent breakout", () => {
+    const result = injectMetaTags(baseHtml, {
+      title: "Test",
+      description: "Test",
+      ogTitle: "Test",
+      ogDescription: "Test",
+      ogUrl: "https://ruachwisdom.org",
+      ogType: "website",
+      ogLocale: "he_IL",
+      canonicalUrl: "https://ruachwisdom.org",
+      jsonLd: { name: "</script><img src=x>" },
+    });
+
+    expect(result).not.toContain("</script><img");
+    expect(result).toContain("\\u003c/script");
+  });
+
   it("omits og:image when not provided", () => {
     const result = injectMetaTags(baseHtml, {
       title: "Test",

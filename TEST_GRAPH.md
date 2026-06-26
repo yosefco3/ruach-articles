@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-23 23:09_
+_נוצר אוטומטית ב: 2026-06-26 13:48_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 178 |
-| מכוסים / covered | 20 |
-| ללא טסט / uncovered | 158 |
-| כיסוי / coverage | 11% →0% |
-| טסטים עוברים / passing | 221 ✅ |
+| קבצי קוד / source files | 180 |
+| מכוסים / covered | 23 |
+| ללא טסט / uncovered | 157 |
+| כיסוי / coverage | 12% ↑1% |
+| טסטים עוברים / passing | 238 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -40,9 +40,11 @@ _נוצר אוטומטית ב: 2026-06-23 23:09_
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
+| `server/_core/vite.ts` | `server/_core/vite.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/ichingAi.ts` | `server/ichingAi.test.ts` |
+| `server/jsonld.ts` | `server/jsonld.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
 | `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
@@ -52,6 +54,7 @@ _נוצר אוטומטית ב: 2026-06-23 23:09_
 | `server/routers/likes.router.ts` | `server/routers/likes.router.test.ts` |
 | `server/routers/profiles.router.ts` | `server/routers/profiles.router.test.ts` |
 | `server/routers/settings.router.ts` | `server/routers/settings.router.test.ts` |
+| `server/rss.ts` | `server/rss.test.ts` |
 | `server/seo.ts` | `server/seo.test.ts` |
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
@@ -182,7 +185,6 @@ _נוצר אוטומטית ב: 2026-06-23 23:09_
 | 🟡 MEDIUM | `server/_core/startup/server.ts` |
 | 🟡 MEDIUM | `server/_core/systemRouter.ts` |
 | 🟡 MEDIUM | `server/_core/trpc.ts` |
-| 🟡 MEDIUM | `server/_core/vite.ts` |
 | 🟡 MEDIUM | `server/articleDocxRoute.ts` |
 | 🟡 MEDIUM | `server/db.ts` |
 | 🟡 MEDIUM | `server/db/about.ts` |

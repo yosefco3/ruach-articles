@@ -1,6 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getArticleBySlug, getArticles, getCategoryBySlug } from "./db";
 import { SITE_URL_PRODUCTION } from "@shared/const";
+import { siteLd, articleLd, breadcrumbLd, jsonLdToScript } from "./jsonld";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,7 +15,17 @@ interface SeoData {
   ogType: string;
   ogLocale: string;
   canonicalUrl: string;
+  jsonLd?: object | object[];
+  ogImageAlt?: string;
+  articleMeta?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    author?: string;
+    section?: string;
+  };
 }
+
+const SITE_NAME = "רוח חכמה";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -41,6 +52,7 @@ const DEFAULT_SEO: SeoData = {
   ogType: "website",
   ogLocale: "he_IL",
   canonicalUrl: SITE_URL_PRODUCTION,
+  jsonLd: siteLd(),
 };
 
 // ─── HTML Injection ─────────────────────────────────────────────────────────
@@ -54,11 +66,29 @@ function buildSeoTags(data: SeoData): string {
     `<meta property="og:url" content="${escapeHtml(data.ogUrl)}" />`,
     `<meta property="og:type" content="${escapeHtml(data.ogType)}" />`,
     `<meta property="og:locale" content="${escapeHtml(data.ogLocale)}" />`,
+    `<meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />`,
     `<link rel="canonical" href="${escapeHtml(data.canonicalUrl)}" />`,
+    `<link rel="alternate" type="application/rss+xml" title="${escapeHtml(SITE_NAME)}" href="${SITE_URL_PRODUCTION}/rss.xml" />`,
   ];
 
   if (data.ogImage) {
     tags.push(`<meta property="og:image" content="${escapeHtml(data.ogImage)}" />`);
+    if (data.ogImageAlt) {
+      tags.push(`<meta property="og:image:alt" content="${escapeHtml(data.ogImageAlt)}" />`);
+    }
+  }
+
+  // article:* Open Graph properties — only the ones we actually have.
+  if (data.articleMeta) {
+    const m = data.articleMeta;
+    if (m.publishedTime)
+      tags.push(`<meta property="article:published_time" content="${escapeHtml(m.publishedTime)}" />`);
+    if (m.modifiedTime)
+      tags.push(`<meta property="article:modified_time" content="${escapeHtml(m.modifiedTime)}" />`);
+    if (m.author)
+      tags.push(`<meta property="article:author" content="${escapeHtml(m.author)}" />`);
+    if (m.section)
+      tags.push(`<meta property="article:section" content="${escapeHtml(m.section)}" />`);
   }
 
   // Twitter / X card — mirrors the OG tags so shared links render a rich preview.
@@ -69,6 +99,15 @@ function buildSeoTags(data: SeoData): string {
   );
   if (data.ogImage) {
     tags.push(`<meta name="twitter:image" content="${escapeHtml(data.ogImage)}" />`);
+    if (data.ogImageAlt) {
+      tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(data.ogImageAlt)}" />`);
+    }
+  }
+
+  // Structured data (schema.org) — one <script> per payload.
+  const lds = Array.isArray(data.jsonLd) ? data.jsonLd : data.jsonLd ? [data.jsonLd] : [];
+  for (const ld of lds) {
+    tags.push(`<script type="application/ld+json">${jsonLdToScript(ld)}</script>`);
   }
 
   return `    <!-- SEO_HEAD_START -->\n${tags.join("\n")}\n    <!-- SEO_HEAD_END -->`;
@@ -104,6 +143,7 @@ const ICHING_SEO: SeoData = {
   ogType: "website",
   ogLocale: "he_IL",
   canonicalUrl: `${SITE_URL_PRODUCTION}/iching`,
+  jsonLd: siteLd(),
 };
 
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
@@ -131,18 +171,55 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
   const articleUrl = `${SITE_URL_PRODUCTION}/article/${article.slug}`;
   const title = `${article.title} – רוח חכמה`;
   const description = article.excerpt || `מאמר מאת ${article.authorName || "יוסף כהן"} בנושא ${article.category}`;
+  const image = toAbsoluteImageUrl(article.coverImage);
+
+  // Human-readable category name for the breadcrumb (article.category is a slug).
+  const category = await getCategoryBySlug(article.category).catch(() => null);
+  const categoryName = category?.name || article.category;
+  const categoryUrl = `${SITE_URL_PRODUCTION}/category/${encodeURIComponent(article.category)}`;
 
   return {
     title,
     description,
     ogTitle: article.title,
     ogDescription: description,
-    ogImage: toAbsoluteImageUrl(article.coverImage),
+    ogImage: image,
+    ogImageAlt: image ? article.title : undefined,
     ogUrl: articleUrl,
     ogType: "article",
     ogLocale: "he_IL",
     canonicalUrl: articleUrl,
+    articleMeta: {
+      publishedTime: toIsoDateTime(article.createdAt),
+      modifiedTime: toIsoDateTime(article.updatedAt || article.createdAt),
+      author: article.authorName || "יוסף כהן",
+      section: categoryName,
+    },
+    jsonLd: [
+      articleLd({
+        title: article.title,
+        url: articleUrl,
+        description,
+        image,
+        authorName: article.authorName,
+        datePublished: toIsoDateTime(article.createdAt),
+        dateModified: toIsoDateTime(article.updatedAt || article.createdAt),
+      }),
+      breadcrumbLd([
+        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: categoryName, url: categoryUrl },
+        { name: article.title, url: articleUrl },
+      ]),
+    ],
   };
+}
+
+/** ISO-8601 timestamp for schema.org date fields; undefined if unparseable. */
+function toIsoDateTime(date: Date | string | null | undefined): string | undefined {
+  if (!date) return undefined;
+  const d = typeof date === "string" ? new Date(date) : date;
+  const t = d.getTime();
+  return Number.isNaN(t) ? undefined : d.toISOString();
 }
 
 async function resolveCategorySeo(slug: string): Promise<SeoData | null> {

@@ -69,6 +69,11 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     changefreq: "monthly",
     priority: 0.5,
   });
+  entries.push({
+    loc: `${baseUrl}/iching`,
+    changefreq: "monthly",
+    priority: 0.9, // flagship interactive feature
+  });
 
   // ── Category pages ──
   try {
