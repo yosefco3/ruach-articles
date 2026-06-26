@@ -68,6 +68,7 @@ function buildSeoTags(data: SeoData): string {
     `<meta property="og:locale" content="${escapeHtml(data.ogLocale)}" />`,
     `<meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />`,
     `<link rel="canonical" href="${escapeHtml(data.canonicalUrl)}" />`,
+    `<link rel="alternate" type="application/rss+xml" title="${escapeHtml(SITE_NAME)}" href="${SITE_URL_PRODUCTION}/rss.xml" />`,
   ];
 
   if (data.ogImage) {
