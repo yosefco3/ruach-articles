@@ -10,6 +10,19 @@ import { applySeoToHtml } from "../seo";
 import { makeSsrFetch, renderHtml } from "./ssr";
 import type { render as RenderFn } from "../../client/src/entry-server";
 
+/**
+ * True for Vite's content-hashed build outputs (e.g. `index-DFa4nFoc.js`),
+ * which can be cached immutably. HTML/manifests/robots return false.
+ */
+export function isImmutableAsset(filePath: string): boolean {
+  // Vite emits every content-hashed bundle under /assets/.
+  if (/[\\/]assets[\\/]/.test(filePath)) return true;
+  // Hashed filename elsewhere (mixed-case base62 hash before the extension).
+  return /[.-][A-Za-z0-9_-]{8,}\.(js|css|mjs|woff2?|ttf|png|jpe?g|svg|webp|avif|gif)$/i.test(
+    filePath,
+  );
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -112,7 +125,22 @@ export async function serveStatic(app: Express) {
   // Real static assets first, so /assets/*.js never hit the renderer.
   // index:false so "/" falls through to the SSR handler instead of being
   // served as the raw (empty-#root) index.html.
-  app.use(express.static(distPath, { index: false }));
+  app.use(
+    express.static(distPath, {
+      index: false,
+      setHeaders: (res, filePath) => {
+        // Content-hashed filenames change whenever content changes, so they're
+        // safe to cache for a year. Everything else (index.html, manifests) stays
+        // short-lived so SEO/JSON-LD updates take effect on the next load.
+        res.setHeader(
+          "Cache-Control",
+          isImmutableAsset(filePath)
+            ? "public, max-age=31536000, immutable"
+            : "public, max-age=3600",
+        );
+      },
+    }),
+  );
 
   app.use("*", async (req, res) => {
     try {
