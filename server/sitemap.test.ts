@@ -41,4 +41,18 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("/category/spirituality");
     expect(xml).toContain("2026-01-15");
   });
+
+  it("includes the /iching flagship page", async () => {
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as any;
+
+    await serveSitemap({} as any, res);
+
+    const xml = res.send.mock.calls[0][0] as string;
+    expect(xml).toContain("<loc>https://ruachwisdom.org/iching</loc>");
+    expect(xml).toContain("<priority>0.9</priority>");
+  });
 });
