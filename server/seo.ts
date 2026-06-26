@@ -33,9 +33,9 @@ export function toAbsoluteImageUrl(url: string | null | undefined): string | und
 
 const DEFAULT_SEO: SeoData = {
   title: "רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי",
-  description: "האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי.",
+  description: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
   ogTitle: "רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי",
-  ogDescription: "האתר של יוסף כהן - פלטפורמה למאמרים מעמיקים בנושאי פילוסופיה, רוחניות וריפוי.",
+  ogDescription: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
   ogUrl: SITE_URL_PRODUCTION,
   ogType: "website",
   ogLocale: "he_IL",
