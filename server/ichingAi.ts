@@ -64,7 +64,7 @@ async function withRetry<T>(
 }
 
 /** קריאה ל-DeepSeek דרך ה-endpoint התואם-OpenAI. */
-async function generateWithDeepSeek(prompt: string): Promise<string> {
+async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<string> {
   const res = await fetch(`${env.DEEPSEEK_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -76,7 +76,7 @@ async function generateWithDeepSeek(prompt: string): Promise<string> {
       messages: [{ role: "user", content: prompt }],
       // ניתן לכוונן ב-env; ברירת מחדל 0.7 — טמפרטורה גבוהה (1.3) מפרקת את העברית של DeepSeek לג'יבריש.
       temperature: env.DEEPSEEK_TEMPERATURE,
-      max_tokens: 3000,
+      max_tokens: maxTokens,
     }),
   });
   if (!res.ok) {
@@ -104,12 +104,10 @@ async function generateWithGemini(prompt: string): Promise<string> {
 }
 
 /**
- * מייצר פירוש (Markdown) דרך הספק שנבחר ב-env. זורק אם אין מפתח / אם הקריאה נכשלה.
- * שגיאות חולפות (429/5xx/רשת) עוברות ניסיון חוזר עם backoff לפני שהן מתפשטות.
+ * קריאה גולמית לספק ה-AI שנבחר ב-env, עם ניסיון חוזר על שגיאות חולפות.
+ * זורק אם אין מפתח / אם הקריאה נכשלה. `maxTokens` מבדיל בין פירוש ארוך לבדיקה זולה.
  */
-export async function generateIchingInterpretation(c: IchingAiContext): Promise<string> {
-  const prompt = buildIchingPrompt(c);
-
+async function callProvider(prompt: string, opts: { maxTokens: number }): Promise<string> {
   if (env.ICHING_AI_PROVIDER === "gemini") {
     if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
     // שגיאות העומס של Gemini (429/503) מגיעות כ-throw מה-SDK → מנסים שוב על כולן.
@@ -118,8 +116,83 @@ export async function generateIchingInterpretation(c: IchingAiContext): Promise<
 
   if (!env.DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY is not configured");
   return withRetry(
-    () => generateWithDeepSeek(prompt),
+    () => generateWithDeepSeek(prompt, opts.maxTokens),
     // ניסיון חוזר רק על שגיאות חולפות: 429/5xx (RetryableError) או תקלת רשת (TypeError).
     (e) => e instanceof RetryableError || e instanceof TypeError,
   );
+}
+
+/**
+ * מייצר פירוש (Markdown) דרך הספק שנבחר ב-env. זורק אם אין מפתח / אם הקריאה נכשלה.
+ * שגיאות חולפות (429/5xx/רשת) עוברות ניסיון חוזר עם backoff לפני שהן מתפשטות.
+ */
+export async function generateIchingInterpretation(c: IchingAiContext): Promise<string> {
+  return callProvider(buildIchingPrompt(c), { maxTokens: 3000 });
+}
+
+/** תוצאת בדיקת השאלה לפני ההטלה: האם בעייתית בבירור, ועד שני ניסוחים חלופיים. */
+export interface QuestionRefineResult {
+  problematic: boolean;
+  suggestions: string[];
+}
+
+/**
+ * בונה פרומפט שמבקש מה-AI לשפוט אם שאלת המשתמש מתאימה לאי צ'ינג, ולהציע ניסוחים חלופיים.
+ * הכללים נגזרים מהמאמר "איך נכתוב שאלה לאי צינג". טהורה — בלי רשת, בלי env.
+ */
+export function buildQuestionRefinePrompt(question: string): string {
+  return [
+    `אתה עוזר שמסייע לנסח שאלות לאי צ'ינג. האי צ'ינג מאיר תהליכים ואת איכות המצב ואת דרך הפעולה — לא תחזיות חד-משמעיות.`,
+    ``,
+    `שאלת המשתמש: "${question}"`,
+    ``,
+    `קבע אם השאלה בעייתית *בבירור* לפי הכללים הבאים (רק בעיה ברורה — לא ניואנס סגנוני):`,
+    `- שאלת כן/לא (האם...).`,
+    `- בקשת תחזית/ניחוש עתידי ("האם אזכה", "מתי אתחתן", "האם אמות").`,
+    `- שאלה על מחשבותיו/מעשיו של אדם אחר ("מה בעלי חושב", "האם הוא בוגד").`,
+    `- כמה שאלות שונות שנדחסו לאחת.`,
+    `- בקשת אישור ("תגיד לי אם אני צודק").`,
+    `- דבר שאינו בתחום ההשפעה של השואל ("האם הבוס יקדם אותי").`,
+    `- שאלה מעורפלת מאוד או בלי מסגרת זמן כשהיא נחוצה.`,
+    ``,
+    `אם — ורק אם — השאלה בעייתית בבירור, נסח **שני** ניסוחים חלופיים שונים זה מזה (זוויות שונות),`,
+    `שאלה אחת בלבד בכל ניסוח, בעברית, תוך שימור הנושא ומסגרת הזמן שהמשתמש נתן.`,
+    `העדף פתיחות כמו: "מה נכון להבין...", "כיצד נכון לפעול...", "מהי הדינמיקה של...", "מה מתפתח במצב...", "ממה כדאי להיזהר...".`,
+    ``,
+    `החזר JSON תקין בלבד, ללא טקסט נוסף וללא סימוני קוד:`,
+    `{"problematic": boolean, "suggestions": string[]}`,
+    `כאשר problematic=false החזר suggestions ריק ([]); אחרת שני ניסוחים (אחד קביל אם אין שני ייחודי).`,
+  ].join("\n");
+}
+
+/** מחלץ ומנקה את שדה suggestions מתשובת ה-AI: trim, השמטת ריקים, חיתוך ל-2. */
+function cleanSuggestions(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .slice(0, 2);
+}
+
+/**
+ * בודק את שאלת המשתמש לפני ההטלה ומציע ניסוחים חלופיים אם היא בעייתית בבירור.
+ * Fail-open לחלוטין: כל שגיאה / תשובה ריקה / JSON לא תקין / "בעייתי" בלי ניסוח שמיש
+ * → {problematic:false, suggestions:[]}. הפונקציה לעולם לא זורקת — "לא בעייתי" = פשוט להטיל.
+ */
+export async function evaluateIchingQuestion(question: string): Promise<QuestionRefineResult> {
+  const safe: QuestionRefineResult = { problematic: false, suggestions: [] };
+  try {
+    const text = await callProvider(buildQuestionRefinePrompt(question), { maxTokens: 500 });
+    // מסירים גדר ```json``` או טקסט עוטף, ומחלצים את אובייקט ה-JSON.
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return safe;
+    const parsed = JSON.parse(match[0]) as { problematic?: unknown; suggestions?: unknown };
+    if (parsed.problematic !== true) return safe;
+    const suggestions = cleanSuggestions(parsed.suggestions);
+    if (suggestions.length === 0) return safe;
+    return { problematic: true, suggestions };
+  } catch {
+    return safe;
+  }
 }
