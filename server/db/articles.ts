@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { articles, users, attachments, comments, likes, type InsertArticle } from "../../drizzle/schema";
 import { getDb } from "./connection";
+import { safeDeleteObject } from "./storage-cleanup";
 
 export async function getArticles(opts?: { category?: string; published?: boolean }) {
   const db = await getDb();
@@ -110,10 +111,23 @@ export async function updateArticle(id: number, data: Partial<InsertArticle>) {
 export async function deleteArticle(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Collect the files to remove (attachment files + cover image) before deleting rows.
+  const atts = await db.select().from(attachments).where(eq(attachments.articleId, id));
+  const articleRows = await db
+    .select({ coverImage: articles.coverImage })
+    .from(articles)
+    .where(eq(articles.id, id))
+    .limit(1);
+
   await db.delete(attachments).where(eq(attachments.articleId, id));
   await db.delete(comments).where(eq(comments.articleId, id));
   await db.delete(likes).where(eq(likes.articleId, id));
   await db.delete(articles).where(eq(articles.id, id));
+
+  // Best-effort file cleanup. Inline body images become unreferenced too — those are
+  // swept by scripts/cleanup-orphan-images.ts rather than parsed on this hot path.
+  for (const a of atts) await safeDeleteObject(a.fileUrl);
+  await safeDeleteObject(articleRows[0]?.coverImage);
 }
 
 export async function reorderArticles(items: { id: number; sortOrder: number }[]) {
