@@ -87,6 +87,7 @@ export default function AdminIChing() {
   const [questionHint, setQuestionHint] = useState("");
   const [buttonLabel, setButtonLabel] = useState("");
   const [refineEnabled, setRefineEnabled] = useState(true);
+  const [aiEnabled, setAiEnabled] = useState(false);
   useEffect(() => {
     if (content) {
       setArticleHtml(content.intro.articleHtml);
@@ -94,6 +95,7 @@ export default function AdminIChing() {
       setQuestionHint(content.intro.questionHint);
       setButtonLabel(content.intro.buttonLabel);
       setRefineEnabled(content.intro.refineEnabled);
+      setAiEnabled(content.intro.aiEnabled);
     }
   }, [content]);
 
@@ -243,18 +245,34 @@ export default function AdminIChing() {
             </div>
             <div className="flex items-center justify-between bg-secondary/50 rounded-xl p-4" dir="rtl">
               <div>
-                <p className="font-medium text-sm text-foreground">שכלול ניסוח השאלה (לפני ההטלה)</p>
+                <p className="font-medium text-sm text-foreground">פירוש AI מותאם-אישית</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {refineEnabled
-                    ? "ה-AI יציע ניסוחים חלופיים כשהשאלה אינה מתאימה לאי צ'ינג"
-                    : "השלב מכובה — ההטלה תתבצע ישירות ללא בדיקת השאלה"}
+                  {aiEnabled
+                    ? "הקורא יכול לקבל פירוש AI לקריאה שלו — לצד פירושי ההקסגרמות והטריגרמות"
+                    : "כבוי — מוצגים רק פירושי ההקסגרמות והטריגרמות, ללא כל קריאת AI"}
                 </p>
               </div>
-              <Switch checked={refineEnabled} onCheckedChange={setRefineEnabled} />
+              <Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
+            </div>
+            <div
+              className={`flex items-center justify-between bg-secondary/50 rounded-xl p-4 ${aiEnabled ? "" : "opacity-50"}`}
+              dir="rtl"
+            >
+              <div>
+                <p className="font-medium text-sm text-foreground">שכלול ניסוח השאלה (לפני ההטלה)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {!aiEnabled
+                    ? "זמין רק כשפירוש ה-AI דלוק"
+                    : refineEnabled
+                      ? "ה-AI יציע ניסוחים חלופיים כשהשאלה אינה מתאימה לאי צ'ינג"
+                      : "השלב מכובה — ההטלה תתבצע ישירות ללא בדיקת השאלה"}
+                </p>
+              </div>
+              <Switch checked={refineEnabled} onCheckedChange={setRefineEnabled} disabled={!aiEnabled} />
             </div>
             <div className="flex justify-end pt-2">
               <Button
-                onClick={() => updateIntro.mutate({ articleHtml, questionPrompt, questionHint, buttonLabel, refineEnabled })}
+                onClick={() => updateIntro.mutate({ articleHtml, questionPrompt, questionHint, buttonLabel, refineEnabled, aiEnabled })}
                 disabled={updateIntro.isPending}
                 className="gap-2"
               >

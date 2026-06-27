@@ -28,6 +28,9 @@ export const createIchingRouter = (deps: RouterDeps) =>
     refineQuestion: publicProcedure
       .input(z.object({ question: z.string().trim().min(1).max(500) }))
       .mutation(async ({ ctx, input }) => {
+        // מתג ה-AI הראשי כבוי → אין שכלול ניסוח (גם זו קריאת AI).
+        const intro = await deps.db.getIchingIntro();
+        if (!intro.aiEnabled) return { problematic: false, suggestions: [] };
         // Fail-open: מעבר לתקרה לא חוסם הטלה — פשוט מפסיק לבזבז קריאות AI.
         const key = `iching-refine:${clientIp(ctx.req)}`;
         if (!rateLimit(key, deps.refineRatePerHour, 3_600_000)) {
@@ -52,6 +55,12 @@ export const createIchingRouter = (deps: RouterDeps) =>
         }),
       )
       .mutation(async ({ ctx, input }) => {
+        // מתג ראשי מפאנל האדמין — כשכבוי, אין כל קריאת AI (הגנה לעומק מעבר להסתרה ב-UI).
+        const intro = await deps.db.getIchingIntro();
+        if (!intro.aiEnabled) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "AI_DISABLED" });
+        }
+
         const userId = ctx.user.dbId; // המזהה המספרי ב-DB (ctx.user.id הוא ה-openId)
         const isAdmin = ctx.user.role === "admin";
         const limit = deps.ichingAiMonthlyLimit;
@@ -127,6 +136,7 @@ export const createIchingRouter = (deps: RouterDeps) =>
           questionHint: z.string().max(512).optional(),
           buttonLabel: z.string().max(128).optional(),
           refineEnabled: z.boolean().optional(),
+          aiEnabled: z.boolean().optional(),
         }),
       )
       .mutation(async ({ input }) => {

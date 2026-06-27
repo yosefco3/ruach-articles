@@ -185,6 +185,21 @@ describe("iching.interpret", () => {
     expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
   });
 
+  it("throws FORBIDDEN when the AI master switch is off, before any quota/Gemini work", async () => {
+    const { caller, db, generateIchingInterpretation } = makeCaller(
+      userCtx({ dbId: 7 }),
+      { getIchingIntro: async () => ({ aiEnabled: false }), getMonthlyUsage: async () => 0 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    await expect(caller.iching.interpret(input)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "AI_DISABLED",
+    });
+    expect(db.getMonthlyUsage).not.toHaveBeenCalled();
+    expect(generateIchingInterpretation).not.toHaveBeenCalled();
+    expect(db.incrementMonthlyUsage).not.toHaveBeenCalled();
+  });
+
   it("propagates a Gemini failure and does not increment usage", async () => {
     const { caller, db } = makeCaller(
       userCtx({ dbId: 7 }),
@@ -236,6 +251,17 @@ describe("iching.refineQuestion", () => {
     const res = await caller.iching.refineQuestion({ question: "שאלה שלוש" });
     expect(res).toEqual({ problematic: false, suggestions: [] });
     expect(evaluateIchingQuestion).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns empty (no evaluator call) when the AI master switch is off", async () => {
+    const { caller, evaluateIchingQuestion } = makeCaller(
+      publicCtx(),
+      { getIchingIntro: async () => ({ aiEnabled: false }) },
+      { evaluateIchingQuestion: async () => ({ problematic: true, suggestions: ["x"] }) },
+    );
+    const res = await caller.iching.refineQuestion({ question: "האם הוא אוהב אותי?" });
+    expect(res).toEqual({ problematic: false, suggestions: [] });
+    expect(evaluateIchingQuestion).not.toHaveBeenCalled();
   });
 
   it("rejects an empty question (zod)", async () => {

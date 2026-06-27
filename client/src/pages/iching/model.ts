@@ -36,6 +36,8 @@ export interface IChingIntro {
   buttonLabel: string;
   /** האם להפעיל את שכלול ניסוח השאלה לפני ההטלה (toggle מפאנל האדמין). */
   refineEnabled: boolean;
+  /** מתג ראשי לפירוש ה-AI המותאם-אישית וכל קריאות ה-AI (toggle מפאנל האדמין). */
+  aiEnabled: boolean;
 }
 export interface IChingContent {
   hexagrams: HexText[];

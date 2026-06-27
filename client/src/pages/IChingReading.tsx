@@ -159,7 +159,9 @@ export default function IChingReading() {
    * מציגים ניסוחים חלופיים, אחרת מטילים ישר. Fail-open: שגיאה/השהיה > 6 שניות → להטיל.
    */
   async function onCast() {
-    const refineEnabled = (data as IChingContent | undefined)?.intro.refineEnabled;
+    const intro = (data as IChingContent | undefined)?.intro;
+    // השכלול עצמו הוא קריאת AI — מצריך גם את המתג הראשי דלוק.
+    const refineEnabled = intro?.aiEnabled && intro?.refineEnabled;
     if (!refineEnabled || !question.trim()) {
       doCast(question);
       return;
@@ -579,7 +581,7 @@ function ResultView({
       )}
 
       {/* ── פירוש AI מותאם אישית — תמיד מעל הפירוש הסטטי, לעולם לא מחביא אותו ── */}
-      {qSaved.trim() && (
+      {content.intro.aiEnabled && qSaved.trim() && (
         <IChingAiPanel
           question={qSaved}
           context={aiContext}

@@ -70,7 +70,9 @@ tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, c
   `interpret` (`protectedProcedure`: פירוש AI אישי דרך ספק נבחר — DeepSeek כברירת מחדל,
   Gemini כ-fallback (`ICHING_AI_PROVIDER`), עם retry/backoff על 429/5xx; בודק מכסה חודשית →
   `FORBIDDEN`/403 בחריגה, מקדם מונה רק בהצלחה, אדמין פטור; השאלה נשלחת רק בלחיצה מפורשת
-  ואינה נשמרת); `upsertHexagram`/`upsertTrigram`/`updateIntro` (`adminProcedure` בלבד).
+  ואינה נשמרת). **מתג AI ראשי** (`intro.aiEnabled`, כבוי כברירת מחדל) שולט בכל קריאות
+  ה-AI: כשהוא כבוי `interpret` מחזיר `FORBIDDEN`/`AI_DISABLED` ו-`refineQuestion` מחזיר
+  `{problematic:false}` — לפני בדיקת מכסה/קצב; `upsertHexagram`/`upsertTrigram`/`updateIntro` (`adminProcedure` בלבד).
   ה-AI מוזרק דרך `RouterDeps` (`generateIchingInterpretation`, `evaluateIchingQuestion`,
   `ichingAiMonthlyLimit`, `refineRatePerHour`).
 
@@ -102,7 +104,8 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 בצד הלקוח (`cast()` ב-`shared/iching`) → הקסגרמה ראשית (+נגזרת אם נפלו קווים
 משתנים) נבנית מלמטה למעלה → בחירה אינטראקטיבית (הקסגרמה ראשית/נגזרת/טריגרמה) →
 חלון פירוט יחיד עם הפירוש **הממוזג**: מבנה מ-`shared/iching` + טקסט מה-DB.
-**פירוש AI אישי:** משתמש מחובר יכול ללחוץ "קבל פירוש AI מותאם אישית" (`IChingAiPanel`,
+**פירוש AI אישי** (מוסתר כברירת מחדל — נשלט במתג `intro.aiEnabled` מפאנל האדמין; כבוי →
+מוצגים רק פירושי ההקסגרמות והטריגרמות, וגם שלב שכלול-השאלה מושבת): משתמש מחובר יכול ללחוץ "קבל פירוש AI מותאם אישית" (`IChingAiPanel`,
 **מעל** הפירוש הסטטי) → הלקוח מזריק את שם+טקסט ההקסגרמות הסטטיות + השאלה + טקסט הקווים שבאמת נפלו כמשתנים (`line1..6`) ל-`iching.interpret`
 → השרת בונה פרומפט Tao Oracle (`server/ichingAi.ts`) ושולח לספק ה-AI (DeepSeek כברירת מחדל) → תשובת Markdown מוצגת
 בתיבה ייעודית. הפרומפט מורה ל-AI לפתוח ב**שורת הכרעה** שמסווגת את הקריאה כ"כן"/"לא, ככל הנראה"/"מעורב" (לפי הקסגרמת התוצאה, או הבסיס בקריאה יציבה), לנמק, ולהמליץ על דרך פעולה — ובמפורש לא לחקות את אוצר-המילים של הטקסטים המוזרקים.
@@ -114,6 +117,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
 | 2026-06-20 | Initial overview created (dev-kit bootstrap) | — |
+| 2026-06-27 | **I Ching AI master switch** — admin toggle `intro.aiEnabled` (default OFF) hides the personal AI interpretation and gates all AI calls server-side (`interpret`→`FORBIDDEN`/`AI_DISABLED`, `refineQuestion`→empty, before quota/rate checks); the refine toggle nests under it in the admin panel. Static hexagram/trigram interpretations are unaffected. Column added to `ichingIntro` (tinyint default 0), applied to dev DB via docker exec. | `drizzle/schema.ts`, `server/db/iching.ts`, `server/routers/iching.router.ts`, `client/src/pages/iching/model.ts`, `client/src/pages/IChingReading.tsx`, `client/src/pages/AdminIChing.tsx`, `server/test-helpers/trpc.ts`, `server/routers/iching.router.test.ts` |
 | 2026-06-26 | פרומפט הפירוש פותח בשורת הכרעה (כן/לא/מעורב) + סיווג חיובי/שלילי, ואיסור על חיקוי שפת הטקסטים המוזרקים | `server/ichingAi.ts`, `server/ichingAi.test.ts` |
 | 2026-06-20 | Vitest now loads `.env.local` so env-validated app modules no longer crash test files; repaired failing suite | `vitest.setup.ts`, `vitest.config.ts` |
 | 2026-06-20 | Added behavioural test layer for tRPC routers via a fake-deps harness over `createAppRouter` (coverage 2%→7%, 0→146 passing) | `server/test-helpers/trpc.ts`, `server/routers/*.router.test.ts` |
