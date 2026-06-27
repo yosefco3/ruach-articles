@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-27 05:56_
+_נוצר אוטומטית ב: 2026-06-27 15:34_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 182 |
+| קבצי קוד / source files | 183 |
 | מכוסים / covered | 24 |
-| ללא טסט / uncovered | 158 |
+| ללא טסט / uncovered | 159 |
 | כיסוי / coverage | 13% →0% |
-| טסטים עוברים / passing | 259 ✅ |
+| טסטים עוברים / passing | 273 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -19,6 +19,7 @@ _נוצר אוטומטית ב: 2026-06-27 05:56_
 |---|---|
 | `(no source found for about-image.test.ts)` | `server/about-image.test.ts` |
 | `(no source found for admin-small-routers.test.ts)` | `server/routers/admin-small-routers.test.ts` |
+| `(no source found for attachments.delete.test.ts)` | `server/db/attachments.delete.test.ts` |
 | `(no source found for auth.logout.test.ts)` | `server/auth.logout.test.ts` |
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |
 | `(no source found for contact-email.test.ts)` | `server/contact-email.test.ts` |
@@ -35,6 +36,7 @@ _נוצר אוטומטית ב: 2026-06-27 05:56_
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
+| `(no source found for storage-delete.test.ts)` | `server/storage-delete.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
@@ -205,6 +207,7 @@ _נוצר אוטומטית ב: 2026-06-27 05:56_
 | 🟡 MEDIUM | `server/db/newsletter.ts` |
 | 🟡 MEDIUM | `server/db/profiles.ts` |
 | 🟡 MEDIUM | `server/db/settings.ts` |
+| 🟡 MEDIUM | `server/db/storage-cleanup.ts` |
 | 🟡 MEDIUM | `server/db/users.ts` |
 | 🟡 MEDIUM | `server/imageCompression.ts` |
 | 🟡 MEDIUM | `server/newsletterEmail.ts` |
