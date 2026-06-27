@@ -81,25 +81,25 @@ describe("articles.create behaviour", () => {
     expect(storedSlug.startsWith("hello-")).toBe(true);
   });
 
-  it("falls back to an 'article-' slug when slugify yields nothing", async () => {
+  it("falls back to a random slug when none is supplied", async () => {
     const { caller, db } = makeCaller(writerCtx(), {
       getArticleBySlug: async () => null,
       createArticle: async (a: Record<string, unknown>) => a,
     });
     await caller.articles.create({ title: "***", slug: "***", body: "b", category: "c" });
     const storedSlug = db.createArticle.mock.calls[0][0].slug as string;
-    expect(storedSlug.startsWith("article-")).toBe(true);
+    expect(storedSlug).toMatch(/^[a-z]+$/);
   });
 
-  it("transliterates a Hebrew title into an English slug when none is supplied", async () => {
+  it("does not derive the slug from the title", async () => {
     const { caller, db } = makeCaller(writerCtx(), {
       getArticleBySlug: async () => null,
       createArticle: async (a: Record<string, unknown>) => a,
     });
     await caller.articles.create({ title: "שלום עולם", body: "b", category: "c" });
     const storedSlug = db.createArticle.mock.calls[0][0].slug as string;
-    expect(storedSlug).toBe("shlvm-avlm");
-    expect(storedSlug).toMatch(/^[a-z0-9-]+$/);
+    expect(storedSlug).toMatch(/^[a-z]+$/);
+    expect(storedSlug).not.toContain("shlvm");
   });
 });
 

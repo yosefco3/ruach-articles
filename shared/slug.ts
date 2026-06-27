@@ -28,3 +28,22 @@ export function generateSlug(text: string): string {
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+/**
+ * Generate a random slug made of lowercase English letters. Used as the default
+ * URL for a new article — not derived from the title. The server still enforces
+ * uniqueness, but the random space makes collisions practically impossible.
+ */
+export function randomSlug(length = 10): string {
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  const cryptoObj = typeof globalThis !== "undefined" ? globalThis.crypto : undefined;
+  let out = "";
+  if (cryptoObj?.getRandomValues) {
+    const bytes = new Uint8Array(length);
+    cryptoObj.getRandomValues(bytes);
+    for (let i = 0; i < length; i++) out += alphabet[bytes[i] % alphabet.length];
+  } else {
+    for (let i = 0; i < length; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}

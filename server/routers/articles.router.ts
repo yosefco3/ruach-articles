@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { generateSlug } from "@shared/slug";
+import { generateSlug, randomSlug } from "@shared/slug";
 import { router, publicProcedure } from "../_core/trpc";
 import { adminProcedure, writerProcedure } from "./middleware";
 import type { RouterDeps } from "./context";
@@ -70,18 +70,13 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Auto-generate an English-letters-and-digits slug. Prefer the supplied
-      // slug, fall back to the title (Hebrew is transliterated to Latin), and
-      // finally to a timestamp so the slug is never empty.
-      let slug = generateSlug(input.slug ?? "") || generateSlug(input.title);
-      if (!slug) {
-        slug = "article-" + Date.now().toString(36);
-      }
+      // Prefer the supplied slug; otherwise generate a random one. Not derived
+      // from the title.
+      let slug = generateSlug(input.slug ?? "") || randomSlug();
 
-      // Ensure slug uniqueness by appending a suffix if needed
-      const existing = await deps.db.getArticleBySlug(slug);
-      if (existing) {
-        slug = slug + "-" + Date.now().toString(36);
+      // Ensure slug uniqueness by appending a random suffix on the rare collision.
+      for (let i = 0; i < 5 && (await deps.db.getArticleBySlug(slug)); i++) {
+        slug = slug + "-" + randomSlug(4);
       }
       
       return await deps.db.createArticle({
