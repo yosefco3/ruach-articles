@@ -1,4 +1,9 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+} from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
 import { env, isR2Configured } from "./_core/env";
@@ -150,4 +155,41 @@ export async function deleteObject(urlOrKey: string): Promise<boolean> {
     new DeleteObjectCommand({ Bucket: env.R2_BUCKET!, Key: key }),
   );
   return true;
+}
+
+/**
+ * List every stored key under a prefix (e.g. "attachments/"). Works in both modes:
+ * local walks LOCAL_UPLOAD_DIR; R2 paginates ListObjectsV2. Used by the orphan scanner.
+ */
+export async function listKeys(prefix = ""): Promise<string[]> {
+  // ── Local ──
+  if (!isR2Configured()) {
+    const base = path.resolve(LOCAL_UPLOAD_DIR);
+    const start = path.join(base, prefix);
+    if (!fs.existsSync(start)) return [];
+    const out: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else out.push(path.relative(base, full).split(path.sep).join("/"));
+      }
+    };
+    walk(start);
+    return out;
+  }
+
+  // ── R2 ──
+  const client = createR2Client();
+  const bucket = env.R2_BUCKET!;
+  const keys: string[] = [];
+  let token: string | undefined;
+  do {
+    const res = await client.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    );
+    for (const obj of res.Contents ?? []) if (obj.Key) keys.push(obj.Key);
+    token = res.IsTruncated ? res.NextContinuationToken : undefined;
+  } while (token);
+  return keys;
 }
