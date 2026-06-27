@@ -74,6 +74,11 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     changefreq: "monthly",
     priority: 0.9, // flagship interactive feature
   });
+  entries.push({
+    loc: `${baseUrl}/guest-post`,
+    changefreq: "monthly",
+    priority: 0.5,
+  });
 
   // ── Category pages ──
   try {
