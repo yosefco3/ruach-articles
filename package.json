@@ -16,7 +16,8 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "seed:iching": "node --env-file=.env.local --import tsx scripts/seed-iching.ts",
-    "cleanup:orphan-images": "node --env-file=.env.local --import tsx scripts/cleanup-orphan-images.ts"
+    "cleanup:orphan-images": "node --env-file=.env.local --import tsx scripts/cleanup-orphan-images.ts",
+    "cleanup:orphan-images:prod": "node --import tsx scripts/cleanup-orphan-images.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
