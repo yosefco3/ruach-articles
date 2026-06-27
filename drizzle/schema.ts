@@ -209,6 +209,8 @@ export const ichingIntro = mysqlTable("ichingIntro", {
     .notNull(),
   // שכלול ניסוח השאלה לפני ההטלה — כיבוי/הדלקה מפאנל האדמין.
   refineEnabled: boolean("refineEnabled").default(true).notNull(),
+  // פירוש ה-AI המותאם-אישית (וכל קריאות ה-AI) — מתג ראשי מפאנל האדמין. כבוי כברירת מחדל.
+  aiEnabled: boolean("aiEnabled").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type IchingIntro = typeof ichingIntro.$inferSelect;

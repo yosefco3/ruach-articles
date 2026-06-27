@@ -56,6 +56,11 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   for (const [key, value] of Object.entries(dbOverrides)) {
     seeded[key] = typeof value === "function" ? vi.fn(value as (...args: unknown[]) => unknown) : value;
   }
+  // ברירת מחדל לאי-צ'ינג: AI דלוק, כך שטסטי interpret/refine רואים פיצר פעיל אלא אם
+  // הם דורסים את getIchingIntro במפורש (למשל כדי לבדוק את מצב הכיבוי).
+  if (!("getIchingIntro" in seeded)) {
+    seeded.getIchingIntro = vi.fn(async () => ({ aiEnabled: true }));
+  }
   const db = new Proxy(seeded, {
     get(target, prop: string) {
       if (!(prop in target)) (target as Record<string, unknown>)[prop] = vi.fn();

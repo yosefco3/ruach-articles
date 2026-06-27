@@ -15,6 +15,7 @@ const DEFAULT_INTRO = {
   questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
   buttonLabel: "הַטֵּל אֶת הַמַּטְבְּעוֹת",
   refineEnabled: true,
+  aiEnabled: false,
 };
 
 // ── Hexagram text ──
