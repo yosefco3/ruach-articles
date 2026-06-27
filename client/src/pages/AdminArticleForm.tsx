@@ -19,7 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
-import { generateSlug } from "@shared/slug";
+import { generateSlug, randomSlug } from "@shared/slug";
 
 interface PendingFile {
   /** Temp local ID before the article is saved */
@@ -64,7 +64,8 @@ export default function AdminArticleForm() {
 
   const [form, setForm] = useState({
     title: "",
-    slug: "",
+    // Random, editable URL — not derived from the title.
+    slug: randomSlug(),
     excerpt: "",
     body: "",
     coverImage: "",
@@ -72,8 +73,6 @@ export default function AdminArticleForm() {
     tags: "",
     published: false,
   });
-
-  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   // Files pending save (uploaded to S3 but not yet linked to an article in DB)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   // Files already saved in DB (edit mode)
@@ -105,8 +104,6 @@ export default function AdminArticleForm() {
         tags: existingArticle.tags ?? "",
         published: existingArticle.published,
       }));
-      // Always lock slug when editing an existing article
-      setSlugManuallyEdited(true);
     }
   }, [existingArticle?.id]);
 
@@ -134,11 +131,7 @@ export default function AdminArticleForm() {
   }, [fullArticle]);
 
   const handleTitleChange = (value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      title: value,
-      slug: slugManuallyEdited ? prev.slug : generateSlug(value),
-    }));
+    setForm((prev) => ({ ...prev, title: value }));
   };
 
   // Upload cover image from file
@@ -394,19 +387,27 @@ export default function AdminArticleForm() {
           <Label htmlFor="slug" className="text-sm font-medium">
             כתובת URL
           </Label>
-          <Input
-            id="slug"
-            value={form.slug}
-            onChange={(e) => {
-              setSlugManuallyEdited(true);
-              setForm((prev) => ({ ...prev, slug: generateSlug(e.target.value) }));
-            }}
-            placeholder="article-url-slug"
-            className="text-left"
-            dir="ltr"
-          />
+          <div className="flex gap-2">
+            <Input
+              id="slug"
+              value={form.slug}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, slug: generateSlug(e.target.value) }))
+              }
+              placeholder="article-url-slug"
+              className="text-left"
+              dir="ltr"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setForm((prev) => ({ ...prev, slug: randomSlug() }))}
+            >
+              אקראי
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
-            נוצרת אוטומטית מהכותרת (אותיות אנגליות ומספרים). /article/{form.slug || "..."}
+            כתובת אקראית, נוצרת אוטומטית וניתנת לעריכה. /article/{form.slug || "..."}
           </p>
         </div>
 
