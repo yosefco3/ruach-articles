@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import path from "path";
 import { env, isR2Configured } from "./_core/env";
@@ -93,4 +93,61 @@ export async function uploadBuffer(
   );
 
   return getPublicUrl(remoteKey);
+}
+
+/**
+ * Recover the storage key (e.g. "attachments/abc123.jpg") from a value stored in the DB.
+ * Accepts a bare key, a local "/uploads/<key>" URL (optionally with a host prefix), or an
+ * R2 "<R2_PUBLIC_URL>/<key>" URL. Returns null for external / unrecognised URLs and for
+ * anything containing ".." (path-traversal guard).
+ */
+export function keyFromUrl(urlOrKey: string): string | null {
+  if (!urlOrKey) return null;
+  const s = urlOrKey.trim();
+  const clean = (key: string): string | null =>
+    key && !key.includes("..") ? key.replace(/^\/+/, "") : null;
+
+  // R2 public base (only meaningful when R2 is configured)
+  if (isR2Configured() && env.R2_PUBLIC_URL) {
+    const base = env.R2_PUBLIC_URL.replace(/\/+$/, "");
+    if (s === base) return null;
+    if (s.startsWith(base + "/")) return clean(s.slice(base.length + 1));
+  }
+
+  // Local "/uploads/<key>" — handles both "/uploads/..." and "https://host/uploads/..."
+  const idx = s.indexOf("/uploads/");
+  if (idx !== -1) return clean(s.slice(idx + "/uploads/".length));
+
+  // Bare key (no scheme, no leading slash) — e.g. "attachments/abc.jpg"
+  if (!s.includes("://") && !s.startsWith("/")) return clean(s);
+
+  return null;
+}
+
+/**
+ * Delete a previously-uploaded file, addressed by the public URL we stored (or its key).
+ * Best-effort: returns true when a file was removed, false for missing / external / unsafe
+ * inputs. Local deletes are confined to LOCAL_UPLOAD_DIR; R2 deletes use DeleteObjectCommand.
+ */
+export async function deleteObject(urlOrKey: string): Promise<boolean> {
+  const key = keyFromUrl(urlOrKey);
+  if (!key) return false;
+
+  // ── Local fallback ──
+  if (!isR2Configured()) {
+    const dest = path.resolve(LOCAL_UPLOAD_DIR, key);
+    const root = path.resolve(LOCAL_UPLOAD_DIR);
+    // Confine deletes to the upload directory.
+    if (dest !== root && !dest.startsWith(root + path.sep)) return false;
+    if (!fs.existsSync(dest)) return false;
+    fs.unlinkSync(dest);
+    return true;
+  }
+
+  // ── R2 ──
+  const client = createR2Client();
+  await client.send(
+    new DeleteObjectCommand({ Bucket: env.R2_BUCKET!, Key: key }),
+  );
+  return true;
 }
