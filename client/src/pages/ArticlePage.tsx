@@ -113,12 +113,13 @@ export default function ArticlePage() {
 
         {/* Article Header */}
         <header className="mb-8">
-          <span
-            className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border"
+          <Link
+            href={`/category/${article.category}`}
+            className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border transition-opacity hover:opacity-80"
             style={getCategoryBadgeStyle(article.category)}
           >
             {getCategoryLabel(article.category)}
-          </span>
+          </Link>
           <h1 className="font-display font-bold text-3xl md:text-4xl text-foreground leading-tight mb-4">
             {article.title}
           </h1>
