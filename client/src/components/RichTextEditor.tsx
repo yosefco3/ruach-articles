@@ -701,7 +701,7 @@ export default function RichTextEditor({
       ══════════════════════════════════════════ */}
       {enableHtmlEmbed && (
         <Dialog open={showHtmlEmbed} onOpenChange={setShowHtmlEmbed}>
-          <DialogContent className="sm:max-w-2xl" dir="rtl">
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader>
               <DialogTitle>הטמעת HTML</DialogTitle>
               <DialogDescription>
@@ -714,7 +714,7 @@ export default function RichTextEditor({
               onChange={(e) => setHtmlEmbedDraft(e.target.value)}
               dir="ltr"
               rows={12}
-              className="font-mono text-xs"
+              className="font-mono text-xs field-sizing-fixed h-72 max-h-[50vh] resize-none overflow-y-auto"
               placeholder="<style>…</style>&#10;<div>…</div>"
             />
             <DialogFooter className="gap-2">
