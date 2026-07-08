@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-06-27 18:56_
+_נוצר אוטומטית ב: 2026-07-08 05:23_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 183 |
-| מכוסים / covered | 24 |
+| קבצי קוד / source files | 184 |
+| מכוסים / covered | 25 |
 | ללא טסט / uncovered | 159 |
 | כיסוי / coverage | 13% →0% |
-| טסטים עוברים / passing | 276 ✅ |
+| טסטים עוברים / passing | 282 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -39,6 +39,7 @@ _נוצר אוטומטית ב: 2026-06-27 18:56_
 | `(no source found for storage-delete.test.ts)` | `server/storage-delete.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
+| `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |

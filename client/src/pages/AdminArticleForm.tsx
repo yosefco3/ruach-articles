@@ -459,6 +459,7 @@ export default function AdminArticleForm() {
           <RichTextEditor
             value={form.body}
             onChange={(v) => setForm((prev) => ({ ...prev, body: v }))}
+            enableHtmlEmbed
           />
         </div>
 

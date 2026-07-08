@@ -260,6 +260,30 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
+   HTML EMBED BLOCK (node view inside the editor)
+   ══════════════════════════════════════════════════════════════ */
+
+.html-embed-view {
+  border: 1px dashed var(--border);
+  border-radius: 0.5em;
+  margin: 0.75em 0;
+  overflow: hidden;
+}
+.html-embed-view__bar {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  padding: 4px 10px;
+  user-select: none;
+}
+.html-embed-view > .html-embed {
+  padding: 10px;
+}
+.html-embed-view.ProseMirror-selectednode {
+  outline: 2px solid var(--primary);
+}
+
+/* ══════════════════════════════════════════════════════════════
    SELECTION
    ══════════════════════════════════════════════════════════════ */
 

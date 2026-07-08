@@ -419,6 +419,26 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── HTML embed blocks (בלוק HTML מוטמע במאמרים) ──────────────────────────
+   Bridges the design tokens used by Claude-generated diagrams to the site
+   theme, so pasted embeds follow light/dark automatically. Diagrams authored
+   with @media(prefers-color-scheme:dark) must be converted to `.dark`-prefixed
+   rules — site dark mode is class-based. */
+.html-embed {
+  direction: rtl;
+  --surface-1: var(--card);
+  --surface-2: var(--muted);
+  --surface-3: var(--secondary);
+  --text-primary: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --text-muted: var(--muted-foreground);
+  --border-subtle: var(--border);
+  --border-strong: var(--border);
+}
+.prose-rtl .html-embed {
+  margin-block: 2rem;
+}
+
 /* כיבוד העדפת תנועה מופחתת — ביטול אנימציות הקריאה */
 @media (prefers-reduced-motion: reduce) {
   .iching-root *,
