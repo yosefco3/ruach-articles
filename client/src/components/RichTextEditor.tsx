@@ -18,7 +18,17 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
+import { HtmlEmbed } from "./editor/htmlEmbed";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Bold,
   Italic,
@@ -47,6 +57,7 @@ import {
   Highlighter,
   Type,
   ChevronDown,
+  FileCode2,
 } from "lucide-react";
 import "./RichTextEditor.css";
 
@@ -103,6 +114,12 @@ interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /**
+   * Register the raw-HTML embed block (admin article form only).
+   * Off by default — editors without it strip embed markup on paste,
+   * so e.g. guest posts can never carry raw HTML.
+   */
+  enableHtmlEmbed?: boolean;
 }
 
 // ── Small helpers ────────────────────────────────────────────────
@@ -143,10 +160,13 @@ export default function RichTextEditor({
   value,
   onChange,
   placeholder = "כתבו את תוכן המאמר כאן...",
+  enableHtmlEmbed = false,
 }: RichTextEditorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [showFontSize, setShowFontSize] = useState(false);
+  const [showHtmlEmbed, setShowHtmlEmbed] = useState(false);
+  const [htmlEmbedDraft, setHtmlEmbedDraft] = useState("");
   const colorRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
   const fontSizeRef = useRef<HTMLDivElement>(null);
@@ -171,6 +191,7 @@ export default function RichTextEditor({
       TableRow,
       TableHeader,
       TableCell,
+      ...(enableHtmlEmbed ? [HtmlEmbed] : []),
     ],
     content: value,
     onUpdate: ({ editor }) => {
@@ -231,6 +252,25 @@ export default function RichTextEditor({
 
   const insertTable = () => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  };
+
+  const openHtmlEmbed = () => {
+    setHtmlEmbedDraft(
+      editor.isActive("htmlEmbed") ? editor.getAttributes("htmlEmbed").html ?? "" : "",
+    );
+    setShowHtmlEmbed(true);
+  };
+
+  const saveHtmlEmbed = () => {
+    const html = htmlEmbedDraft.trim();
+    if (html) {
+      if (editor.isActive("htmlEmbed")) {
+        editor.chain().focus().updateHtmlEmbed(html).run();
+      } else {
+        editor.chain().focus().insertHtmlEmbed(html).run();
+      }
+    }
+    setShowHtmlEmbed(false);
   };
 
   const currentColor = editor.getAttributes("textStyle").color || "";
@@ -633,6 +673,18 @@ export default function RichTextEditor({
         <ToolBtn onClick={addImage} title="הוסף תמונה מ-URL">
           <ImageIcon className="w-3.5 h-3.5" />
         </ToolBtn>
+        {enableHtmlEmbed && (
+          <>
+            <Sep />
+            <ToolBtn
+              onClick={openHtmlEmbed}
+              active={editor.isActive("htmlEmbed")}
+              title={editor.isActive("htmlEmbed") ? "ערוך בלוק HTML" : "הטמעת HTML (תרשימים)"}
+            >
+              <FileCode2 className="w-3.5 h-3.5" />
+            </ToolBtn>
+          </>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════
@@ -643,6 +695,39 @@ export default function RichTextEditor({
         className="prose prose-invert max-w-none p-4"
         style={{ minHeight: "400px", direction: "rtl" }}
       />
+
+      {/* ══════════════════════════════════════════
+          HTML EMBED DIALOG
+      ══════════════════════════════════════════ */}
+      {enableHtmlEmbed && (
+        <Dialog open={showHtmlEmbed} onOpenChange={setShowHtmlEmbed}>
+          <DialogContent className="sm:max-w-2xl" dir="rtl">
+            <DialogHeader>
+              <DialogTitle>הטמעת HTML</DialogTitle>
+              <DialogDescription>
+                הדביקו קטע HTML עצמאי (למשל תרשים השוואה) — הוא יישמר ויוצג במאמר
+                כפי שהוא, כולל העיצוב הפנימי שלו.
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              value={htmlEmbedDraft}
+              onChange={(e) => setHtmlEmbedDraft(e.target.value)}
+              dir="ltr"
+              rows={12}
+              className="font-mono text-xs"
+              placeholder="<style>…</style>&#10;<div>…</div>"
+            />
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowHtmlEmbed(false)}>
+                ביטול
+              </Button>
+              <Button type="button" onClick={saveHtmlEmbed} disabled={!htmlEmbedDraft.trim()}>
+                {editor.isActive("htmlEmbed") ? "עדכון הבלוק" : "הוספה למאמר"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
