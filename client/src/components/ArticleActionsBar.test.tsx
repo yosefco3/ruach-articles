@@ -21,7 +21,8 @@ vi.mock("@/lib/trpc", () => ({
   },
 }));
 
-const { default: ArticleActionsBar } = await import("./ArticleActionsBar");
+// Safe as a static import: vi.mock calls above are hoisted ahead of it.
+import ArticleActionsBar from "./ArticleActionsBar";
 
 const article = { id: 3, authorId: 7, published: true };
 
@@ -52,7 +53,7 @@ describe("ArticleActionsBar", () => {
     state.user = { role: "user", dbId: 7 };
     const html = render(article);
     expect(html).toContain("ערוך מאמר");
-    expect(html).toContain("/admin/edit/3");
+    expect(html).toContain("/admin/edit/3?from=article");
     expect(html).not.toContain("הפוך למאמר הראשי");
   });
 

@@ -17,7 +17,7 @@ import {
   Loader2, Save, ArrowRight, Upload, X, File, ImageIcon, Trash2, Pencil, Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { generateSlug, randomSlug } from "@shared/slug";
 
@@ -64,6 +64,10 @@ export default function AdminArticleForm() {
 
   // Editing is gated by that ownership check; creating still needs the writer role.
   const canWrite = isEdit ? !articleError : isAdmin || (user as any)?.guestPostApproved;
+
+  // ?from=article — opened via the action bar on the article page, so leaving the
+  // editor (save / cancel / back) should land back on the article, not the admin table.
+  const cameFromArticle = isEdit && new URLSearchParams(useSearch()).get("from") === "article";
 
   // Load dynamic categories
   const { data: dynamicCategories } = trpc.categories.listAll.useQuery();
@@ -243,6 +247,9 @@ export default function AdminArticleForm() {
     }
   };
 
+  /** Where leaving the editor goes. Reads form.slug so a renamed URL still resolves. */
+  const exitTo = () => (cameFromArticle && form.slug ? `/article/${form.slug}` : "/admin");
+
   const createArticle = trpc.articles.create.useMutation({
     onSuccess: async (newArticle) => {
       // Save any pending attachments now that we have an article ID
@@ -267,7 +274,7 @@ export default function AdminArticleForm() {
       utils.articles.bySlug.invalidate();
       utils.articles.byId.invalidate();
       toast.success("המאמר עודכן בהצלחה");
-      navigate("/admin");
+      navigate(exitTo());
     },
     onError: (err) => toast.error(err.message || "שגיאה בעדכון המאמר"),
   });
@@ -350,7 +357,7 @@ export default function AdminArticleForm() {
     <div className="container py-10 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(exitTo())}>
           <ArrowRight className="w-5 h-5" />
         </Button>
         <div>
@@ -711,7 +718,7 @@ export default function AdminArticleForm() {
             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {isEdit ? "שמירת שינויים" : "יצירת מאמר"}
           </Button>
-          <Button type="button" variant="outline" onClick={() => navigate("/admin")}>
+          <Button type="button" variant="outline" onClick={() => navigate(exitTo())}>
             ביטול
           </Button>
         </div>
