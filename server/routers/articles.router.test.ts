@@ -203,25 +203,44 @@ describe("articles.delete / reorder / attachments", () => {
     expect(db.deleteArticle).toHaveBeenCalledWith(4);
   });
 
-  it("addAttachment is writer-allowed and forwards the metadata", async () => {
-    const { caller, db } = makeCaller(writerCtx());
-    await caller.articles.addAttachment({
-      articleId: 1,
-      fileName: "f.pdf",
-      fileUrl: "https://x.test/f.pdf",
-      fileSize: 10,
+  const meta = { articleId: 1, fileName: "f.pdf", fileUrl: "https://x.test/f.pdf", fileSize: 10 };
+
+  it("addAttachment forwards the metadata for the article's author", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 1, authorId: 7 }),
     });
-    expect(db.createAttachment).toHaveBeenCalledWith({
-      articleId: 1,
-      fileName: "f.pdf",
-      fileUrl: "https://x.test/f.pdf",
-      fileSize: 10,
-    });
+    await caller.articles.addAttachment(meta);
+    expect(db.createAttachment).toHaveBeenCalledWith(meta);
   });
 
-  it("deleteAttachment is admin-only", async () => {
-    await expect(
-      makeCaller(writerCtx()).caller.articles.deleteAttachment({ id: 1 }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  it("addAttachment forbids attaching to someone else's article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 1, authorId: 8 }),
+    });
+    await expect(caller.articles.addAttachment(meta)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(db.createAttachment).not.toHaveBeenCalled();
+  });
+
+  it("deleteAttachment follows the parent article's ownership", async () => {
+    const owned = {
+      getAttachmentById: async () => ({ id: 1, articleId: 3 }),
+      getArticleById: async () => ({ id: 3, authorId: 7 }),
+    };
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), owned);
+    await expect(caller.articles.deleteAttachment({ id: 1 })).resolves.toEqual({ success: true });
+    expect(db.deleteAttachment).toHaveBeenCalledWith(1);
+
+    const other = makeCaller(userCtx({ dbId: 8 }), owned);
+    await expect(other.caller.articles.deleteAttachment({ id: 1 })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(other.db.deleteAttachment).not.toHaveBeenCalled();
+  });
+
+  it("deleteAttachment throws NOT_FOUND for an unknown attachment", async () => {
+    const { caller } = makeCaller(adminCtx(), { getAttachmentById: async () => null });
+    await expect(caller.articles.deleteAttachment({ id: 1 })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 });

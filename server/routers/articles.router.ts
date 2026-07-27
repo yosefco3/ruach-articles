@@ -152,7 +152,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return { success: true };
     }),
   // Save attachment metadata after file upload to S3
-  addAttachment: writerProcedure
+  addAttachment: protectedProcedure
     .input(
       z.object({
         articleId: z.number(),
@@ -161,7 +161,8 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         fileSize: z.number(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertCanEditArticle(deps.db, ctx.user, input.articleId);
       await deps.db.createAttachment({
         articleId: input.articleId,
         fileName: input.fileName,
@@ -170,10 +171,13 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       });
       return { success: true };
     }),
-  // Delete an attachment (admin only)
-  deleteAttachment: adminProcedure
+  // Delete an attachment — same reach as editing the article it belongs to
+  deleteAttachment: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const attachment = await deps.db.getAttachmentById(input.id);
+      if (!attachment) throw new TRPCError({ code: "NOT_FOUND", message: "קובץ לא נמצא" });
+      await assertCanEditArticle(deps.db, ctx.user, attachment.articleId);
       await deps.db.deleteAttachment(input.id);
       return { success: true };
     }),

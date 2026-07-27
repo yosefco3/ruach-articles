@@ -9,6 +9,13 @@ export async function getAttachmentsByArticle(articleId: number) {
   return await db.select().from(attachments).where(eq(attachments.articleId, articleId)).orderBy(desc(attachments.uploadedAt));
 }
 
+export async function getAttachmentById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(attachments).where(eq(attachments.id, id)).limit(1);
+  return rows.length > 0 ? rows[0] : undefined;
+}
+
 export async function createAttachment(data: InsertAttachment) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
