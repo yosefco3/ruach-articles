@@ -42,8 +42,9 @@ export default function ArticleActionsBar({ article }: Props) {
     <div className="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-xl border border-dashed border-primary/40 bg-primary/5">
       <span className="text-xs text-muted-foreground ms-1">ניהול המאמר</span>
 
+      {/* from=article tells the editor to send us back here when we're done */}
       <Link
-        href={`/admin/edit/${article.id}`}
+        href={`/admin/edit/${article.id}?from=article`}
         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:border-primary/50 hover:text-primary transition-colors"
       >
         <Pencil className="w-4 h-4" />
