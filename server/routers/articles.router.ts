@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateSlug, randomSlug } from "@shared/slug";
-import { router, publicProcedure } from "../_core/trpc";
-import { adminProcedure, writerProcedure } from "./middleware";
+import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+import { adminProcedure, writerProcedure, assertCanEditArticle } from "./middleware";
 import type { RouterDeps } from "./context";
 
 export const createArticlesRouter = (deps: RouterDeps) => router({
@@ -87,7 +87,8 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       });
     }),
 
-  update: writerProcedure
+  // Any signed-in user may edit an article they authored; admins may edit any.
+  update: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -102,8 +103,12 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         siteUrl: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { id, siteUrl: _siteUrl, ...data } = input;
+      await assertCanEditArticle(deps.db, ctx.user, id);
+      // Publishing stays an admin decision — an author editing their own article
+      // cannot flip the flag, so the review flow can't be self-approved.
+      if (ctx.user.role !== "admin") delete (data as { published?: boolean }).published;
       const updated = await deps.db.updateArticle(id, data);
       return updated;
     }),

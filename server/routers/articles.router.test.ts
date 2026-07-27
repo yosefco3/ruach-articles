@@ -104,12 +104,56 @@ describe("articles.create behaviour", () => {
 });
 
 describe("articles.update", () => {
+  const ownedBy = (authorId: number) => ({
+    getArticleById: async () => ({ id: 3, authorId }),
+    updateArticle: async () => ({ id: 3 }),
+  });
+
   it("does not forward id or siteUrl into the update payload", async () => {
-    const { caller, db } = makeCaller(writerCtx(), { updateArticle: async () => ({ id: 3 }) });
+    const { caller, db } = makeCaller(adminCtx(), ownedBy(1));
     await caller.articles.update({ id: 3, title: "new", siteUrl: "https://x.test" });
     const [id, data] = db.updateArticle.mock.calls[0];
     expect(id).toBe(3);
     expect(data).toEqual({ title: "new" });
+  });
+
+  it("rejects anonymous callers", async () => {
+    await expect(
+      makeCaller(publicCtx()).caller.articles.update({ id: 3, title: "new" }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("lets the author edit their own article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), ownedBy(7));
+    await caller.articles.update({ id: 3, title: "new" });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new" });
+  });
+
+  it("forbids editing someone else's article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), ownedBy(8));
+    await expect(caller.articles.update({ id: 3, title: "new" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(db.updateArticle).not.toHaveBeenCalled();
+  });
+
+  it("throws NOT_FOUND when the article is missing", async () => {
+    const { caller } = makeCaller(adminCtx(), { getArticleById: async () => null });
+    await expect(caller.articles.update({ id: 3, title: "new" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("admins may edit any article, including its published flag", async () => {
+    const { caller, db } = makeCaller(adminCtx(), ownedBy(7));
+    await caller.articles.update({ id: 3, published: true });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { published: true });
+  });
+
+  it("strips published for a non-admin author", async () => {
+    const { caller, db } = makeCaller(writerCtx({ dbId: 7 }), ownedBy(7));
+    await caller.articles.update({ id: 3, title: "new", published: true });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new" });
   });
 });
 
