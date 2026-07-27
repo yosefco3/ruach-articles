@@ -34,6 +34,16 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return { ...article, attachments };
     }),
 
+  // Editing view: fetch by numeric id, restricted to the author (or an admin).
+  // Unlike `list`, this reaches unpublished drafts the caller owns.
+  byId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const article = await assertCanEditArticle(deps.db, ctx.user, input.id);
+      const attachments = await deps.db.getAttachmentsByArticle(article.id);
+      return { ...article, attachments };
+    }),
+
   // Get next article in same category
   nextInCategory: publicProcedure
     .input(

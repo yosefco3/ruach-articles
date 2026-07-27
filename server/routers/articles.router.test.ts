@@ -38,6 +38,30 @@ describe("articles.bySlug", () => {
   });
 });
 
+describe("articles.byId", () => {
+  it("returns the article with its attachments for the author", async () => {
+    const { caller } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 3, authorId: 7, title: "T", published: false }),
+      getAttachmentsByArticle: async () => [{ id: 1, fileName: "a.pdf" }],
+    });
+    expect(await caller.articles.byId({ id: 3 })).toMatchObject({
+      id: 3,
+      title: "T",
+      attachments: [{ id: 1, fileName: "a.pdf" }],
+    });
+  });
+
+  it("is closed to anonymous callers and to non-authors", async () => {
+    await expect(makeCaller(publicCtx()).caller.articles.byId({ id: 3 })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+    await expect(
+      makeCaller(userCtx({ dbId: 7 }), { getArticleById: async () => ({ id: 3, authorId: 8 }) })
+        .caller.articles.byId({ id: 3 }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
+
 describe("articles.create guards", () => {
   it("rejects anonymous (UNAUTHORIZED) and regular users (FORBIDDEN)", async () => {
     await expect(
