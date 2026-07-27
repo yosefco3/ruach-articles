@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Link } from "wouter";
 import CommentsSection from "@/components/CommentsSection";
 import NextArticleCard from "@/components/NextArticleCard";
+import ArticleActionsBar from "@/components/ArticleActionsBar";
 
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
@@ -110,6 +111,9 @@ export default function ArticlePage() {
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           חזרה לכל המאמרים
         </Link>
+
+        {/* Admin / author actions — renders nothing for regular readers */}
+        <ArticleActionsBar article={article} />
 
         {/* Article Header */}
         <header className="mb-8">

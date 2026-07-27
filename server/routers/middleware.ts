@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../_core/trpc";
+import type { AuthUser } from "../_core/auth/types";
+import type { RouterDeps } from "./context";
 
 /**
  * Admin-only procedure guard
@@ -24,3 +26,20 @@ export const writerProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next({ ctx });
 });
+
+/**
+ * Ownership guard for a single article: admins may touch any article, everyone
+ * else only the ones they authored. Returns the article so callers can reuse it.
+ */
+export async function assertCanEditArticle(
+  db: RouterDeps["db"],
+  user: AuthUser,
+  articleId: number,
+) {
+  const article = await db.getArticleById(articleId);
+  if (!article) throw new TRPCError({ code: "NOT_FOUND", message: "מאמר לא נמצא" });
+  if (user.role !== "admin" && article.authorId !== user.dbId) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
+  }
+  return article;
+}

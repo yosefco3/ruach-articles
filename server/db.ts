@@ -22,7 +22,7 @@ export {
 
 // Attachments
 export {
-  getAttachmentsByArticle, createAttachment, deleteAttachment,
+  getAttachmentsByArticle, getAttachmentById, createAttachment, deleteAttachment,
   deleteAttachmentsByArticle,
 } from "./db/attachments";
 

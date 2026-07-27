@@ -53,11 +53,17 @@ export default function AdminArticleForm() {
   const isEdit = !!params.id;
   const articleId = params.id ? parseInt(params.id) : undefined;
 
-  const canWrite = user?.role === "admin" || (user as any)?.guestPostApproved;
+  const isAdmin = user?.role === "admin";
 
-  // Load existing article for edit
-  const { data: articles } = trpc.articles.list.useQuery({ all: true }, { enabled: isEdit });
-  const existingArticle = articles?.find((a) => a.id === articleId);
+  // Load existing article for edit. byId is ownership-scoped on the server, so it
+  // also reaches the caller's own drafts and 403s on anyone else's article.
+  const { data: existingArticle, error: articleError } = trpc.articles.byId.useQuery(
+    { id: articleId! },
+    { enabled: isEdit && !!articleId, retry: false }
+  );
+
+  // Editing is gated by that ownership check; creating still needs the writer role.
+  const canWrite = isEdit ? !articleError : isAdmin || (user as any)?.guestPostApproved;
 
   // Load dynamic categories
   const { data: dynamicCategories } = trpc.categories.listAll.useQuery();
@@ -93,42 +99,27 @@ export default function AdminArticleForm() {
 
   // Populate form when editing — lock slug so it is never regenerated
   useEffect(() => {
-    if (existingArticle) {
-      setForm((prev) => ({
-        ...prev,
-        title: existingArticle.title,
-        slug: existingArticle.slug,
-        excerpt: existingArticle.excerpt ?? "",
-        coverImage: existingArticle.coverImage ?? "",
-        category: existingArticle.category,
-        tags: existingArticle.tags ?? "",
-        published: existingArticle.published,
-      }));
-    }
+    if (!existingArticle) return;
+    setForm((prev) => ({
+      ...prev,
+      title: existingArticle.title,
+      slug: existingArticle.slug,
+      excerpt: existingArticle.excerpt ?? "",
+      body: existingArticle.body,
+      coverImage: existingArticle.coverImage ?? "",
+      category: existingArticle.category,
+      tags: existingArticle.tags ?? "",
+      published: existingArticle.published,
+    }));
+    setSavedAttachments(
+      (existingArticle.attachments as SavedAttachment[]).map((a) => ({
+        id: a.id,
+        fileName: a.fileName,
+        fileUrl: a.fileUrl,
+        fileSize: a.fileSize,
+      }))
+    );
   }, [existingArticle?.id]);
-
-  // Load full article body for edit
-  const { data: fullArticle } = trpc.articles.bySlug.useQuery(
-    { slug: existingArticle?.slug ?? "" },
-    { enabled: !!existingArticle?.slug }
-  );
-
-  useEffect(() => {
-    if (fullArticle?.body) {
-      setForm((prev) => ({ ...prev, body: fullArticle.body }));
-    }
-    // Load existing attachments into savedAttachments state
-    if (fullArticle?.attachments) {
-      setSavedAttachments(
-        (fullArticle.attachments as SavedAttachment[]).map((a) => ({
-          id: a.id,
-          fileName: a.fileName,
-          fileUrl: a.fileUrl,
-          fileSize: a.fileSize,
-        }))
-      );
-    }
-  }, [fullArticle]);
 
   const handleTitleChange = (value: string) => {
     setForm((prev) => ({ ...prev, title: value }));
@@ -274,6 +265,7 @@ export default function AdminArticleForm() {
       }
       utils.articles.list.invalidate();
       utils.articles.bySlug.invalidate();
+      utils.articles.byId.invalidate();
       toast.success("המאמר עודכן בהצלחה");
       navigate("/admin");
     },
@@ -311,7 +303,8 @@ export default function AdminArticleForm() {
   // In edit mode, wait for both the article data AND categories before rendering
   // so the Select component finds its matching SelectItem on first render
   const categoriesLoading = !dynamicCategories;
-  const articleDataLoading = isEdit && (!existingArticle || !form.category || categoriesLoading);
+  const articleDataLoading =
+    isEdit && !articleError && (!existingArticle || !form.category || categoriesLoading);
 
   if (loading || articleDataLoading) {
     return (
@@ -325,9 +318,13 @@ export default function AdminArticleForm() {
     return (
       <div className="container max-w-2xl py-12">
         <div className="bg-card border border-border rounded-xl p-8 text-center">
-          <h1 className="font-display font-bold text-2xl text-foreground mb-4">אין לך הרשאה לכתוב מאמרים</h1>
+          <h1 className="font-display font-bold text-2xl text-foreground mb-4">
+            {isEdit ? "אין לך הרשאה לערוך את המאמר הזה" : "אין לך הרשאה לכתוב מאמרים"}
+          </h1>
           <p className="text-muted-foreground mb-6">
-            רק אדמין וסופרים אורחים מאושרים יכולים לכתוב מאמרים.
+            {isEdit
+              ? "אפשר לערוך רק מאמרים שכתבתם. אדמין יכול לערוך כל מאמר."
+              : "רק אדמין וסופרים אורחים מאושרים יכולים לכתוב מאמרים."}
           </p>
           <Button onClick={() => navigate("/")} className="gap-2">
             <ArrowRight className="w-4 h-4" />
@@ -693,11 +690,17 @@ export default function AdminArticleForm() {
           <div>
             <p className="font-medium text-sm text-foreground">פרסום מיידי</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {form.published ? "המאמר יהיה גלוי לכל המבקרים" : "המאמר יישמר כטיוטה"}
+              {!isAdmin
+                ? "רק אדמין יכול לפרסם או להסיר מפרסום"
+                : form.published
+                  ? "המאמר יהיה גלוי לכל המבקרים"
+                  : "המאמר יישמר כטיוטה"}
             </p>
           </div>
+          {/* Publishing is an admin decision — the server drops this field for others. */}
           <Switch
             checked={form.published}
+            disabled={!isAdmin}
             onCheckedChange={(v) => setForm((prev) => ({ ...prev, published: v }))}
           />
         </div>

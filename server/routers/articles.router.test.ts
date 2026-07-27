@@ -38,6 +38,30 @@ describe("articles.bySlug", () => {
   });
 });
 
+describe("articles.byId", () => {
+  it("returns the article with its attachments for the author", async () => {
+    const { caller } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 3, authorId: 7, title: "T", published: false }),
+      getAttachmentsByArticle: async () => [{ id: 1, fileName: "a.pdf" }],
+    });
+    expect(await caller.articles.byId({ id: 3 })).toMatchObject({
+      id: 3,
+      title: "T",
+      attachments: [{ id: 1, fileName: "a.pdf" }],
+    });
+  });
+
+  it("is closed to anonymous callers and to non-authors", async () => {
+    await expect(makeCaller(publicCtx()).caller.articles.byId({ id: 3 })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+    await expect(
+      makeCaller(userCtx({ dbId: 7 }), { getArticleById: async () => ({ id: 3, authorId: 8 }) })
+        .caller.articles.byId({ id: 3 }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
+
 describe("articles.create guards", () => {
   it("rejects anonymous (UNAUTHORIZED) and regular users (FORBIDDEN)", async () => {
     await expect(
@@ -104,12 +128,56 @@ describe("articles.create behaviour", () => {
 });
 
 describe("articles.update", () => {
+  const ownedBy = (authorId: number) => ({
+    getArticleById: async () => ({ id: 3, authorId }),
+    updateArticle: async () => ({ id: 3 }),
+  });
+
   it("does not forward id or siteUrl into the update payload", async () => {
-    const { caller, db } = makeCaller(writerCtx(), { updateArticle: async () => ({ id: 3 }) });
+    const { caller, db } = makeCaller(adminCtx(), ownedBy(1));
     await caller.articles.update({ id: 3, title: "new", siteUrl: "https://x.test" });
     const [id, data] = db.updateArticle.mock.calls[0];
     expect(id).toBe(3);
     expect(data).toEqual({ title: "new" });
+  });
+
+  it("rejects anonymous callers", async () => {
+    await expect(
+      makeCaller(publicCtx()).caller.articles.update({ id: 3, title: "new" }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("lets the author edit their own article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), ownedBy(7));
+    await caller.articles.update({ id: 3, title: "new" });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new" });
+  });
+
+  it("forbids editing someone else's article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), ownedBy(8));
+    await expect(caller.articles.update({ id: 3, title: "new" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(db.updateArticle).not.toHaveBeenCalled();
+  });
+
+  it("throws NOT_FOUND when the article is missing", async () => {
+    const { caller } = makeCaller(adminCtx(), { getArticleById: async () => null });
+    await expect(caller.articles.update({ id: 3, title: "new" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("admins may edit any article, including its published flag", async () => {
+    const { caller, db } = makeCaller(adminCtx(), ownedBy(7));
+    await caller.articles.update({ id: 3, published: true });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { published: true });
+  });
+
+  it("strips published for a non-admin author", async () => {
+    const { caller, db } = makeCaller(writerCtx({ dbId: 7 }), ownedBy(7));
+    await caller.articles.update({ id: 3, title: "new", published: true });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new" });
   });
 });
 
@@ -159,25 +227,44 @@ describe("articles.delete / reorder / attachments", () => {
     expect(db.deleteArticle).toHaveBeenCalledWith(4);
   });
 
-  it("addAttachment is writer-allowed and forwards the metadata", async () => {
-    const { caller, db } = makeCaller(writerCtx());
-    await caller.articles.addAttachment({
-      articleId: 1,
-      fileName: "f.pdf",
-      fileUrl: "https://x.test/f.pdf",
-      fileSize: 10,
+  const meta = { articleId: 1, fileName: "f.pdf", fileUrl: "https://x.test/f.pdf", fileSize: 10 };
+
+  it("addAttachment forwards the metadata for the article's author", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 1, authorId: 7 }),
     });
-    expect(db.createAttachment).toHaveBeenCalledWith({
-      articleId: 1,
-      fileName: "f.pdf",
-      fileUrl: "https://x.test/f.pdf",
-      fileSize: 10,
-    });
+    await caller.articles.addAttachment(meta);
+    expect(db.createAttachment).toHaveBeenCalledWith(meta);
   });
 
-  it("deleteAttachment is admin-only", async () => {
-    await expect(
-      makeCaller(writerCtx()).caller.articles.deleteAttachment({ id: 1 }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  it("addAttachment forbids attaching to someone else's article", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getArticleById: async () => ({ id: 1, authorId: 8 }),
+    });
+    await expect(caller.articles.addAttachment(meta)).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(db.createAttachment).not.toHaveBeenCalled();
+  });
+
+  it("deleteAttachment follows the parent article's ownership", async () => {
+    const owned = {
+      getAttachmentById: async () => ({ id: 1, articleId: 3 }),
+      getArticleById: async () => ({ id: 3, authorId: 7 }),
+    };
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), owned);
+    await expect(caller.articles.deleteAttachment({ id: 1 })).resolves.toEqual({ success: true });
+    expect(db.deleteAttachment).toHaveBeenCalledWith(1);
+
+    const other = makeCaller(userCtx({ dbId: 8 }), owned);
+    await expect(other.caller.articles.deleteAttachment({ id: 1 })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(other.db.deleteAttachment).not.toHaveBeenCalled();
+  });
+
+  it("deleteAttachment throws NOT_FOUND for an unknown attachment", async () => {
+    const { caller } = makeCaller(adminCtx(), { getAttachmentById: async () => null });
+    await expect(caller.articles.deleteAttachment({ id: 1 })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
   });
 });

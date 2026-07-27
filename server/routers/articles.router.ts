@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateSlug, randomSlug } from "@shared/slug";
-import { router, publicProcedure } from "../_core/trpc";
-import { adminProcedure, writerProcedure } from "./middleware";
+import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
+import { adminProcedure, writerProcedure, assertCanEditArticle } from "./middleware";
 import type { RouterDeps } from "./context";
 
 export const createArticlesRouter = (deps: RouterDeps) => router({
@@ -30,6 +30,16 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
     .query(async ({ input }) => {
       const article = await deps.db.getArticleBySlug(input.slug);
       if (!article) return null;
+      const attachments = await deps.db.getAttachmentsByArticle(article.id);
+      return { ...article, attachments };
+    }),
+
+  // Editing view: fetch by numeric id, restricted to the author (or an admin).
+  // Unlike `list`, this reaches unpublished drafts the caller owns.
+  byId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const article = await assertCanEditArticle(deps.db, ctx.user, input.id);
       const attachments = await deps.db.getAttachmentsByArticle(article.id);
       return { ...article, attachments };
     }),
@@ -87,7 +97,8 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       });
     }),
 
-  update: writerProcedure
+  // Any signed-in user may edit an article they authored; admins may edit any.
+  update: protectedProcedure
     .input(
       z.object({
         id: z.number(),
@@ -102,8 +113,12 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         siteUrl: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { id, siteUrl: _siteUrl, ...data } = input;
+      await assertCanEditArticle(deps.db, ctx.user, id);
+      // Publishing stays an admin decision — an author editing their own article
+      // cannot flip the flag, so the review flow can't be self-approved.
+      if (ctx.user.role !== "admin") delete (data as { published?: boolean }).published;
       const updated = await deps.db.updateArticle(id, data);
       return updated;
     }),
@@ -147,7 +162,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return { success: true };
     }),
   // Save attachment metadata after file upload to S3
-  addAttachment: writerProcedure
+  addAttachment: protectedProcedure
     .input(
       z.object({
         articleId: z.number(),
@@ -156,7 +171,8 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         fileSize: z.number(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      await assertCanEditArticle(deps.db, ctx.user, input.articleId);
       await deps.db.createAttachment({
         articleId: input.articleId,
         fileName: input.fileName,
@@ -165,10 +181,13 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       });
       return { success: true };
     }),
-  // Delete an attachment (admin only)
-  deleteAttachment: adminProcedure
+  // Delete an attachment — same reach as editing the article it belongs to
+  deleteAttachment: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const attachment = await deps.db.getAttachmentById(input.id);
+      if (!attachment) throw new TRPCError({ code: "NOT_FOUND", message: "קובץ לא נמצא" });
+      await assertCanEditArticle(deps.db, ctx.user, attachment.articleId);
       await deps.db.deleteAttachment(input.id);
       return { success: true };
     }),
