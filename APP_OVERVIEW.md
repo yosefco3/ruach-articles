@@ -100,7 +100,8 @@ BlogPosting+BreadcrumbList במאמר). **נקודות-קצה לסורקים:** 
 (**פרסום = אדמין בלבד**) → הצגה בדף הבית (חיפוש/סינון/פופולריים) → עמוד מאמר (תוכן,
 צמדות, תגובות, likes, שיתוף). **עריכה מדף המאמר:** `ArticleActionsBar` מציג לכותב
 המאמר (ולאדמין) קיצור ל-`/admin/edit/:id`, ולאדמין גם "הפוך למאמר הראשי"
-(`featured.set`) ותג "טיוטה" כשהמאמר לא מפורסם; לקורא רגיל לא מוצג דבר.
+(`featured.set`) ותג "טיוטה" כשהמאמר לא מפורסם; לקורא רגיל לא מוצג דבר. הקישור נושא
+`?from=article`, ולכן שמירה/ביטול/חזרה בעורך חוזרים לדף המאמר במקום לטבלת האדמין.
 **הרשאת עריכה** נאכפת בשרת ב-`assertCanEditArticle` (אדמין = הכול, אחרת רק
 `articles.authorId === user.dbId`) ומשמשת את `articles.update`/`byId`/`addAttachment`/
 `deleteAttachment`; ה-UI רק משקף אותה (`client/src/lib/articlePermissions.ts`).
