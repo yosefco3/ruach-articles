@@ -96,8 +96,14 @@ BlogPosting+BreadcrumbList במאמר). **נקודות-קצה לסורקים:** 
 נכסים עם hash תחת `/assets/` מוגשים `immutable` לשנה (`_core/vite.ts`). **Build/Run:** `pnpm build`
 (client+manifest → ssr bundle → server bundle) → `pnpm start` (`node dist/index.js`).
 
-זרימת מאמר: יצירה/עריכה ע"י אדמין (עורך TipTap) → סטטוס טיוטה/פורסם → הצגה בדף הבית
-(חיפוש/סינון/פופולריים) → עמוד מאמר (תוכן, צמדות, תגובות, likes, שיתוף).
+זרימת מאמר: יצירה ע"י אדמין/סופר-אורח מאושר (עורך TipTap) → סטטוס טיוטה/פורסם
+(**פרסום = אדמין בלבד**) → הצגה בדף הבית (חיפוש/סינון/פופולריים) → עמוד מאמר (תוכן,
+צמדות, תגובות, likes, שיתוף). **עריכה מדף המאמר:** `ArticleActionsBar` מציג לכותב
+המאמר (ולאדמין) קיצור ל-`/admin/edit/:id`, ולאדמין גם "הפוך למאמר הראשי"
+(`featured.set`) ותג "טיוטה" כשהמאמר לא מפורסם; לקורא רגיל לא מוצג דבר.
+**הרשאת עריכה** נאכפת בשרת ב-`assertCanEditArticle` (אדמין = הכול, אחרת רק
+`articles.authorId === user.dbId`) ומשמשת את `articles.update`/`byId`/`addAttachment`/
+`deleteAttachment`; ה-UI רק משקף אותה (`client/src/lib/articlePermissions.ts`).
 _TODO: לאמת את מעברי הסטטוס מול הקוד._
 
 זרימת קריאת אי-צ'ינג: מאמר מבוא → שאלה (state בלבד, לא נשמרת) → הטלת 3 מטבעות ×6
@@ -116,6 +122,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 ## היסטוריית שינויים משמעותיים / Significant change history
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
+| 2026-07-27 | **Article-page management bar + real author ownership** (`feature-prompts/article-page-author-actions/`): the public article page now renders `ArticleActionsBar` — edit shortcut for the author/admin, "make this the featured article" (`featured.set`) and a draft badge for admins, nothing for readers. Behind it, editing permission became ownership-based: new `assertCanEditArticle(db, user, id)` guard (admin → any article, otherwise `authorId === user.dbId`) now backs `articles.update`, the new ownership-scoped `articles.byId` query, and `add/deleteAttachment`. This replaces `writerProcedure` on those routes, whose `guestPostApproved` check was never populated in the session (so in practice only admins could edit, and any "writer" could have edited *any* article). `published` is stripped for non-admin authors server-side and the switch is disabled in the editor, keeping publication an admin decision. `AdminArticleForm` now loads through `byId` instead of scanning `list({all:true})` → `bySlug`, which also makes a non-admin author's own draft reachable. | `client/src/components/ArticleActionsBar.tsx`(+test), `client/src/lib/articlePermissions.ts`(+test), `client/src/pages/ArticlePage.tsx`, `client/src/pages/AdminArticleForm.tsx`, `server/routers/middleware.ts`, `server/routers/articles.router.ts`(+test), `server/db/attachments.ts`, `server/db.ts` |
 | 2026-06-20 | Initial overview created (dev-kit bootstrap) | — |
 | 2026-07-08 | **HTML embed block in the article editor** (`feature-prompts/html-embed-block/`): new TipTap node `htmlEmbed` (atom) stores a raw HTML string and serializes it verbatim as `<div data-html-embed class="html-embed">…</div>`, so self-contained diagrams (inline `<style>` + classed divs) survive editing round-trips instead of being stripped by the schema. Opt-in per editor via `enableHtmlEmbed` prop (default off) — **only** `AdminArticleForm` enables it; guest posts/other editors strip embed markup. Toolbar button (FileCode2) opens a paste dialog (textarea, insert new / edit selected block). `.html-embed` CSS bridge in `index.css` maps Claude-artifact tokens (`--surface-1`, `--text-primary`, `--border-strong`…) to the site's shadcn vars so embeds follow light/dark; diagrams authored with `@media(prefers-color-scheme:dark)` must be converted to `.dark`-prefixed rules (site dark mode is class-based). No new security surface: article body was already rendered unsanitized, admin-only. +6 headless tests under happy-dom (per-file env pragma; new devDep). | `client/src/components/editor/htmlEmbed.ts`(+test), `client/src/components/RichTextEditor.tsx`, `client/src/components/RichTextEditor.css`, `client/src/pages/AdminArticleForm.tsx`, `client/src/index.css` |
 | 2026-06-27 | **I Ching AI master switch** — admin toggle `intro.aiEnabled` (default OFF) hides the personal AI interpretation and gates all AI calls server-side (`interpret`→`FORBIDDEN`/`AI_DISABLED`, `refineQuestion`→empty, before quota/rate checks); the refine toggle nests under it in the admin panel. Static hexagram/trigram interpretations are unaffected. Column added to `ichingIntro` (tinyint default 0), applied to dev DB via docker exec. | `drizzle/schema.ts`, `server/db/iching.ts`, `server/routers/iching.router.ts`, `client/src/pages/iching/model.ts`, `client/src/pages/IChingReading.tsx`, `client/src/pages/AdminIChing.tsx`, `server/test-helpers/trpc.ts`, `server/routers/iching.router.test.ts` |
