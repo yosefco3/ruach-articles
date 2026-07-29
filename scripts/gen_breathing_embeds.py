@@ -196,50 +196,49 @@ def eight(g, uid, poles, t_in):
 
 
 # =============================================================== diagram 1
-def diagram_one():
-    base = dict(cy=350, h=200, A=300)
-    fem = dict(base, cx=400, fl=False)   # faces right → her front is on the right
-    mal = dict(base, cx=800, fl=True)    # faces left  → his front is on the left
+# two standalone maps, one per sex — each with its own four labels and its own
+# front/back marking, since neither has the other body to orient against
+ONE = dict(cx=340, cy=350, A=300, h=200, fl=False)   # front on the right
+VB1 = "85 118 545 480"
 
-    # unmirrored frame: ur=top-front, ll=bottom-back, lr=bottom-front, ul=top-back
-    fpol = {"ur": "+", "ll": "+", "lr": "-", "ul": "-"}   # female: chest +, buttocks +, genitals −, back −
-    mpol = {"ur": "-", "ll": "-", "lr": "+", "ul": "+"}   # male:   chest −, buttocks −, genitals +, back +
 
-    fbody, fref, fL, fkf, T = eight(fem, "F", fpol, 5 * PI / 4)   # her minus strand starts at lr
-    mbody, mref, mL, mkf, _ = eight(mal, "M", mpol, PI / 4)       # his minus strand starts at ur
+def one_body(sex):
+    pol = ({"ur": "-", "ll": "-", "lr": "+", "ul": "+"} if sex == "male" else
+           {"ur": "+", "ll": "+", "lr": "-", "ul": "-"})
+    t_in = PI / 4 if sex == "male" else 5 * PI / 4       # where the minus strand starts
+    uid = "M" if sex == "male" else "F"
+    genitals = "איבר המין" if sex == "male" else "אזור המין"
 
-    svg = ['<svg class="b8-svg" viewBox="150 100 940 530" xmlns="http://www.w3.org/2000/svg" '
-           'role="img" aria-label="מפת ה־8: זכר ונקבה זה מול זה">']
-    svg.append(fbody)
-    svg.append(mbody)
+    body, ref, L, kf, T = eight(ONE, uid, pol, t_in)
 
-    # badges: female
-    for key, sign in fpol.items():
-        x, y = pt(T[key], fem)
-        svg.append(badge(x, y, sign))
-    for key, sign in mpol.items():
-        x, y = pt(T[key], mal)
+    svg = ['<svg class="b8-svg" viewBox="%s" xmlns="http://www.w3.org/2000/svg" '
+           'role="img" aria-label="מפת ה־8 — %s">' % (VB1, "זכר" if sex == "male" else "נקבה")]
+    svg.append(body)
+    for key, sign in pol.items():
+        x, y = pt(T[key], ONE)
         svg.append(badge(x, y, sign))
 
-    # outer labels (back side of each body)
-    svg.append(label(pt(T["ul"], fem)[0] - 32, 209, "גב", "end"))
-    svg.append(label(pt(T["ll"], fem)[0] - 32, 491, "ישבן", "end"))
-    svg.append(label(pt(T["ul"], mal)[0] + 32, 209, "גב", "start"))
-    svg.append(label(pt(T["ll"], mal)[0] + 32, 491, "ישבן", "start"))
+    fx, bx = pt(T["ur"], ONE)[0] + 34, pt(T["ul"], ONE)[0] - 34
+    svg.append(label(fx, 209, "חזה", "start"))
+    svg.append(label(bx, 209, "גב", "end"))
+    svg.append(label(bx, 491, "ישבן", "end"))
+    svg.append(label(fx, 491, genitals, "start", "b8-organ b8-lg"))
+    svg.append(label(fx, 491, "מין", "start", "b8-organ b8-sm"))
 
-    # shared centre labels — chest faces chest, genitals face genitals
-    svg.append(label(600, 209, "חזה", "middle"))
-    svg.append(label(600, 491, "מין", "middle"))
+    svg.append(label(628, 590, "קדימה ▸", "end", "b8-side"))
+    svg.append(label(87, 590, "◂ אחורה", "start", "b8-side"))
 
-    svg.append(label(400, 130, "נקבה", "middle", "b8-who"))
-    svg.append(label(800, 130, "זכר", "middle", "b8-who"))
-
-    svg.append(runner_markup("b8-run-in", "b8-trackF", fref))
-    svg.append(runner_markup("b8-run-ex", "b8-trackF", fref))
-    svg.append(runner_markup("b8-run-in", "b8-trackM", mref))
-    svg.append(runner_markup("b8-run-ex", "b8-trackM", mref))
+    track = "b8-trackM" if sex == "male" else "b8-trackF"
+    svg.append(runner_markup("b8-run-in", track, ref))
+    svg.append(runner_markup("b8-run-ex", track, ref))
     svg.append("</svg>")
-    return "".join(svg), fkf, mkf, fL, mL
+    return "".join(svg), kf, L
+
+
+def diagram_one():
+    sm, kfm, Lm = one_body("male")
+    sf, kff, Lf = one_body("female")
+    return sm, sf, kfm, kff, Lm, Lf
 
 
 # =============================================================== diagram 2
@@ -337,7 +336,7 @@ def css(scope, keyframes, dash_rules):
   background:var(--b8-surface2);color:var(--b8-muted);opacity:0}
 .html-embed .b8-ph-in{background:var(--b8-minus-soft);color:var(--b8-minus);border-color:var(--b8-minus)}
 .html-embed .b8-ph-ex{background:var(--b8-plus-soft);color:var(--b8-plus);border-color:var(--b8-plus)}
-.html-embed .b8-cap{text-align:center;font-size:.85em;color:var(--b8-muted);margin:.2em .6em 0}
+.html-embed .b8-figtitle{text-align:center;font-weight:700;font-size:1.05em;margin:.15em 0 .1em;letter-spacing:.03em}\n.html-embed .b8-side{font-size:17px;fill:var(--b8-muted);letter-spacing:.03em}\n.html-embed .b8-cap{text-align:center;font-size:.85em;color:var(--b8-muted);margin:.2em .6em 0}
 
 .html-embed .b8-legend{display:flex;flex-wrap:wrap;gap:.5em 1.4em;justify-content:center;
   font-size:.88em;color:var(--b8-muted);margin:.9em 0 1.9em}
@@ -407,7 +406,7 @@ def css(scope, keyframes, dash_rules):
   .html-embed .b8-lg{display:none}
   .html-embed .b8-sm{display:inline}
   .html-embed .b8-organ{font-size:30px}
-  .html-embed .b8-who{font-size:31px}
+  .html-embed .b8-who{font-size:31px}\n  .html-embed .b8-side{font-size:26px}
   .html-embed .b8-badge text{font-size:44px}
   .html-embed .b8-legend{gap:.4em .9em;font-size:.82em}
 }
@@ -435,10 +434,19 @@ LEGEND = ('<div class="b8-legend">'
 # ---------------------------------------------------------------- articles
 ART1 = """<div class="b8 b8-1">
 <div class="b8-fig">
+<div class="b8-figtitle">זכר</div>
 %(phase)s
-%(svg)s
-<div class="b8-cap">שתי המפות זו מול זו — חזה מול חזה, מין מול מין. שימו לב שכל נקודה
-פוגשת את הקוטב ההפוך שלה. הקצב בציור הוא להמחשה בלבד.</div>
+%(svg_m)s
+<div class="b8-cap">החזה והישבן <b>שקועים</b> (−) — הם קו השאיפה. הגב ואיבר המין
+<b>בולטים</b> (+) — הם קו הנשיפה.</div>
+</div>
+
+<div class="b8-fig">
+<div class="b8-figtitle">נקבה</div>
+%(phase)s
+%(svg_f)s
+<div class="b8-cap">כאן הכול הפוך: הגב ואזור המין <b>שקועים</b> (−) — הם קו השאיפה.
+החזה והישבן <b>בולטים</b> (+) — הם קו הנשיפה.</div>
 </div>
 %(legend)s
 
@@ -564,7 +572,7 @@ ART2 = """<div class="b8 b8-2">
 
 # ---------------------------------------------------------------- build
 def main():
-    svg1, kf1f, kf1m, L1f, L1m = diagram_one()
+    svg1m, svg1f, kf1m, kf1f, L1m, L1f = diagram_one()
     dash1 = (".html-embed .b8-trackF use{stroke-dasharray:0.1 %.1f;"
              "animation:b8runF %dms linear infinite}\n"
              ".html-embed .b8-trackM use{stroke-dasharray:0.1 %.1f;"
@@ -572,7 +580,7 @@ def main():
              % (L1f + 60, TOTAL, L1m + 60, TOTAL))
     html1 = ("<style>%s</style>\n%s\n" %
              (css("article 1 — the method", kf1f + "\n" + kf1m, dash1),
-              ART1 % dict(phase=PHASE, svg=svg1, legend=LEGEND)))
+              ART1 % dict(phase=PHASE, svg_m=svg1m, svg_f=svg1f, legend=LEGEND)))
 
     svg2, kf2, L2 = diagram_two()
     dash2 = (".html-embed .b8-trackU use{stroke-dasharray:0.1 %.1f;"
