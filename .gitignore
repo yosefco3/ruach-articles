@@ -130,3 +130,6 @@ feature-prompts/
 # Added by code-review-graph
 .code-review-graph/
 .claude/settings.local.json
+
+# Article content & diagrams (internal, pasted into the CMS by hand)
+docs/
