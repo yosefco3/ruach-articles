@@ -327,6 +327,7 @@ def css(scope, keyframes, dash_rules):
 .html-embed .b8 b{font-weight:700}
 
 /* --- the figure --- */
+.html-embed .b8-fig:first-child{margin-top:0}
 .html-embed .b8-fig{background:var(--b8-card);border:1px solid var(--b8-line);
   border-radius:14px;padding:.6em .4em .8em;margin:1.4em 0}
 .html-embed .b8-svg{display:block;width:100%%;height:auto;direction:ltr}
@@ -339,7 +340,7 @@ def css(scope, keyframes, dash_rules):
 .html-embed .b8-cap{text-align:center;font-size:.85em;color:var(--b8-muted);margin:.2em .6em 0}
 
 .html-embed .b8-legend{display:flex;flex-wrap:wrap;gap:.5em 1.4em;justify-content:center;
-  font-size:.88em;color:var(--b8-muted);margin:.9em 0 0}
+  font-size:.88em;color:var(--b8-muted);margin:.9em 0 1.9em}
 .html-embed .b8-legend span{display:inline-flex;align-items:center;gap:.45em}
 .html-embed .b8-sw{width:30px;height:8px;border-radius:99px;display:inline-block}
 .html-embed .b8-sw-m{background:var(--b8-minus)} .html-embed .b8-sw-p{background:var(--b8-plus)}
@@ -433,6 +434,14 @@ LEGEND = ('<div class="b8-legend">'
 
 # ---------------------------------------------------------------- articles
 ART1 = """<div class="b8 b8-1">
+<div class="b8-fig">
+%(phase)s
+%(svg)s
+<div class="b8-cap">שתי המפות זו מול זו — חזה מול חזה, מין מול מין. שימו לב שכל נקודה
+פוגשת את הקוטב ההפוך שלה. הקצב בציור הוא להמחשה בלבד.</div>
+</div>
+%(legend)s
+
 <p class="b8-lead">לפני כעשרים שנה התגלתה אלי שיטת נשימה, שלמיטב ידיעתי איננה קיימת בשום
 מקום אחר. השיטה פשוטה, עם היגיון ברור המבוסס על האנטומיה האנושית.</p>
 
@@ -509,18 +518,18 @@ ART1 = """<div class="b8 b8-1">
 אוהב רצף, ולכן איני "עוצר את הנשימה" — אבל ככל שאני קרוב יותר לקצה העליון או התחתון של
 ה־8, כך השאיפה והנשיפה נחלשות.</p>
 <p>שכל אחד יתרגל וימצא את הקצב הנכון עבורו.</p>
-
-<div class="b8-fig">
-%(phase)s
-%(svg)s
-<div class="b8-cap">שתי המפות זו מול זו — חזה מול חזה, מין מול מין. שימו לב שכל נקודה
-פוגשת את הקוטב ההפוך שלה. הקצב בציור הוא להמחשה בלבד.</div>
-</div>
-%(legend)s
 </div>"""
 
 
 ART2 = """<div class="b8 b8-2">
+<div class="b8-fig">
+%(phase)s
+%(svg)s
+<div class="b8-cap">שני הפרופילים נכנסים זה בזה. במסגרות המקווקוות — נקודות החיבור
+הפנימיות, שכבר אינן חלק מהמעטפת. מה שנשאר בחוץ, שני הגבים ושני הישבנים, מרכיב 8 אחת.</div>
+</div>
+%(legend)s
+
 <p class="b8-lead">במאמר הקודם תיארתי את מפת ה־8: ארבעה קטבים על הגוף, שני קווים שנחתכים
 במרכז, ושאיפה שהולכת תמיד על קו המינוס. כאן אני רוצה לקחת את אותה מפה צעד אחד קדימה —
 ולראות מה קורה כששני גופים נפגשים ביחסי מין.</p>
@@ -550,14 +559,6 @@ ART2 = """<div class="b8 b8-2">
 של בן או בת הזוג.</li>
 </ol>
 <p>גם תרגיל הצ\'י גונג שתיארנו קודם מדמה בדיוק את תנועת האנרגיה.</p>
-
-<div class="b8-fig">
-%(phase)s
-%(svg)s
-<div class="b8-cap">שני הפרופילים נכנסים זה בזה. במסגרות המקווקוות — נקודות החיבור
-הפנימיות, שכבר אינן חלק מהמעטפת. מה שנשאר בחוץ, שני הגבים ושני הישבנים, מרכיב 8 אחת.</div>
-</div>
-%(legend)s
 </div>"""
 
 
