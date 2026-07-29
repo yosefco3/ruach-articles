@@ -1,19 +1,18 @@
 <style>
 /* ==== article 2 — the union : self-contained, no JS ==== */
+/* dark only, on purpose: the block carries its own surface so it looks the
+   same whatever theme the surrounding page happens to be in */
 .html-embed .b8{
-  --b8-minus:#2563eb; --b8-minus-soft:#dbeafe;
-  --b8-plus:#dc2626;  --b8-plus-soft:#fee2e2;
-  --b8-neutral:#cfcabd;
-  --b8-bodyA:#f4f0e6; --b8-bodyB:#ddd6c4; --b8-bodyline:#c6bfab;
-  --b8-card:var(--surface-1); --b8-ink:var(--text-primary);
-  --b8-muted:var(--text-secondary); --b8-line:var(--border-subtle);
-  direction:rtl; line-height:1.85;
-}
-.dark .html-embed .b8{
   --b8-minus:#5b9dfb; --b8-minus-soft:#16304f;
   --b8-plus:#f97070;  --b8-plus-soft:#45191a;
   --b8-neutral:#45413a;
   --b8-bodyA:#1f1c17; --b8-bodyB:#38322a; --b8-bodyline:#57503f;
+  --b8-card:#1d1c18; --b8-surface2:#26241f;
+  --b8-ink:#f0eee8; --b8-muted:#a09a8e; --b8-line:#33312b;
+  direction:rtl; line-height:1.85;
+  background:#14130f; color:var(--b8-ink);
+  border:1px solid var(--b8-line); border-radius:16px;
+  padding:1.4em 1.5em 1.6em;
 }
 
 .html-embed .b8 h2{font-size:1.45em;margin:0 0 .5em;line-height:1.35}
@@ -25,19 +24,19 @@
 .html-embed .b8 ul{margin:.2em 0 1em;padding-inline-start:1.25em}
 .html-embed .b8 li{margin:.3em 0}
 .html-embed .b8 .b8-lead{font-size:1.06em;color:var(--b8-muted)}
-.html-embed .b8 .b8-rule{background:var(--surface-2);border:1px solid var(--b8-line);
+.html-embed .b8 .b8-rule{background:var(--b8-surface2);border:1px solid var(--b8-line);
   border-radius:12px;padding:.85em 1.1em;margin:1.2em 0}
 .html-embed .b8 .b8-rule p:last-child{margin:0}
 .html-embed .b8 b{font-weight:700}
 
 /* --- the figure --- */
-.html-embed .b8-fig{background:var(--surface-1);border:1px solid var(--b8-line);
+.html-embed .b8-fig{background:var(--b8-card);border:1px solid var(--b8-line);
   border-radius:14px;padding:.6em .4em .8em;margin:1.4em 0}
 .html-embed .b8-svg{display:block;width:100%;height:auto;direction:ltr}
 .html-embed .b8-phase{display:grid;justify-items:center;margin:.1em 0 .4em}
 .html-embed .b8-phase > span{grid-area:1/1;font-size:.85em;font-weight:700;
   padding:.25em .9em;border-radius:999px;border:1.5px solid var(--b8-line);
-  background:var(--surface-2);color:var(--b8-muted);opacity:0}
+  background:var(--b8-surface2);color:var(--b8-muted);opacity:0}
 .html-embed .b8-ph-in{background:var(--b8-minus-soft);color:var(--b8-minus);border-color:var(--b8-minus)}
 .html-embed .b8-ph-ex{background:var(--b8-plus-soft);color:var(--b8-plus);border-color:var(--b8-plus)}
 .html-embed .b8-cap{text-align:center;font-size:.85em;color:var(--b8-muted);margin:.2em .6em 0}
@@ -107,6 +106,7 @@
 
 
 @media (max-width:620px){
+  .html-embed .b8{padding:1.1em 1em 1.2em}
   .html-embed .b8-lg{display:none}
   .html-embed .b8-sm{display:inline}
   .html-embed .b8-organ{font-size:30px}
