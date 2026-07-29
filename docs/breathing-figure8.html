@@ -213,7 +213,7 @@
 
   /* the top/bottom arcs are the turning points of the breath — they get a long
      duration over a short arc, so the runner crawls through them (near-stop) */
-  var DUR = { inhale:4000, exhale:4000, turn:3400 };
+  var DUR = { inhale:6500, exhale:6500, turn:5000 };
 
   var state = { sex:'male', phase:'cycle', body:false, labels:true,
                 compare:true, faceLeft:false, flip:false, speed:1 };
@@ -307,8 +307,8 @@
     return s;
   }
 
-  function figureSVG(sex, uid){
-    var fl = state.faceLeft, pol = POL[sex], org = ORGAN[sex];
+  function figureSVG(sex, uid, fl){
+    var pol = POL[sex], org = ORGAN[sex];
     var inS = inhaleStrandOf(sex);
     var sched = scheduleFor(sex, state.phase, state.flip);
     var dirOf = {};                                    /* type -> directed [a,b] */
@@ -418,8 +418,10 @@
     var sexes = state.compare ? ['male','female'] : [state.sex];
     var html = '', built = [];
     sexes.forEach(function(sex, i){
-      var f = figureSVG(sex, sex + i);
-      built.push({ sex:sex, sched:f.sched });
+      /* face to face: in RTL the first card sits on the right, so it faces left */
+      var fl = state.compare ? (i === 0 ? !state.faceLeft : state.faceLeft) : state.faceLeft;
+      var f = figureSVG(sex, sex + i, fl);
+      built.push({ sex:sex, sched:f.sched, fl:fl });
       html += '<div class="fig" data-i="' + i + '">' +
               '<div class="phase-badge">' + (state.phase === 'both' ? 'מפה' : phaseText(built[i].sched[0].kind)) + '</div>' +
               f.svg +
@@ -431,6 +433,7 @@
       return {
         sex: built[i].sex,
         sched: built[i].sched,
+        fl: built[i].fl,
         total: built[i].sched.reduce(function(s, x){ return s + x.dur; }, 0),
         badge: el.querySelector('.phase-badge'),
         runner: el.querySelector('.runner'),
@@ -487,7 +490,7 @@
          and the short turning arcs are crossed at a crawl */
       var eased = 0.5 - 0.5*Math.cos(PI*u);
       var t = seg.a + (seg.b - seg.a)*eased;
-      var p = P(t, state.faceLeft);
+      var p = P(t, f.fl);
       var c = colorAt(f, idx, eased);
 
       f.dot.setAttribute('cx', p[0].toFixed(2));  f.dot.setAttribute('cy', p[1].toFixed(2));
