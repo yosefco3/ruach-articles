@@ -69,25 +69,26 @@ def cum(pts):
 
 
 # ------------------------------------------------- the runner's path + keyframes
-def runner(t_start, g, name, n=520, steps=20):
+def runner(t_start, g, name, sgn=1, n=520, steps=20):
     """Full-8 path starting at the inhale strand, plus the dashoffset keyframes.
 
     The eased profile (0.5-0.5cos) makes the speed fall to zero at every pole,
     and the turning arcs get a long duration over a short arc — a near-stop.
     """
-    pts = poly(t_start, t_start + TAU, n, g)
+    pts = poly(t_start, t_start + sgn * TAU, n, g)
     cl = cum(pts)
     L = cl[-1]
 
     def dist(t):
-        x = (t - t_start) / TAU * n
+        x = (t - t_start) / (sgn * TAU) * n
         i = max(0, min(n - 1, int(x)))
         return cl[i] + (cl[i + 1] - cl[i]) * (x - i)
 
-    sched = [(t_start + 0.0, t_start + PI / 2, IN),
-             (t_start + PI / 2, t_start + PI, TURN),
-             (t_start + PI, t_start + 3 * PI / 2, EX),
-             (t_start + 3 * PI / 2, t_start + TAU, TURN)]
+    q = sgn * PI / 2
+    sched = [(t_start, t_start + q, IN),
+             (t_start + q, t_start + 2 * q, TURN),
+             (t_start + 2 * q, t_start + 3 * q, EX),
+             (t_start + 3 * q, t_start + 4 * q, TURN)]
 
     rows, elapsed = [], 0
     for si, (a, b, dur) in enumerate(sched):
@@ -142,27 +143,45 @@ def runner_markup(cls, track, ref):
             % (cls, track, ref, ref, ref))
 
 
-def eight(g, uid, poles, t_in):
-    """One complete figure-8: ribbon, coloured strands, arrows, badges, runner.
+def eight(g, uid, poles, reverse=False):
+    """One complete figure-8: ribbon, coloured strands, arrows, runner.
 
-    poles maps the four parameters (ur/ll/lr/ul in the unmirrored frame) to a sign.
-    t_in is the parameter where the inhale (minus) strand begins.
+    poles maps the four extremes to a sign, named in the unmirrored frame:
+    ur = top-front, ll = bottom-back, lr = bottom-front, ul = top-back.
+    reverse traverses the 8 the other way round; the inhale strand is always
+    the one joining the two minus poles, and the runner starts there.
     """
     T = {"ur": PI / 4, "ll": 3 * PI / 4, "lr": 5 * PI / 4, "ul": 7 * PI / 4}
     col = {k: (MINUS if v == "-" else PLUS) for k, v in poles.items()}
 
-    # strandA joins ur↔ll, strandB joins lr↔ul; each links two identical poles
-    sA, sB = poles["ur"], poles["lr"]
-    dA = arc(T["ur"], T["ll"], g)
-    dB = arc(T["lr"], T["ul"], g)
-    dCB = arc(T["ll"], T["lr"], g)
-    dCT = arc(T["ul"], T["ul"] + PI / 2, g)
+    if reverse:
+        order = [("A", "ll", "ur"), ("capTop", "ur", "ul"),
+                 ("B", "ul", "lr"), ("capBottom", "lr", "ll")]
+        tv = [3 * PI / 4, PI / 4, -PI / 4, -3 * PI / 4, -5 * PI / 4]
+        sgn = -1
+    else:
+        order = [("A", "ur", "ll"), ("capBottom", "ll", "lr"),
+                 ("B", "lr", "ul"), ("capTop", "ul", "ur")]
+        tv = [PI / 4, 3 * PI / 4, 5 * PI / 4, 7 * PI / 4, 9 * PI / 4]
+        sgn = 1
 
-    rpath, L, kf = runner(t_in, g, "b8run%s" % uid)
+    seg = {name: (tv[i], tv[i + 1], a, b) for i, (name, a, b) in enumerate(order)}
 
-    inhale_is_A = sA == "-"
-    gA = "b8-glow-in" if inhale_is_A else "b8-glow-ex"
-    gB = "b8-glow-ex" if inhale_is_A else "b8-glow-in"
+    # each strand joins two identical poles; the minus one is the inhale
+    inhale = "A" if poles["ur"] == "-" else "B"
+    rpath, L, kf = runner(seg[inhale][0], g, "b8run%s" % uid, sgn)
+
+    gA = "b8-glow-in" if inhale == "A" else "b8-glow-ex"
+    gB = "b8-glow-ex" if inhale == "A" else "b8-glow-in"
+
+    dA = arc(seg["A"][0], seg["A"][1], g)
+    dB = arc(seg["B"][0], seg["B"][1], g)
+    dCB = arc(seg["capBottom"][0], seg["capBottom"][1], g)
+    dCT = arc(seg["capTop"][0], seg["capTop"][1], g)
+
+    def cap_grad(gid, name):
+        t0, t1, p0, p1 = seg[name]
+        return grad(gid, pt(t0, g), pt(t1, g), col[p0], col[p1])
 
     # every path is defined once and referenced; the closed track doubles as the ribbon
     s = ['<defs>%s%s'
@@ -170,8 +189,7 @@ def eight(g, uid, poles, t_in):
          '<path id="sa%s" fill="none" d="%s"/><path id="sb%s" fill="none" d="%s"/>'
          '<path id="cb%s" fill="none" d="%s"/><path id="ct%s" fill="none" d="%s"/>'
          '</defs>'
-         % (grad("gb%s" % uid, pt(T["ll"], g), pt(T["lr"], g), col["ll"], col["lr"]),
-            grad("gt%s" % uid, pt(T["ul"], g), pt(T["ur"], g), col["ul"], col["ur"]),
+         % (cap_grad("gb%s" % uid, "capBottom"), cap_grad("gt%s" % uid, "capTop"),
             uid, rpath, uid, dA, uid, dB, uid, dCB, uid, dCT)]
 
     s.append('<use href="#tk%s" class="b8-back"/>' % uid)
@@ -187,10 +205,9 @@ def eight(g, uid, poles, t_in):
     s.append('<use href="#sb%s" class="b8-seg" stroke="%s"/>' % (uid, col["lr"]))
     s.append('<use href="#sb%s" class="b8-flow %s"/>' % (uid, gB))
 
-    s.append(arrow(T["ur"], T["ll"], 0.30, g, col["ur"]))
-    s.append(arrow(T["ur"], T["ll"], 0.73, g, col["ur"]))
-    s.append(arrow(T["lr"], T["ul"], 0.30, g, col["lr"]))
-    s.append(arrow(T["lr"], T["ul"], 0.73, g, col["lr"]))
+    for name, c in (("A", col["ur"]), ("B", col["lr"])):
+        for f in (0.30, 0.73):
+            s.append(arrow(seg[name][0], seg[name][1], f, g, c))
 
     return "".join(s), "tk%s" % uid, L, kf, T
 
@@ -205,11 +222,12 @@ VB1 = "85 118 545 480"
 def one_body(sex):
     pol = ({"ur": "-", "ll": "-", "lr": "+", "ul": "+"} if sex == "male" else
            {"ur": "+", "ll": "+", "lr": "-", "ul": "-"})
-    t_in = PI / 4 if sex == "male" else 5 * PI / 4       # where the minus strand starts
     uid = "M" if sex == "male" else "F"
     genitals = "איבר המין" if sex == "male" else "אזור המין"
 
-    body, ref, L, kf, T = eight(ONE, uid, pol, t_in)
+    # reversed traversal, so the runner matches the qigong exercise:
+    # the male inhales on the way up, the female on the way down
+    body, ref, L, kf, T = eight(ONE, uid, pol, reverse=True)
 
     svg = ['<svg class="b8-svg" viewBox="%s" xmlns="http://www.w3.org/2000/svg" '
            'role="img" aria-label="מפת ה־8 — %s">' % (VB1, "זכר" if sex == "male" else "נקבה")]
@@ -249,7 +267,7 @@ def diagram_two():
            "lr": "-",   # his buttocks
            "ul": "-",   # her back
            "ll": "+"}   # her buttocks
-    body, uref, L, kf, T = eight(g, "U", pol, 5 * PI / 4)   # minus strand: lr → ul
+    body, uref, L, kf, T = eight(g, "U", pol)
 
     SEAM = "M 500 120 C 600 180,600 300,500 380 C 400 460,400 580,500 640"
     BODY_F = SEAM + " L 410 640 Q 340 640 340 570 L 340 190 Q 340 120 410 120 Z"
@@ -493,7 +511,8 @@ ART1 = """<div class="b8 b8-1">
 
 <h3>איך מתרגלים</h3>
 <p>על מנת לתרגל, המצאתי תרגיל צ\'י גונג בעמידה. את התנועה נעשה באמצעות הידיים, אך היא
-מדמה את המסלול בתוך הגוף: הידיים מציירות באוויר כעין תנועת 8.</p>
+מדמה את המסלול בתוך הגוף: הידיים מציירות באוויר כעין תנועת 8. החצים בדיאגרמות שלמעלה
+מראים בדיוק את הכיוון הזה.</p>
 
 <h4>לזכר</h4>
 <ol>
