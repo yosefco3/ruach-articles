@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-07-27 16:51_
+_נוצר אוטומטית ב: 2026-07-31 07:22_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 186 |
-| מכוסים / covered | 27 |
+| קבצי קוד / source files | 187 |
+| מכוסים / covered | 28 |
 | ללא טסט / uncovered | 159 |
 | כיסוי / coverage | 14% →0% |
-| טסטים עוברים / passing | 304 ✅ |
+| טסטים עוברים / passing | 314 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -40,6 +40,7 @@ _נוצר אוטומטית ב: 2026-07-27 16:51_
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
 | `client/src/components/ArticleActionsBar.tsx` | `client/src/components/ArticleActionsBar.test.tsx` |
+| `client/src/components/editor/collapsibleQuote.ts` | `client/src/components/editor/collapsibleQuote.test.ts` |
 | `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |

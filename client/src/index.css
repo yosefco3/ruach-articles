@@ -303,6 +303,66 @@
     background: var(--muted);
     font-weight: 600;
   }
+  /* ── Collapsible quote (<details> emitted by the editor's collapsibleQuote
+     node). Folded by default; the browser handles opening, no JS involved. ── */
+  .prose-rtl .collapsible-quote {
+    border: 1px solid var(--border);
+    border-right: 4px solid oklch(0.72 0.12 75);
+    border-radius: 0.25rem;
+    background: var(--muted);
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+  .prose-rtl .collapsible-quote__summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    padding: 0.85rem 1.25rem;
+    font-weight: 600;
+    color: var(--foreground);
+    user-select: none;
+    transition: color 0.2s;
+  }
+  .prose-rtl .collapsible-quote__summary::-webkit-details-marker {
+    display: none;
+  }
+  /* Chevron: points down when folded, up when open. */
+  .prose-rtl .collapsible-quote__summary::before {
+    content: "";
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid oklch(0.72 0.12 75);
+    border-bottom: 2px solid oklch(0.72 0.12 75);
+    transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+    transition: transform 0.2s;
+  }
+  .prose-rtl .collapsible-quote[open] > .collapsible-quote__summary::before {
+    transform: rotate(-135deg);
+  }
+  .prose-rtl .collapsible-quote__summary:hover {
+    color: oklch(0.72 0.12 75);
+  }
+  .prose-rtl .collapsible-quote__body {
+    padding: 0.25rem 1.25rem 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 1.05rem;
+    color: var(--muted-foreground);
+  }
+  .prose-rtl .collapsible-quote__body > *:first-child {
+    margin-top: 1rem;
+  }
+  .prose-rtl .collapsible-quote__body > *:last-child {
+    margin-bottom: 0;
+  }
+  /* A blockquote inside the box would double the frame. */
+  .prose-rtl .collapsible-quote__body blockquote {
+    background: none;
+    margin: 1rem 0;
+  }
+
   /* Allow TipTap inline color & font-size styles to override the container defaults.
      TipTap outputs <span style="color: #eab308"> for colored text.
      Without these rules the parent .prose-rtl color: var(--foreground) wins. */

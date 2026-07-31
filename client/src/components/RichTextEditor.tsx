@@ -19,6 +19,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { HtmlEmbed } from "./editor/htmlEmbed";
+import { CollapsibleQuote } from "./editor/collapsibleQuote";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -57,6 +58,7 @@ import {
   Highlighter,
   Type,
   ChevronDown,
+  ChevronsDownUp,
   FileCode2,
 } from "lucide-react";
 import "./RichTextEditor.css";
@@ -187,6 +189,7 @@ export default function RichTextEditor({
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Superscript,
       Subscript,
+      CollapsibleQuote,
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -604,6 +607,13 @@ export default function RichTextEditor({
           title="ציטוט"
         >
           <Quote className="w-3.5 h-3.5" />
+        </ToolBtn>
+        <ToolBtn
+          onClick={() => editor.chain().focus().toggleCollapsibleQuote().run()}
+          active={editor.isActive("collapsibleQuote")}
+          title="ציטוט מתקפל (מקופל אצל הקורא, נפתח בלחיצה)"
+        >
+          <ChevronsDownUp className="w-3.5 h-3.5" />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
