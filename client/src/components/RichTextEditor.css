@@ -260,6 +260,57 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
+   COLLAPSIBLE QUOTE (node view inside the editor — always open)
+   ══════════════════════════════════════════════════════════════ */
+
+.collapsible-quote-view {
+  border: 1px solid var(--border);
+  border-right: 3px solid var(--primary);
+  border-radius: 0.5em;
+  margin: 1em 0;
+  overflow: hidden;
+}
+.collapsible-quote-view__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  background: var(--muted);
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.collapsible-quote-view__hint {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  user-select: none;
+}
+.collapsible-quote-view__title {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--foreground);
+  padding: 2px 0;
+}
+.collapsible-quote-view__title::placeholder {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.collapsible-quote-view__body {
+  padding: 0.5em 0.9em;
+}
+.collapsible-quote-view__body > * + * {
+  margin-top: 0.75em;
+}
+.collapsible-quote-view.ProseMirror-selectednode {
+  outline: 2px solid var(--primary);
+}
+
+/* ══════════════════════════════════════════════════════════════
    HTML EMBED BLOCK (node view inside the editor)
    ══════════════════════════════════════════════════════════════ */
 
