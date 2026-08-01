@@ -1,6 +1,6 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-07-31 07:22_
+_נוצר אוטומטית ב: 2026-08-01 13:34_
 
 ## סיכום / Summary
 
@@ -10,7 +10,7 @@ _נוצר אוטומטית ב: 2026-07-31 07:22_
 | מכוסים / covered | 28 |
 | ללא טסט / uncovered | 159 |
 | כיסוי / coverage | 14% →0% |
-| טסטים עוברים / passing | 314 ✅ |
+| טסטים עוברים / passing | 316 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -19,6 +19,7 @@ _נוצר אוטומטית ב: 2026-07-31 07:22_
 |---|---|
 | `(no source found for about-image.test.ts)` | `server/about-image.test.ts` |
 | `(no source found for admin-small-routers.test.ts)` | `server/routers/admin-small-routers.test.ts` |
+| `(no source found for article-body-capacity.test.ts)` | `server/article-body-capacity.test.ts` |
 | `(no source found for attachments.delete.test.ts)` | `server/db/attachments.delete.test.ts` |
 | `(no source found for auth.logout.test.ts)` | `server/auth.logout.test.ts` |
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |

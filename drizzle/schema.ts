@@ -1,6 +1,7 @@
 import {
   boolean,
   int,
+  mediumtext,
   mysqlEnum,
   mysqlTable,
   text,
@@ -29,8 +30,9 @@ export const articles = mysqlTable("articles", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 512 }).notNull(),
   slug: varchar("slug", { length: 256 }).notNull().unique(),
-  excerpt: text("excerpt"),
-  body: text("body").notNull(),
+  // mediumtext (16MB): מאמרי HTML מה-RTE עוברים בקלות את גבול ה-64KB של text
+  excerpt: mediumtext("excerpt"),
+  body: mediumtext("body").notNull(),
   coverImage: varchar("coverImage", { length: 1024 }),
   category: varchar("category", { length: 128 }).notNull(),
   tags: varchar("tags", { length: 512 }).default(""),
@@ -84,7 +86,8 @@ export const guestPosts = mysqlTable("guestPosts", {
   title: varchar("title", { length: 512 }).notNull(),
   authorName: varchar("authorName", { length: 256 }).notNull(),
   authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
-  body: text("body").notNull(),
+  body: mediumtext("body").notNull(), // כמו articles.body — מאמר אורח מלא
+
   category: varchar("category", { length: 128 }).notNull(),
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
