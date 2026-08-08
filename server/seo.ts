@@ -146,8 +146,23 @@ const ICHING_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const DERECH_SEO: SeoData = {
+  title: "דרך הרוח — הנבואה הטבעית | רוח חכמה",
+  description:
+    "השיטה שמאחורי כל המאמרים באתר: חמישה עקרונות לקשר חי, טבעי ובלתי-מתווך עם האל — מהרמב\"ם והרמח\"ל ועד דון חואן.",
+  ogTitle: "דרך הרוח — הנבואה הטבעית",
+  ogDescription:
+    "השיטה שמאחורי כל המאמרים באתר: חמישה עקרונות לקשר חי, טבעי ובלתי-מתווך עם האל.",
+  ogUrl: `${SITE_URL_PRODUCTION}/derech`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/derech`,
+  jsonLd: siteLd(),
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
+  "/derech": DERECH_SEO,
 };
 
 // ─── Route Matchers ─────────────────────────────────────────────────────────

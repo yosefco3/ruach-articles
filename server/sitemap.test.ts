@@ -56,6 +56,20 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("<priority>0.9</priority>");
   });
 
+  it("includes the /derech method page", async () => {
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as any;
+
+    await serveSitemap({} as any, res);
+
+    const xml = res.send.mock.calls[0][0] as string;
+    expect(xml).toContain("<loc>https://ruachwisdom.org/derech</loc>");
+    expect(xml).toContain("<priority>0.8</priority>");
+  });
+
   it("includes the public static pages (about, contact, guest-post)", async () => {
     const res = {
       status: vi.fn().mockReturnThis(),

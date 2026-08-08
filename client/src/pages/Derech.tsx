@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft,
@@ -19,7 +20,7 @@ const PRINCIPLES: {
   icon: typeof Sprout;
   title: string;
   law: string;
-  body: JSX.Element;
+  body: ReactNode;
 }[] = [
   {
     icon: Sprout,
