@@ -72,6 +72,13 @@ const routes: SsrRoute[] = [
       ),
   },
   {
+    pattern: "/derech",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.derech.get, undefined, "query"), () =>
+        client.derech.get.query()
+      ),
+  },
+  {
     pattern: "/article/:slug",
     prefetch: (qc, client, p) =>
       prefetch(

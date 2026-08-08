@@ -45,6 +45,9 @@ export {
 // About
 export { getAboutPage, updateAboutPage } from "./db/about";
 
+// Derech (method page)
+export { getDerechContent, updateDerechContent } from "./db/derech";
+
 // Guest Writers
 export {
   approveGuestWriter, revokeGuestWriter, getApprovedGuestWriters,
