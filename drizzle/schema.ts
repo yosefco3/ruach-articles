@@ -130,6 +130,16 @@ export const aboutPage = mysqlTable("aboutPage", {
 export type AboutPage = typeof aboutPage.$inferSelect;
 export type InsertAboutPage = typeof aboutPage.$inferInsert;
 
+// דף "דרך הרוח" (/derech) — תוכן מובנה כ-JSON (ראו shared/derech.ts לצורת התוכן).
+export const derechPage = mysqlTable("derechPage", {
+  id: int("id").autoincrement().primaryKey(),
+  content: mediumtext("content"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DerechPage = typeof derechPage.$inferSelect;
+export type InsertDerechPage = typeof derechPage.$inferInsert;
+
 export const categories = mysqlTable("categories", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 128 }).notNull().unique(),

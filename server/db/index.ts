@@ -10,6 +10,7 @@ export * from "./likes";
 export * from "./profiles";
 export * from "./newsletter";
 export * from "./about";
+export * from "./derech";
 export * from "./guest-writers";
 export * from "./categories";
 export * from "./featured";
