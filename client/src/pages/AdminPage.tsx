@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -150,6 +150,12 @@ export default function AdminPage() {
           <Link href="/admin/iching" className="gap-2">
             <Sparkles className="w-4 h-4" />
             אִי צִ׳ינְג
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/derech" className="gap-2">
+            <Compass className="w-4 h-4" />
+            דף הדרך
           </Link>
         </Button>
       </div>
