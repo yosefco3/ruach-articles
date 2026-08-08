@@ -94,6 +94,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 </DropdownMenuContent>
               </DropdownMenu>
               <Link
+                href="/derech"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+                  location === "/derech" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                }`}
+              >
+                הדרך
+              </Link>
+              <Link
                 href="/about"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
                   location === "/about" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
@@ -245,6 +253,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               </div>
             )}
             <Link
+              href="/derech"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              הדרך
+            </Link>
+            <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -305,6 +320,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 קריאה באי צינג
+              </Link>
+              <Link
+                href="/derech"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                הדרך
               </Link>
               <Link
                 href="/about"
