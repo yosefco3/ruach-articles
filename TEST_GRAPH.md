@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-08-01 13:34_
+_נוצר אוטומטית ב: 2026-08-08 20:53_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 187 |
+| קבצי קוד / source files | 188 |
 | מכוסים / covered | 28 |
-| ללא טסט / uncovered | 159 |
+| ללא טסט / uncovered | 160 |
 | כיסוי / coverage | 14% →0% |
-| טסטים עוברים / passing | 316 ✅ |
+| טסטים עוברים / passing | 317 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -177,6 +177,7 @@ _נוצר אוטומטית ב: 2026-08-01 13:34_
 | 🟡 MEDIUM | `client/src/pages/ArticlePage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/CategoryPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Contact.tsx` |
+| 🟡 MEDIUM | `client/src/pages/Derech.tsx` |
 | 🟡 MEDIUM | `client/src/pages/GuestPostForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
 | 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
