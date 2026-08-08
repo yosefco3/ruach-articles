@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-08-08 20:53_
+_נוצר אוטומטית ב: 2026-08-08 21:10_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 188 |
-| מכוסים / covered | 28 |
-| ללא טסט / uncovered | 160 |
-| כיסוי / coverage | 14% →0% |
-| טסטים עוברים / passing | 317 ✅ |
+| קבצי קוד / source files | 193 |
+| מכוסים / covered | 30 |
+| ללא טסט / uncovered | 163 |
+| כיסוי / coverage | 15% ↑1% |
+| טסטים עוברים / passing | 328 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -46,6 +46,7 @@ _נוצר אוטומטית ב: 2026-08-08 20:53_
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
+| `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
@@ -57,6 +58,7 @@ _נוצר אוטומטית ב: 2026-08-08 20:53_
 | `server/robots.ts` | `server/robots.test.ts` |
 | `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
+| `server/routers/derech.router.ts` | `server/routers/derech.router.test.ts` |
 | `server/routers/featured.router.ts` | `server/routers/featured.router.test.ts` |
 | `server/routers/guestPosts.router.ts` | `server/routers/guestPosts.router.test.ts` |
 | `server/routers/iching.router.ts` | `server/routers/iching.router.test.ts` |
@@ -168,6 +170,7 @@ _נוצר אוטומטית ב: 2026-08-08 20:53_
 | 🟡 MEDIUM | `client/src/pages/AdminArticleForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleOrder.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminCategories.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminDerech.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminGuestPosts.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminIChing.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminNewsletter.tsx` |
@@ -204,6 +207,7 @@ _נוצר אוטומטית ב: 2026-08-08 20:53_
 | 🟡 MEDIUM | `server/db/categories.ts` |
 | 🟡 MEDIUM | `server/db/comments.ts` |
 | 🟡 MEDIUM | `server/db/connection.ts` |
+| 🟡 MEDIUM | `server/db/derech.ts` |
 | 🟡 MEDIUM | `server/db/featured.ts` |
 | 🟡 MEDIUM | `server/db/guest-posts.ts` |
 | 🟡 MEDIUM | `server/db/guest-writers.ts` |
@@ -221,6 +225,7 @@ _נוצר אוטומטית ב: 2026-08-08 20:53_
 | 🟡 MEDIUM | `server/test-helpers/trpc.ts` |
 | 🟡 MEDIUM | `server/upload.ts` |
 | 🟡 MEDIUM | `shared/const.ts` |
+| 🟡 MEDIUM | `shared/derech.ts` |
 | 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | 🟡 MEDIUM | `shared/slug.ts` |
