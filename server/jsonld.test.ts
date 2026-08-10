@@ -5,6 +5,7 @@ import {
   siteLd,
   articleLd,
   breadcrumbLd,
+  faqPageLd,
   jsonLdToScript,
 } from "./jsonld";
 import { SITE_URL_PRODUCTION } from "@shared/const";
@@ -70,6 +71,21 @@ describe("jsonld builders", () => {
     ]) as { itemListElement: Array<{ position: number; name: string }> };
     expect(b.itemListElement.map((i) => i.position)).toEqual([1, 2]);
     expect(b.itemListElement[0].name).toBe("בית");
+  });
+
+  it("faqPageLd builds Question/Answer entities", () => {
+    const faq = faqPageLd([
+      { question: "מהי דרך הרוח?", answer: "השיטה שמאחורי המאמרים." },
+      { question: "שאלה שנייה?", answer: "תשובה שנייה." },
+    ]) as { mainEntity: Array<Record<string, any>> };
+    expect((faq as any)["@type"]).toBe("FAQPage");
+    expect(faq.mainEntity).toHaveLength(2);
+    expect(faq.mainEntity[0]["@type"]).toBe("Question");
+    expect(faq.mainEntity[0].name).toBe("מהי דרך הרוח?");
+    expect(faq.mainEntity[0].acceptedAnswer).toEqual({
+      "@type": "Answer",
+      text: "השיטה שמאחורי המאמרים.",
+    });
   });
 
   it("jsonLdToScript escapes < to neutralise </script>", () => {

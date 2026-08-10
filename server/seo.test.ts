@@ -5,9 +5,18 @@ vi.mock("./db", () => ({
   getArticleBySlug: vi.fn(),
   getArticles: vi.fn(),
   getCategoryBySlug: vi.fn(),
+  getDerechContent: vi.fn(),
 }));
 
-import { injectMetaTags, toAbsoluteImageUrl } from "./seo";
+import {
+  injectMetaTags,
+  toAbsoluteImageUrl,
+  stripMdLite,
+  derechFaqItems,
+  resolveDerechSeo,
+} from "./seo";
+import { getDerechContent } from "./db";
+import { DEFAULT_DERECH_CONTENT } from "@shared/derech";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 
 describe("SEO Meta Injection", () => {
@@ -220,5 +229,52 @@ describe("SEO Meta Injection", () => {
     });
 
     expect(result).not.toContain('property="og:image"');
+  });
+
+  describe("derech FAQPage (GEO)", () => {
+    it("stripMdLite unwraps bold and links", () => {
+      expect(stripMdLite("קטע **מודגש** עם [קישור](/article/x) בפנים")).toBe(
+        "קטע מודגש עם קישור בפנים",
+      );
+    });
+
+    it("derechFaqItems mirrors the visible page content", () => {
+      const items = derechFaqItems(DEFAULT_DERECH_CONTENT);
+      expect(items.length).toBe(4);
+      expect(items[0].question).toBe("מהי דרך הרוח?");
+      // Answers are plain text — no markdown-lite artifacts survive.
+      for (const it of items) {
+        expect(it.answer).not.toMatch(/\*\*|\]\(/);
+      }
+      // The principles answer enumerates all five, title + law.
+      const principles = items.find((i) => i.question.includes("העקרונות"));
+      expect(principles?.answer).toContain("1. התפתחות, לא השגה");
+      expect(principles?.answer).toContain("5. החוש להרמוניה");
+    });
+
+    it("resolveDerechSeo builds FAQ from DB content when present", async () => {
+      const custom = {
+        ...DEFAULT_DERECH_CONTENT,
+        opening: ["פתיח מותאם מה-DB", ""],
+      };
+      vi.mocked(getDerechContent).mockResolvedValue(custom as any);
+
+      const seo = await resolveDerechSeo();
+      const lds = seo.jsonLd as object[];
+      expect(seo.canonicalUrl).toBe(`${SITE_URL_PRODUCTION}/derech`);
+      const faq = lds.find((ld: any) => ld["@type"] === "FAQPage") as any;
+      expect(faq).toBeDefined();
+      expect(faq.mainEntity[0].acceptedAnswer.text).toBe("פתיח מותאם מה-DB");
+    });
+
+    it("resolveDerechSeo falls back to the default content on DB failure", async () => {
+      vi.mocked(getDerechContent).mockRejectedValue(new Error("db down"));
+
+      const seo = await resolveDerechSeo();
+      const lds = seo.jsonLd as object[];
+      const faq = lds.find((ld: any) => ld["@type"] === "FAQPage") as any;
+      expect(faq.mainEntity.length).toBe(4);
+      expect(faq.mainEntity[0].name).toBe("מהי דרך הרוח?");
+    });
   });
 });

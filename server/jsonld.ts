@@ -73,6 +73,28 @@ export function articleLd(a: ArticleLdInput): Record<string, unknown> {
   };
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/**
+ * FAQPage — the schema AI engines (ChatGPT, Perplexity, Gemini) extract and
+ * cite most readily. Per Google policy the Q&A must mirror content actually
+ * visible on the page — callers derive items from the rendered content.
+ */
+export function faqPageLd(items: FaqItem[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((it) => ({
+      "@type": "Question",
+      name: it.question,
+      acceptedAnswer: { "@type": "Answer", text: it.answer },
+    })),
+  };
+}
+
 export function breadcrumbLd(
   items: Array<{ name: string; url: string }>,
 ): Record<string, unknown> {

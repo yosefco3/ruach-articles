@@ -1,7 +1,8 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { getArticleBySlug, getArticles, getCategoryBySlug } from "./db";
+import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent } from "./db";
 import { SITE_URL_PRODUCTION } from "@shared/const";
-import { siteLd, articleLd, breadcrumbLd, jsonLdToScript } from "./jsonld";
+import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
+import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,68 @@ const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/derech": DERECH_SEO,
 };
 
+// ─── /derech FAQPage (GEO) ──────────────────────────────────────────────────
+
+/** markdown-lite → plain text: **bold** unwrapped, [text](url) → text. */
+export function stripMdLite(s: string): string {
+  return s
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\*\*([^*]*)\*\*/g, "$1");
+}
+
+/**
+ * Q&A pairs for the FAQPage schema, derived from the DerechContent that the
+ * page actually renders (Google requires FAQ markup to mirror visible text).
+ */
+export function derechFaqItems(c: DerechContent): FaqItem[] {
+  const items: FaqItem[] = [];
+
+  if (c.opening[0]) {
+    items.push({ question: "מהי דרך הרוח?", answer: stripMdLite(c.opening[0]) });
+  }
+  if (c.opening[1]) {
+    items.push({
+      question: "מדוע השם \"דרך הרוח — הנבואה הטבעית\"?",
+      answer: stripMdLite(c.opening[1]),
+    });
+  }
+  if (c.principles.length) {
+    items.push({
+      question: `מהם ${c.principlesTitle} של דרך הרוח?`,
+      answer: c.principles
+        .map((p, i) => `${i + 1}. ${p.title} — ${stripMdLite(p.law)}`)
+        .join(" "),
+    });
+  }
+  if (c.inItems.length && c.outItems.length) {
+    items.push({
+      question: "מה נכנס לאתר — ומה נשאר בחוץ?",
+      answer:
+        `בפנים: ${c.inItems.map(stripMdLite).join("; ")}. ` +
+        `בחוץ: ${c.outItems.map(stripMdLite).join("; ")}.`,
+    });
+  }
+  return items;
+}
+
+/**
+ * /derech SEO — static meta plus JSON-LD built from the live page content
+ * (DB-stored, editable in /admin/derech; falls back to the built-in default,
+ * exactly like the page itself). Never throws — worst case returns DERECH_SEO.
+ */
+export async function resolveDerechSeo(): Promise<SeoData> {
+  let content: DerechContent = DEFAULT_DERECH_CONTENT;
+  try {
+    content = (await getDerechContent()) ?? DEFAULT_DERECH_CONTENT;
+  } catch (err) {
+    console.warn("[SEO] Error fetching derech content:", err);
+  }
+  return {
+    ...DERECH_SEO,
+    jsonLd: [siteLd(), faqPageLd(derechFaqItems(content))],
+  };
+}
+
 // ─── Route Matchers ─────────────────────────────────────────────────────────
 
 function matchArticleSlug(pathname: string): string | null {
@@ -296,7 +359,9 @@ export async function seoMiddleware(
     const articleSlug = matchArticleSlug(pathname);
     const categorySlug = matchCategorySlug(pathname);
 
-    if (STATIC_ROUTE_SEO[pathname]) {
+    if (pathname === "/derech") {
+      seo = await resolveDerechSeo();
+    } else if (STATIC_ROUTE_SEO[pathname]) {
       seo = STATIC_ROUTE_SEO[pathname];
     } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
