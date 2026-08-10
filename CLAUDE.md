@@ -25,6 +25,11 @@ Pillars:
    `python3 scripts/test_graph.py`, and update `APP_OVERVIEW.md` if features/models/
    endpoints/workflow/architecture changed.
 
+## Writing articles
+- Before writing/editing site articles: read `docs/GEO-WRITING.md` (structure &
+  citation rules that make AI engines cite us) alongside `knowledge/INDEX.md`
+  (existing articles) and `docs/STYLE-HE.md` (language style sheet).
+
 ## Notes
 - The test graph uses **colocated** mapping by default. Many tests here are behavioural
   (e.g. `articles.test.ts` exercises `server/routers/articles.ts`), so they show as

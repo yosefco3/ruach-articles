@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-08-10 19:51_
+_נוצר אוטומטית ב: 2026-08-10 20:51_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 193 |
-| מכוסים / covered | 30 |
+| קבצי קוד / source files | 194 |
+| מכוסים / covered | 31 |
 | ללא טסט / uncovered | 163 |
 | כיסוי / coverage | 15% →0% |
-| טסטים עוברים / passing | 343 ✅ |
+| טסטים עוברים / passing | 351 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -55,6 +55,7 @@ _נוצר אוטומטית ב: 2026-08-10 19:51_
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/ichingAi.ts` | `server/ichingAi.test.ts` |
 | `server/jsonld.ts` | `server/jsonld.test.ts` |
+| `server/llmstxt.ts` | `server/llmstxt.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
 | `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
