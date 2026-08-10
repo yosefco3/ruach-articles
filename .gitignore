@@ -133,3 +133,6 @@ feature-prompts/
 
 # Article content & diagrams (internal, pasted into the CMS by hand)
 docs/
+
+# Local knowledge base synced from production (pnpm sync:articles)
+knowledge/
