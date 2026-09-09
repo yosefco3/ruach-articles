@@ -16,6 +16,7 @@ import { createUsersRouter } from "./users.router";
 import { createFeaturedRouter } from "./featured.router";
 import { createAuthRouter } from "./auth.router";
 import { createIchingRouter } from "./iching.router";
+import { createTarotRouter } from "./tarot.router";
 import type { RouterDeps } from "./context";
 
 /**
@@ -40,12 +41,14 @@ export const createAppRouter = (deps: RouterDeps) => router({
   newsletter: createNewsletterRouter(deps),
   featured: createFeaturedRouter(deps),
   iching: createIchingRouter(deps),
+  tarot: createTarotRouter(deps),
 });
 
 // Convenience: create with default deps for backward compatibility
 import * as db from "../db";
 import { sendArticleNewsletter } from "../newsletterEmail";
 import { generateIchingInterpretation, evaluateIchingQuestion } from "../ichingAi";
+import { generateTarotInterpretation } from "../tarotAi";
 import { env } from "../_core/env";
 
 const defaultDeps: RouterDeps = {
@@ -55,6 +58,8 @@ const defaultDeps: RouterDeps = {
   ichingAiMonthlyLimit: env.ICHING_AI_MONTHLY_LIMIT,
   evaluateIchingQuestion,
   refineRatePerHour: env.ICHING_REFINE_RATE_PER_HOUR,
+  generateTarotInterpretation,
+  tarotAiMonthlyLimit: env.TAROT_AI_MONTHLY_LIMIT,
 };
 
 export const appRouter = createAppRouter(defaultDeps);

@@ -5,6 +5,7 @@
 import type * as db from "../db";
 import type { ArticleEmailPayload } from "../newsletterEmail";
 import type { IchingAiContext, QuestionRefineResult } from "../ichingAi";
+import type { TarotAiContext } from "../tarotAi";
 
 export interface RouterDeps {
   db: typeof db;
@@ -15,4 +16,7 @@ export interface RouterDeps {
   evaluateIchingQuestion: (question: string) => Promise<QuestionRefineResult>;
   /** תקרת קריאות שכלול-שאלה לכל IP בשעה. */
   refineRatePerHour: number;
+  generateTarotInterpretation: (c: TarotAiContext) => Promise<string>;
+  /** מכסת פירושי טארוט חודשית — נפרדת ממכסת האי-צ'ינג. */
+  tarotAiMonthlyLimit: number;
 }

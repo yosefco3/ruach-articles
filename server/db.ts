@@ -81,3 +81,14 @@ export {
 export {
   currentMonthYear, getMonthlyUsage, incrementMonthlyUsage,
 } from "./db/ichingUsage";
+// Tarot
+export {
+  DEFAULT_TAROT_INTRO,
+  listCardTexts, getCardText, upsertCardText,
+  getTarotIntro, updateTarotIntro,
+} from "./db/tarot";
+
+// Tarot — AI usage quota (separate counter from the I Ching)
+export {
+  getTarotMonthlyUsage, incrementTarotMonthlyUsage,
+} from "./db/tarotUsage";

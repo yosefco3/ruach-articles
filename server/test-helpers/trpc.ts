@@ -48,6 +48,8 @@ export interface ExtraDeps {
   ichingAiMonthlyLimit?: number;
   evaluateIchingQuestion?: (...args: unknown[]) => unknown;
   refineRatePerHour?: number;
+  generateTarotInterpretation?: (...args: unknown[]) => unknown;
+  tarotAiMonthlyLimit?: number;
 }
 
 export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: ExtraDeps = {}) {
@@ -60,6 +62,10 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   // הם דורסים את getIchingIntro במפורש (למשל כדי לבדוק את מצב הכיבוי).
   if (!("getIchingIntro" in seeded)) {
     seeded.getIchingIntro = vi.fn(async () => ({ aiEnabled: true }));
+  }
+  // אותה ברירת מחדל לטארוט — AI דלוק אלא אם הטסט דורס את getTarotIntro.
+  if (!("getTarotIntro" in seeded)) {
+    seeded.getTarotIntro = vi.fn(async () => ({ aiEnabled: true }));
   }
   const db = new Proxy(seeded, {
     get(target, prop: string) {
@@ -74,6 +80,9 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   const evaluateIchingQuestion = vi.fn(
     extra.evaluateIchingQuestion ?? (async () => ({ problematic: false, suggestions: [] })),
   );
+  const generateTarotInterpretation = vi.fn(
+    extra.generateTarotInterpretation ?? (async () => "פירוש טארוט לדוגמה"),
+  );
   const deps = {
     db,
     sendArticleNewsletter,
@@ -81,6 +90,8 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
     ichingAiMonthlyLimit: extra.ichingAiMonthlyLimit ?? 5,
     evaluateIchingQuestion,
     refineRatePerHour: extra.refineRatePerHour ?? 30,
+    generateTarotInterpretation,
+    tarotAiMonthlyLimit: extra.tarotAiMonthlyLimit ?? 5,
   } as unknown as RouterDeps;
   return {
     deps,
@@ -88,6 +99,7 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
     sendArticleNewsletter,
     generateIchingInterpretation,
     evaluateIchingQuestion,
+    generateTarotInterpretation,
   };
 }
 
@@ -97,8 +109,21 @@ export function makeCaller(
   dbOverrides: Record<string, unknown> = {},
   extra: ExtraDeps = {},
 ) {
-  const { deps, db, sendArticleNewsletter, generateIchingInterpretation, evaluateIchingQuestion } =
-    makeDeps(dbOverrides, extra);
+  const {
+    deps,
+    db,
+    sendArticleNewsletter,
+    generateIchingInterpretation,
+    evaluateIchingQuestion,
+    generateTarotInterpretation,
+  } = makeDeps(dbOverrides, extra);
   const caller = createAppRouter(deps).createCaller(ctx);
-  return { caller, db, sendArticleNewsletter, generateIchingInterpretation, evaluateIchingQuestion };
+  return {
+    caller,
+    db,
+    sendArticleNewsletter,
+    generateIchingInterpretation,
+    evaluateIchingQuestion,
+    generateTarotInterpretation,
+  };
 }
