@@ -161,8 +161,23 @@ const DERECH_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const TAROT_SEO: SeoData = {
+  title: "קריאה בקלפי טארוט — רוּחַ",
+  description:
+    "שלפו שלושה קלפים מחפיסת טארוט מקורית שצוירה לאתר — מראה סמלית להבנת נטיות וכיוונים, לא הגדת עתידות. חינם, והשאלה אינה נשמרת.",
+  ogTitle: "קריאה בקלפי טארוט — רוּחַ",
+  ogDescription:
+    "שלפו שלושה קלפים מחפיסה מקורית — מראה סמלית להבנת המצב, בעברית ובחינם.",
+  ogUrl: `${SITE_URL_PRODUCTION}/tarot`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/tarot`,
+  jsonLd: siteLd(),
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
+  "/tarot": TAROT_SEO,
   "/derech": DERECH_SEO,
 };
 

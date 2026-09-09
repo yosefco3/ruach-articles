@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail, Sparkles } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail, Sparkles, WandSparkles } from "lucide-react";
 import { useState } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +55,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 קריאה באי צינג
+              </Link>
+              <Link
+                href="/tarot"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 me-1 rounded-full text-sm font-semibold border transition-colors ${
+                  location === "/tarot"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
+                }`}
+              >
+                <WandSparkles className="w-3.5 h-3.5" />
+                קריאה בטארוט
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -179,6 +190,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                             <span>אִי צִ׳ינְג</span>
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/tarot" className="flex items-center gap-2 cursor-pointer">
+                            <WandSparkles className="w-4 h-4" />
+                            <span>טָארוֹט</span>
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
@@ -224,6 +241,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             >
               <Sparkles className="w-4 h-4" />
               קריאה באי צינג
+            </Link>
+            <Link
+              href="/tarot"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 mb-1 rounded-full text-sm font-semibold border border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <WandSparkles className="w-4 h-4" />
+              קריאה בטארוט
             </Link>
             <button
               onClick={() => setCatsOpen(!catsOpen)}
@@ -320,6 +345,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 קריאה באי צינג
+              </Link>
+              <Link
+                href="/tarot"
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              >
+                קריאה בטארוט
               </Link>
               <Link
                 href="/derech"

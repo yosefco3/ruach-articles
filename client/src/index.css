@@ -503,8 +503,25 @@
 @media (prefers-reduced-motion: reduce) {
   .iching-root *,
   .iching-root *::before,
-  .iching-root *::after {
+  .iching-root *::after,
+  .tarot-root *,
+  .tarot-root *::before,
+  .tarot-root *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* טארוט — רעד הערבוב של ערימת הגבות */
+@keyframes tarotShuffle {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(var(--shuffle-rot, 0deg));
+  }
+  25% {
+    transform: translate(-5px, 2px) rotate(calc(var(--shuffle-rot, 0deg) - 3deg));
+  }
+  75% {
+    transform: translate(5px, -2px) rotate(calc(var(--shuffle-rot, 0deg) + 3deg));
   }
 }

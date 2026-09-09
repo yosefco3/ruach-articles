@@ -1,6 +1,6 @@
 # APP_OVERVIEW — רוּחַ / Ruach Articles
 
-> עדכון אחרון / Last updated: 2026-06-21
+> עדכון אחרון / Last updated: 2026-09-09
 > מסמך חי. עדכן אותו אחרי כל שינוי שנוגע בפיצ'רים/מודלים/endpoints/workflow/ארכיטקטורה.
 
 ## מה זה / What it is
@@ -10,6 +10,9 @@
 בנוסף: **קריאת אִי צִ׳ינְג** (`/iching`) — דף ציבורי שבו מבקר כותב שאלה (שאינה נשמרת),
 מטיל 3 מטבעות 6 פעמים בצד הלקוח, ורואה הקסגרמה ראשית (+נגזרת אם יש קווים משתנים)
 עם פירוש; אדמין עורך את הטקסטים ב-`/admin/iching`.
+וכן **קריאה בקלפי טארוט** (`/tarot`) — שליפת 3 קלפים (ללא תפקידי עמדות) מחפיסה
+מקורית של האתר, פירוש סטטי לכל קלף בלחיצה + פירוש AI לפריסה כולה (מכסה נפרדת),
+והורדת החפיסה כ-ZIP חופשי; אדמין עורך ב-`/admin/tarot`.
 
 ## סטאק / Stack
 - **Frontend:** React, TypeScript, Vite, Tailwind, shadcn/ui (`client/`)
@@ -45,6 +48,17 @@
   קוד טהור משותף ל-client+server; הטקסט הערוך בלבד חי ב-DB.
 - `client/src/pages/iching/` — מודולי לוגיקה טהורים לדף הקריאה (`model.ts` מיזוג
   מבנה+טקסט, `reveal.ts` תזמון האנימציה) + טסטים colocated.
+- `shared/tarot/` — **מבנה ומנוע שליפה טהורים**: 78 הקלפים (שמות ברירת-מחדל, כולל
+  4 המוסבים: המורה/המעבר/הצל/ההתעוררות), `draw()` — Fisher-Yates ללא חזרות עם RNG
+  קריפטוגרפי (`secureRng`) ו-`orientation` שמור להיפוכים עתידיים.
+- `client/src/pages/tarot/` — `model.ts` (מיזוג מבנה+DB, `buildAiContext`),
+  `reveal.ts` (סדרן ערבוב→פריסה→היפוך); רכיבים ב-`client/src/components/tarot/`
+  (`TarotCard` — flip תלת-ממדי + placeholders עד העלאת הנכסים, `TarotAiPanel`).
+- `server/_core/aiProvider.ts` — שכבת ספק ה-AI המשותפת (DeepSeek/Gemini + retry),
+  חולצה מ-ichingAi ומשרתת גם את `server/tarotAi.ts`.
+- `server/_core/zip.ts` + `server/tarotDeckZip.ts` — ZIP store אפס-תלויות; החפיסה
+  להורדה חופשית ב-`/tarot-cards/ruach-tarot-deck.zip` (נבנה בעצלנות מהנכסים, cache
+  לפי mtime, מעדיף `print/` ברזולוציה מלאה אם קיימת).
 - `drizzle/` — schema + migrations (`drizzle/schema.ts`).
 
 ## מודלים / Data models
@@ -59,6 +73,13 @@
 - **I Ching — מכסת AI:** `ichingAiUsage` (`userId`, `monthYear` "YYYY-MM", `usageCount`,
   unique על `(userId, monthYear)`). שומר **רק מונה** שימושי פירוש-AI חודשיים — לעולם לא
   שאלה/תשובה. גישה אטומית (upsert) ב-`server/db/ichingUsage.ts`.
+- **Tarot (טקסט ערוך בלבד):** `tarotCardText` (cardId varchar PK + `name` override +
+  `summary` + `interpretation` mediumtext), `tarotIntro` (singleton: מאמר + תוויות +
+  `aiEnabled` ברירת מחדל כבוי), `tarotAiUsage` — מכסה חודשית **נפרדת** מהאי-צ'ינג,
+  אותה סמנטיקה (מונה בלבד, upsert אטומי ב-`server/db/tarotUsage.ts`). המבנה ב-`shared/tarot`;
+  שמות ריקים נופלים לברירת המחדל (`effectiveCardName`). מיגרציה `0017` (+`-prod`).
+  Seed: `pnpm seed:tarot` — אידמפוטנטי, לא דורס עריכות אדמין; הנתונים (מהות+פירוש מלא
+  לכל 78 הקלפים) committed ב-`scripts/data/tarot-seed.json`.
 
 ## Endpoints / API
 tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, contact, …),
@@ -75,6 +96,16 @@ tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, c
   `{problematic:false}` — לפני בדיקת מכסה/קצב; `upsertHexagram`/`upsertTrigram`/`updateIntro` (`adminProcedure` בלבד).
   ה-AI מוזרק דרך `RouterDeps` (`generateIchingInterpretation`, `evaluateIchingQuestion`,
   `ichingAiMonthlyLimit`, `refineRatePerHour`).
+- **`tarot`** — `getContent` (ציבורי: cards+intro+`aiMonthlyLimit`); `interpret`
+  (`protectedProcedure`: פירוש AI לפריסה של בדיוק 3 קלפים; שאלה ריקה = קריאה כללית;
+  אותן גדרות כמו האי-צ'ינג — מתג `intro.aiEnabled` (כבוי כברירת מחדל) → `AI_DISABLED`,
+  מכסה חודשית נפרדת `TAROT_AI_MONTHLY_LIMIT` (ברירת מחדל 5) → `QUOTA_EXCEEDED`,
+  count-on-success, אדמין פטור; הפרומפט (`server/tarotAi.ts`) מנחה את המודל **לבחור
+  בעצמו מסגרת קריאה** — אין תפקידי עמדות — ותחום בעקרונות דרך הרוח: נטיות, לא ניבוי);
+  `upsertCard`/`updateIntro` (`adminProcedure`). דרך `RouterDeps`:
+  `generateTarotInterpretation`, `tarotAiMonthlyLimit`.
+- **`GET /tarot-cards/ruach-tarot-deck.zip`** — הורדת החפיסה (לא-tRPC, נרשם ב-
+  `_core/startup/seo-routes.ts`); 404 עד שהנכסים מועלים ל-`client/public/tarot-cards/`.
 
 ## Workflow / Lifecycle
 זרימת בקשת SSR (GET ל-route, לא `/api`/נכס): השרת בונה `makeSsrFetch(req)` (מעביר
@@ -124,9 +155,19 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 ב-`ichingAiUsage`. הערך נחשף ללקוח דרך `iching.getContent` כדי שהפרומפטים למשתמש יציגו את
 המספר המעודכן ולא מספר מקובע. אורח רואה כפתור חסום עם הזמנה להתחברות. השאלה/התשובה לעולם אינן נשמרות.
 
+זרימת קריאת טארוט: מאמר מבוא → שאלה (state בלבד; אופציונלית — בלעדיה זו קריאה
+כללית) → `draw()` בצד הלקוח (ללא חזרות, RNG קריפטוגרפי) → אנימציית ערבוב→פריסה→
+היפוך (`pages/tarot/reveal.ts`, מכבדת reduced-motion, ניתנת לדילוג; רק *חושפת*
+תוצאה שחושבה) → 3 קלפים; לחיצה על קלף פותחת פאנל פירוש יחיד (מבנה מ-`shared/tarot` +
+טקסט מה-DB). **פירוש AI לפריסה** (כשהמתג דלוק): מוצג מעל הפירוש הסטטי, שולח את
+השאלה + שם/מהות/פירוש שלושת הקלפים ל-`tarot.interpret` רק בלחיצה מפורשת; המודל
+בוחר בעצמו מסגרת קריאה. תחתית הדף: קטע "החפיסה שלנו — להורדה חופשית" (מוצג רק
+כשקובץ הגב קיים — בדיקת HEAD).
+
 ## היסטוריית שינויים משמעותיים / Significant change history
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
+| 2026-09-09 | **Tarot reading feature** (`feature-prompts/tarot-reading/`, 16 steps): public `/tarot` (3-card free-position spread, crypto-RNG no-repeat draw, shuffle/deal/flip reveal, per-card panel), AI spread interpretation via the shared provider layer **extracted from ichingAi to `_core/aiProvider.ts`** (separate `tarotAiUsage` quota, `TAROT_AI_MONTHLY_LIMIT`=5, master switch off by default), admin editor `/admin/tarot` (grouped picker, live previews), idempotent seed with **full Hebrew interpretations for all 78 cards** (`scripts/data/tarot-seed.json`, renamed cards: המורה/המעבר/הצל/ההתעוררות), free deck download as zero-dep store-ZIP (`/tarot-cards/ruach-tarot-deck.zip`, lazy-built, `print/` preferred), SEO head + sitemap + llms.txt + nav links. Card images pending from the tarot-deck pipeline (placeholders until then). Migration `0017` (+idempotent `-prod`). +63 tests (352→415). | `shared/tarot/`, `drizzle/schema.ts`+`0017_*.sql`, `server/db/{tarot,tarotUsage}.ts`, `server/_core/{aiProvider,zip}.ts`, `server/{tarotAi,tarotDeckZip}.ts`(+tests), `server/routers/tarot.router.ts`(+test), `client/src/pages/{TarotReading,AdminTarot}.tsx`, `client/src/pages/tarot/`, `client/src/components/tarot/`, `scripts/seed-tarot.ts`+`data/tarot-seed.json`, `server/{seo,sitemap,llmstxt}.ts`, `client/src/components/SiteLayout.tsx` |
 | 2026-09-09 | **`/favicon.png` served for real in production**: the Organization JSON-LD logo (`LOGO_URL` in `server/jsonld.ts`) points at `/favicon.png`, but the file lived at `client/favicon.png` (outside `client/public/`), so Vite only emitted a hashed copy under `/assets/` and prod requests for `/favicon.png` fell through the static handler to the SSR fallback — search/AI engines fetching the declared logo got HTML. Moved the file to `client/public/favicon.png` (Vite copies it verbatim to the dist root; `express.static` now serves it as `image/png`, `max-age=3600` per `isImmutableAsset` — the existing `vite.test.ts` assertion) and switched the `<link rel="icon">` href to absolute `/favicon.png`. No code changes — asset location + href only. | `client/public/favicon.png` (moved), `client/index.html`, `server/seo.test.ts` |
 | 2026-08-10 | **GEO round** (`feature-prompts/geo-optimization/`, cherry-picked from the Desktop `hebrew-seo-geo-toolkit` skill): (1) `/llms.txt` — AI-readable markdown site index per llmstxt.org (summary, key pages, all published articles with excerpts; DB failure degrades to the static section; 1h cache). (2) **FAQPage JSON-LD on `/derech`** — `faqPageLd` builder + `derechFaqItems` mapper derive 4 Q&A pairs from the *live* page content (DB via `getDerechContent`, fallback `DEFAULT_DERECH_CONTENT` — same chain as the page; `stripMdLite` keeps answers plain-text so markup mirrors visible text per Google policy); `/derech` SEO resolution moved from static map to async `resolveDerechSeo`. (3) `docs/GEO-WRITING.md` — Princeton GEO writing rules (quotes-with-attribution, specific data, answer-first structure) wired into article writing via CLAUDE.md pointer. robots.txt intentionally unchanged (wildcard already allows AI bots). +8 tests (suite now 352, incl. 1 skipped). | `server/llmstxt.ts`(+test), `server/_core/startup/seo-routes.ts`, `server/jsonld.ts`(+test), `server/seo.ts`(+test), `docs/GEO-WRITING.md`, `CLAUDE.md` |
 | 2026-08-10 | **Local knowledge base of production articles** (`pnpm sync:articles`): pulls all published articles from production via the public tRPC GETs (`articles.list` + `articles.bySlug`, superjson envelope; `RUACH_BASE_URL` overridable) into gitignored `knowledge/` — one markdown file per article (`knowledge/articles/<slug>.md`, YAML frontmatter: title/slug/category/tags/dates/url) plus a category-grouped `knowledge/INDEX.md`. Purpose: give Claude instant offline context on the existing corpus when writing new articles. Converter is a zero-dep mini HTML→markdown parser handling the RTE tag set + embedded HTML widgets (drops style/script/svg/comments wholesale, renders tables, `details.quote-collapse` → labeled blockquote); stale files for renamed/unpublished slugs are removed on each run. +15 tests (311→326). | `scripts/sync-articles.ts`(+test), `package.json`, `.gitignore` |

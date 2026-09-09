@@ -72,6 +72,13 @@ const routes: SsrRoute[] = [
       ),
   },
   {
+    pattern: "/tarot",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.tarot.getContent, undefined, "query"), () =>
+        client.tarot.getContent.query()
+      ),
+  },
+  {
     pattern: "/derech",
     prefetch: (qc, client) =>
       prefetch(qc, getQueryKey(trpc.derech.get, undefined, "query"), () =>

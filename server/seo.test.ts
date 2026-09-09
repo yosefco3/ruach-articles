@@ -278,3 +278,17 @@ describe("SEO Meta Injection", () => {
     });
   });
 });
+describe("static route SEO — /tarot", () => {
+  it("seoMiddleware resolves a head for /tarot and applySeoToHtml injects it", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const req = { method: "GET", path: "/tarot" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("קריאה בקלפי טארוט — רוּחַ");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot`);
+    expect(html).toContain('og:type" content="website"');
+  });
+});

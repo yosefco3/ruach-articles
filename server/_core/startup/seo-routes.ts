@@ -4,6 +4,7 @@ import { serveSitemap } from "../../sitemap";
 import { serveRobotsTxt } from "../../robots";
 import { serveRss } from "../../rss";
 import { serveLlmsTxt } from "../../llmstxt";
+import { DECK_ZIP_ROUTE, serveDeckZip } from "../../tarotDeckZip";
 
 export function mountSeoRoutes(app: Express): void {
   // SEO: Sitemap, robots.txt, RSS feed, llms.txt (AI-readable index)
@@ -11,6 +12,9 @@ export function mountSeoRoutes(app: Express): void {
   app.get("/robots.txt", serveRobotsTxt);
   app.get("/rss.xml", serveRss);
   app.get("/llms.txt", serveLlmsTxt);
+
+  // חפיסת הטארוט להורדה חופשית (ZIP נבנה בעצלנות מהנכסים הפרוסים)
+  app.get(DECK_ZIP_ROUTE, serveDeckZip);
 
   // SEO middleware — resolves article/category meta data before serving HTML
   app.use(seoMiddleware);
