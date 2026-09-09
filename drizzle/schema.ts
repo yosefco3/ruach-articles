@@ -248,3 +248,55 @@ export const ichingAiUsage = mysqlTable(
 
 export type IchingAiUsage = typeof ichingAiUsage.$inferSelect;
 export type InsertIchingAiUsage = typeof ichingAiUsage.$inferInsert;
+
+// ── Tarot ───────────────────────────────────────────────
+// טקסט פירוש בלבד. המבנה (78 הקלפים, מנוע השליפה) חי ב-shared/tarot.
+// לעולם לא נשמרות קריאות/שאלות/תשובות — רק טקסט ערוך + מונה AI.
+
+export const tarotCardText = mysqlTable("tarotCardText", {
+  cardId: varchar("cardId", { length: 16 }).primaryKey(), // "major-00" | "pents-queen" — תואם shared/tarot
+  name: varchar("name", { length: 128 }).default("").notNull(), // override לשם; ריק = ברירת המחדל מ-shared
+  summary: varchar("summary", { length: 512 }).default("").notNull(), // שורת מהות קצרה
+  interpretation: mediumtext("interpretation").notNull(), // פירוש מלא — HTML עשיר (TipTap)
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TarotCardText = typeof tarotCardText.$inferSelect;
+export type InsertTarotCardText = typeof tarotCardText.$inferInsert;
+
+export const tarotIntro = mysqlTable("tarotIntro", {
+  id: int("id").autoincrement().primaryKey(), // singleton
+  articleHtml: mediumtext("articleHtml").notNull(), // המאמר הקצר בראש הדף (HTML מ-TipTap)
+  questionPrompt: varchar("questionPrompt", { length: 512 })
+    .default("מה השאלה שמעסיקה אותך?")
+    .notNull(),
+  questionHint: varchar("questionHint", { length: 512 })
+    .default("השאלה אישית ואינה נשמרת בשום מקום.")
+    .notNull(),
+  buttonLabel: varchar("buttonLabel", { length: 128 })
+    .default("עִרְבְּבוּ וְשִׁלְפוּ קְלָפִים")
+    .notNull(),
+  // פירוש ה-AI המותאם-אישית — מתג ראשי מפאנל האדמין. כבוי כברירת מחדל.
+  aiEnabled: boolean("aiEnabled").default(false).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TarotIntro = typeof tarotIntro.$inferSelect;
+export type InsertTarotIntro = typeof tarotIntro.$inferInsert;
+
+// מונה שימושי AI חודשיים לכל משתמש — מכסה *נפרדת* מהאי-צ'ינג (החלטת 2026-09-09).
+// שומר *רק* מונה — לעולם לא שאלה/תשובה.
+export const tarotAiUsage = mysqlTable(
+  "tarotAiUsage",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(), // → users.id
+    monthYear: varchar("monthYear", { length: 7 }).notNull(), // "YYYY-MM"
+    usageCount: int("usageCount").default(0).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    uniqUserMonth: unique("uniq_tarot_usage_user_month").on(t.userId, t.monthYear),
+  }),
+);
+export type TarotAiUsage = typeof tarotAiUsage.$inferSelect;
+export type InsertTarotAiUsage = typeof tarotAiUsage.$inferInsert;
