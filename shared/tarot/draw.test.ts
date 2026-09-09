@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CARDS } from "./cards";
-import { SPREAD_SIZE, draw } from "./draw";
+import { SPREAD_SIZE, draw, secureRng } from "./draw";
 
 /** RNG דטרמיניסטי מסדרת ערכים קבועה (מוחזר מחזורית). */
 function seqRng(values: number[]) {
@@ -44,6 +44,20 @@ describe("tarot draw engine", () => {
     }
     // 3000 שליפות אקראיות — ההסתברות שקלף כלשהו לא הופיע זניחה
     expect(seen.size).toBe(CARDS.length);
+  });
+
+  it("secureRng yields uniform-ish values in [0,1) from the crypto source", () => {
+    const n = 10_000;
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const v = secureRng();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+      sum += v;
+    }
+    // ממוצע של 10k דגימות אחידות ~0.5 (סטיית תקן ~0.003 → גבולות רחבים פי כמה)
+    expect(sum / n).toBeGreaterThan(0.45);
+    expect(sum / n).toBeLessThan(0.55);
   });
 
   it("rejects invalid counts", () => {

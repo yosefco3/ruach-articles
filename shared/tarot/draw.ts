@@ -6,7 +6,22 @@
  */
 import { CARDS, type CardStruct } from "./cards";
 
-export type Rng = () => number; // [0,1) — ברירת מחדל Math.random
+export type Rng = () => number; // [0,1) — ברירת מחדל secureRng
+
+/**
+ * RNG קריפטוגרפי כברירת מחדל: crypto.getRandomValues (קיים בדפדפן וב-Node 19+),
+ * עם fallback ל-Math.random בסביבה נטולת crypto. 32 ביט אקראיים → [0,1) אחיד;
+ * ההטיה ב-Math.floor(rng()*(i+1)) עבור i≤77 זניחה (מיליארדית).
+ */
+export function secureRng(): number {
+  const c = globalThis.crypto;
+  if (c?.getRandomValues) {
+    const buf = new Uint32Array(1);
+    c.getRandomValues(buf);
+    return buf[0] / 2 ** 32;
+  }
+  return Math.random();
+}
 
 export type Orientation = "upright" | "reversed";
 
@@ -22,7 +37,7 @@ export interface TarotReading {
 
 export const SPREAD_SIZE = 3;
 
-export function draw(count: number = SPREAD_SIZE, rng: Rng = Math.random): TarotReading {
+export function draw(count: number = SPREAD_SIZE, rng: Rng = secureRng): TarotReading {
   if (!Number.isInteger(count) || count < 1 || count > CARDS.length) {
     throw new Error(`invalid draw count: ${count}`);
   }
