@@ -46,6 +46,10 @@ pids
 *.pid.lock
 *.bak
 
+# Python bytecode (helper scripts)
+__pycache__/
+*.pyc
+
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
