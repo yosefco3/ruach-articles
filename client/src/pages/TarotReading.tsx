@@ -4,71 +4,30 @@
  * הטקסטים מה-DB (`trpc.tarot.getContent`). השאלה חיה ב-state; היא תישלח לשרת
  * רק לפירוש ה-AI בלחיצה מפורשת (צעד 11) — ואינה נשמרת בשרת.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { draw, type TarotReading as Reading } from "@shared/tarot";
 import {
   buildAiContext,
-  cardFallbackGlyph,
   resolvePanel,
   toCardViews,
-  type CardView,
   type TarotContent,
 } from "@/pages/tarot/model";
+import { runDeal, SPREAD } from "@/pages/tarot/reveal";
+import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
 
-type Phase = "intro" | "result";
+type Phase = "intro" | "drawing" | "result";
 
 // ── סגנונות (השפה של דף האי-צ'ינג) ──
 const SERIF = "'Frank Ruhl Libre',serif";
 const SANS = "'Heebo',sans-serif";
 
-function cardBoxStyle(selected: boolean): React.CSSProperties {
-  return {
-    padding: 10,
-    borderRadius: 16,
-    cursor: "pointer",
-    transition: "all .15s",
-    background: selected ? "oklch(0.95 0.03 82)" : "transparent",
-    border: selected ? "1.5px solid oklch(0.60 0.10 65)" : "1.5px solid oklch(0.88 0.022 75 / 0.6)",
-    boxShadow: selected ? "0 0 0 4px oklch(0.74 0.13 78 / 0.18)" : "none",
-  };
-}
-
-/** תמונת קלף עם placeholder מעוצב כשהנכסים עוד לא הועלו (onError). */
-export function CardFace({ view }: { view: CardView }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div
-        style={{
-          width: "100%",
-          aspectRatio: "2 / 3",
-          borderRadius: 10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 10,
-          background: "radial-gradient(120% 120% at 50% 0%, oklch(0.30 0.045 58), oklch(0.18 0.03 55))",
-          color: "oklch(0.85 0.09 82)",
-          border: "1px solid oklch(0.45 0.06 65)",
-        }}
-      >
-        <div style={{ fontSize: 34, lineHeight: 1 }}>{cardFallbackGlyph(view.id)}</div>
-        <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 17, padding: "0 8px", textAlign: "center" }}>
-          {view.name}
-        </div>
-      </div>
-    );
-  }
+function prefersReducedMotion(): boolean {
   return (
-    <img
-      src={view.imageUrl}
-      alt={view.name}
-      onError={() => setFailed(true)}
-      style={{ width: "100%", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 10, display: "block" }}
-    />
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
 
@@ -81,15 +40,42 @@ export default function TarotReading() {
   const [qSaved, setQSaved] = useState("");
   const [reading, setReading] = useState<Reading | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  // מצב אנימציית השליפה: כמה קלפים נפרסו / נחשפו
+  const [dealtCount, setDealtCount] = useState(0);
+  const [flippedCount, setFlippedCount] = useState(0);
+
+  const cancelDeal = useRef<() => void>(() => {});
+  useEffect(() => () => cancelDeal.current(), []);
 
   function onDraw() {
+    cancelDeal.current();
     setReading(draw());
     setQSaved(question);
     setSelected(null);
+    setDealtCount(0);
+    setFlippedCount(0);
+    setPhase("drawing");
+
+    cancelDeal.current = runDeal(
+      {
+        onShuffleStart: () => {},
+        onDeal: (i) => setDealtCount(i + 1),
+        onFlip: (i) => setFlippedCount(i + 1),
+        onDone: () => setPhase("result"),
+      },
+      { reducedMotion: prefersReducedMotion() },
+    );
+  }
+
+  function onSkip() {
+    cancelDeal.current();
+    setDealtCount(SPREAD);
+    setFlippedCount(SPREAD);
     setPhase("result");
   }
 
   function onReset() {
+    cancelDeal.current();
     setPhase("intro");
     setReading(null);
     setSelected(null);
@@ -231,6 +217,16 @@ export default function TarotReading() {
           </div>
         )}
 
+        {phase === "drawing" && reading && (
+          <DrawingView
+            reading={reading}
+            content={content}
+            dealtCount={dealtCount}
+            flippedCount={flippedCount}
+            onSkip={onSkip}
+          />
+        )}
+
         {phase === "result" && reading && (
           <ResultView
             reading={reading}
@@ -241,6 +237,89 @@ export default function TarotReading() {
             onReset={onReset}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+/** פאזת השליפה: ערבוב (גבות רועדים) → פריסה → היפוך אחד-אחד. חושף בלבד — התוצאה כבר חושבה. */
+function DrawingView({
+  reading,
+  content,
+  dealtCount,
+  flippedCount,
+  onSkip,
+}: {
+  reading: Reading;
+  content: TarotContent;
+  dealtCount: number;
+  flippedCount: number;
+  onSkip: () => void;
+}) {
+  const views = toCardViews(reading, content);
+  const shuffling = dealtCount === 0;
+
+  return (
+    <div
+      style={{
+        marginTop: 44,
+        borderRadius: 20,
+        padding: "48px 28px 40px",
+        background: "radial-gradient(120% 120% at 50% 0%, oklch(0.26 0.035 58), oklch(0.16 0.025 55))",
+        boxShadow: "0 24px 60px oklch(0.15 0.03 55 / 0.45)",
+        animation: "softIn 0.5s ease both",
+      }}
+    >
+      <div style={{ textAlign: "center", color: "oklch(0.80 0.06 82)", fontSize: 14, letterSpacing: "0.22em", marginBottom: 34 }}>
+        {shuffling ? "מְעַרְבְּבִים אֶת הַחֲפִיסָה…" : "הַקְּלָפִים נִפְרָסִים"}
+      </div>
+
+      {shuffling ? (
+        <div style={{ display: "flex", justifyContent: "center", minHeight: 220 }}>
+          <div style={{ position: "relative", width: 140 }}>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={
+                  {
+                    position: i === 2 ? "relative" : "absolute",
+                    inset: 0,
+                    "--shuffle-rot": `${(i - 1) * 4}deg`,
+                    animation: `tarotShuffle 0.9s ease-in-out ${i * 0.12}s infinite`,
+                  } as React.CSSProperties
+                }
+              >
+                <CardBack />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", justifyContent: "center", gap: "clamp(10px,3vw,22px)" }}>
+          {views.map((v, i) => (
+            <div key={v.id} style={{ width: "clamp(96px,22vw,150px)" }}>
+              <TarotCard view={v} faceUp={i < flippedCount} dealt={i < dealtCount} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ textAlign: "center", marginTop: 34 }}>
+        <button
+          onClick={onSkip}
+          style={{
+            background: "transparent",
+            border: "1px solid oklch(0.55 0.04 70 / 0.5)",
+            color: "oklch(0.78 0.05 80)",
+            padding: "9px 22px",
+            borderRadius: 999,
+            fontFamily: SANS,
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          דלג להצגת התוצאה
+        </button>
       </div>
     </div>
   );
@@ -294,9 +373,7 @@ function ResultView({
             <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 12 }}>
               {`קְלָף ${["רִאשׁוֹן", "שֵׁנִי", "שְׁלִישִׁי"][i]}`}
             </div>
-            <div onClick={() => setSelected(i)} style={cardBoxStyle(selected === i)}>
-              <CardFace view={v} />
-            </div>
+            <TarotCard view={v} faceUp selected={selected === i} onClick={() => setSelected(i)} />
             <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 19, color: "oklch(0.24 0.03 55)", marginTop: 12 }}>
               {v.name}
             </div>
