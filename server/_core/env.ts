@@ -53,6 +53,9 @@ const envSchema = z.object({
 
   ICHING_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
 
+  // מכסת פירושי ה-AI של הטארוט — נפרדת מהאי-צ'ינג (אותו ספק, מונה נפרד).
+  TAROT_AI_MONTHLY_LIMIT: z.coerce.number().int().positive().default(5),
+
   // שכלול ניסוח השאלה לפני ההטלה — חופשי לכולם, מוגן רק בהגבלת-קצב פר-IP (לשעה).
   ICHING_REFINE_RATE_PER_HOUR: z.coerce.number().int().positive().default(30),
 });
