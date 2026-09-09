@@ -16,6 +16,7 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "seed:iching": "node --env-file=.env.local --import tsx scripts/seed-iching.ts",
+    "seed:tarot": "node --env-file=.env.local --import tsx scripts/seed-tarot.ts",
     "cleanup:orphan-images": "node --env-file=.env.local --import tsx scripts/cleanup-orphan-images.ts",
     "cleanup:orphan-images:prod": "node --import tsx scripts/cleanup-orphan-images.ts",
     "sync:articles": "node --import tsx scripts/sync-articles.ts"
