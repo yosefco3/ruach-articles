@@ -23,7 +23,7 @@ describe("SEO Meta Injection", () => {
   const baseHtml = `<!doctype html>
 <html lang="he" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <!-- SEO_HEAD_START -->
@@ -72,7 +72,7 @@ describe("SEO Meta Injection", () => {
       canonicalUrl: "https://ruachwisdom.org",
     });
 
-    expect(result).toContain('href="./favicon.png"');
+    expect(result).toContain('href="/favicon.png"');
     expect(result).toContain('charset="UTF-8"');
     expect(result).toContain("fonts.googleapis.com");
   });
