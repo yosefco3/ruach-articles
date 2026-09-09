@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-09 19:09_
+_נוצר אוטומטית ב: 2026-09-09 19:51_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 194 |
-| מכוסים / covered | 31 |
-| ללא טסט / uncovered | 163 |
-| כיסוי / coverage | 15% →0% |
-| טסטים עוברים / passing | 351 ✅ |
+| קבצי קוד / source files | 210 |
+| מכוסים / covered | 39 |
+| ללא טסט / uncovered | 171 |
+| כיסוי / coverage | 18% ↑3% |
+| טסטים עוברים / passing | 415 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -38,17 +38,23 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
 | `(no source found for storage-delete.test.ts)` | `server/storage-delete.test.ts` |
+| `(no source found for tarot.test.ts)` | `shared/tarot/tarot.test.ts` |
+| `(no source found for tarotDb.test.ts)` | `server/tarotDb.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
 | `client/src/components/ArticleActionsBar.tsx` | `client/src/components/ArticleActionsBar.test.tsx` |
 | `client/src/components/editor/collapsibleQuote.ts` | `client/src/components/editor/collapsibleQuote.test.ts` |
 | `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
+| `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
+| `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
+| `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |
+| `client/src/pages/tarot/reveal.ts` | `client/src/pages/tarot/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
 | `server/_core/vite.ts` | `server/_core/vite.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
@@ -66,10 +72,14 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | `server/routers/likes.router.ts` | `server/routers/likes.router.test.ts` |
 | `server/routers/profiles.router.ts` | `server/routers/profiles.router.test.ts` |
 | `server/routers/settings.router.ts` | `server/routers/settings.router.test.ts` |
+| `server/routers/tarot.router.ts` | `server/routers/tarot.router.test.ts` |
 | `server/rss.ts` | `server/rss.test.ts` |
 | `server/seo.ts` | `server/seo.test.ts` |
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
+| `server/tarotAi.ts` | `server/tarotAi.test.ts` |
+| `server/tarotDeckZip.ts` | `server/tarotDeckZip.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
+| `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
 
 ## קבצים ללא טסטים (לפי עדיפות) / Uncovered (by priority)
 
@@ -177,6 +187,7 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | 🟡 MEDIUM | `client/src/pages/AdminNewsletter.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminSettings.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminTarot.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminUsers.tsx` |
 | 🟡 MEDIUM | `client/src/pages/ArticlePage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/CategoryPage.tsx` |
@@ -186,7 +197,9 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
 | 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TarotReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
+| 🟡 MEDIUM | `server/_core/aiProvider.ts` |
 | 🟡 MEDIUM | `server/_core/auth/session.ts` |
 | 🟡 MEDIUM | `server/_core/auth/strategies/oauth.ts` |
 | 🟡 MEDIUM | `server/_core/context.ts` |
@@ -200,6 +213,7 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | 🟡 MEDIUM | `server/_core/startup/server.ts` |
 | 🟡 MEDIUM | `server/_core/systemRouter.ts` |
 | 🟡 MEDIUM | `server/_core/trpc.ts` |
+| 🟡 MEDIUM | `server/_core/zip.ts` |
 | 🟡 MEDIUM | `server/articleDocxRoute.ts` |
 | 🟡 MEDIUM | `server/db.ts` |
 | 🟡 MEDIUM | `server/db/about.ts` |
@@ -219,6 +233,8 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | 🟡 MEDIUM | `server/db/profiles.ts` |
 | 🟡 MEDIUM | `server/db/settings.ts` |
 | 🟡 MEDIUM | `server/db/storage-cleanup.ts` |
+| 🟡 MEDIUM | `server/db/tarot.ts` |
+| 🟡 MEDIUM | `server/db/tarotUsage.ts` |
 | 🟡 MEDIUM | `server/db/users.ts` |
 | 🟡 MEDIUM | `server/imageCompression.ts` |
 | 🟡 MEDIUM | `server/newsletterEmail.ts` |
@@ -230,6 +246,7 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | 🟡 MEDIUM | `shared/iching/hexagrams.ts` |
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | 🟡 MEDIUM | `shared/slug.ts` |
+| 🟡 MEDIUM | `shared/tarot/cards.ts` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
 | ⚪ LOW | `server/_core/auth/types.ts` |
 | ⚪ LOW | `server/_core/index.ts` |
@@ -237,4 +254,5 @@ _נוצר אוטומטית ב: 2026-09-09 19:09_
 | ⚪ LOW | `server/_core/types/manusTypes.ts` |
 | ⚪ LOW | `server/db/index.ts` |
 | ⚪ LOW | `shared/iching/index.ts` |
+| ⚪ LOW | `shared/tarot/index.ts` |
 | ⚪ LOW | `shared/types.ts` |
