@@ -13,6 +13,20 @@ describe("tarot seed data", () => {
     }
   });
 
+  it("every card carries a full interpretation in RTE-compatible HTML", () => {
+    const data = loadSeed();
+    for (const c of data.cards) {
+      const html = c.interpretationHtml ?? "";
+      expect(html.length, c.id).toBeGreaterThanOrEqual(500);
+      expect(html.length, c.id).toBeLessThanOrEqual(4000);
+      expect(html, c.id).toMatch(/^<p>/);
+      expect(html, c.id).toContain("כשהקלף עולה בקריאה");
+      // תגי whitelist בלבד (p/strong) — תואם ל-RTE
+      const tags = [...html.matchAll(/<\/?([a-z0-9]+)/g)].map((m) => m[1]);
+      for (const t of new Set(tags)) expect(["p", "strong"], c.id).toContain(t);
+    }
+  });
+
   it("carries a complete intro", () => {
     const { intro } = loadSeed();
     expect(intro.articleHtml).toContain("<p>");
