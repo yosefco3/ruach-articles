@@ -8,6 +8,7 @@ import {
   LazyGuestPostForm,
   LazyHome,
   LazyIChing,
+  LazyTarot,
   LazyUserProfile,
 } from "./lazy";
 
@@ -24,4 +25,5 @@ export const publicRoutes = [
   <Route key="guest-post" path="/guest-post" component={LazyGuestPostForm} />,
   <Route key="profile" path="/profile/:id" component={LazyUserProfile} />,
   <Route key="iching" path="/iching" component={LazyIChing} />,
+  <Route key="tarot" path="/tarot" component={LazyTarot} />,
 ];
