@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { draw, type TarotReading as Reading } from "@shared/tarot";
+import { CARD_BACK_IMAGE, draw, type TarotReading as Reading } from "@shared/tarot";
 import {
   buildAiContext,
   resolvePanel,
@@ -239,7 +239,66 @@ export default function TarotReading() {
             onReset={onReset}
           />
         )}
+
+        <DeckDownload />
       </div>
+    </div>
+  );
+}
+
+/**
+ * "החפיסה שלנו — להורדה חופשית". מוצג רק כשנכסי החפיסה קיימים (בדיקת HEAD
+ * על גב הקלף) — כך אין קישור שבור לפני העלאת התמונות.
+ */
+function DeckDownload() {
+  const [available, setAvailable] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    fetch(CARD_BACK_IMAGE, { method: "HEAD" })
+      .then((res) => {
+        if (alive && res.ok) setAvailable(true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (!available) return null;
+
+  return (
+    <div
+      style={{
+        marginTop: 64,
+        textAlign: "center",
+        borderTop: "1px solid oklch(0.86 0.024 75)",
+        paddingTop: 40,
+      }}
+    >
+      <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 24, color: "oklch(0.24 0.03 55)" }}>
+        הַחֲפִיסָה שֶׁלָּנוּ — לְהוֹרָדָה חָפְשִׁית
+      </div>
+      <p style={{ maxWidth: 520, margin: "12px auto 20px", fontSize: 15.5, lineHeight: 1.9, color: "oklch(0.40 0.03 58)" }}>
+        חפיסה מקורית שצוירה במיוחד עבור האתר בסגנון גואש — בלי סמלים דתיים ובלי עירום.
+        מוזמנים להוריד, להדפיס ולהשתמש באופן חופשי, עם ייחוס לאתר.
+      </p>
+      <a
+        href="/tarot-cards/ruach-tarot-deck.zip"
+        download
+        style={{
+          display: "inline-block",
+          padding: "13px 34px",
+          fontFamily: SERIF,
+          fontWeight: 700,
+          fontSize: 18,
+          color: "oklch(0.98 0.008 80)",
+          background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
+          borderRadius: 10,
+          textDecoration: "none",
+          boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
+        }}
+      >
+        הורדת החפיסה (ZIP)
+      </a>
     </div>
   );
 }
