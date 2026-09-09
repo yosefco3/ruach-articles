@@ -16,6 +16,8 @@ import {
 } from "@/pages/tarot/model";
 import { runDeal, SPREAD } from "@/pages/tarot/reveal";
 import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
+import { TarotAiPanel } from "@/components/tarot/TarotAiPanel";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
 
@@ -342,7 +344,7 @@ function ResultView({
 }) {
   const views = toCardViews(reading, content);
   const panel = resolvePanel(views, selected);
-  void buildAiContext; // מחובר בצעד ה-AI (11)
+  const { isAuthenticated } = useAuth();
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -381,6 +383,16 @@ function ResultView({
           </div>
         ))}
       </div>
+
+      {/* ── פירוש AI לפריסה — תמיד מעל פירושי הקלפים, לעולם לא מחביא אותם ── */}
+      {content.intro.aiEnabled && (
+        <TarotAiPanel
+          question={qSaved}
+          cards={buildAiContext(views)}
+          isAuthenticated={isAuthenticated}
+          monthlyLimit={content.aiMonthlyLimit}
+        />
+      )}
 
       <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
         בחרו קלף כדי לקרוא את פירושו בחלון שלמטה
