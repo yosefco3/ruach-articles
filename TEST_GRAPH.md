@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 14:12_
+_נוצר אוטומטית ב: 2026-09-10 14:35_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 212 |
+| קבצי קוד / source files | 215 |
 | מכוסים / covered | 39 |
-| ללא טסט / uncovered | 173 |
+| ללא טסט / uncovered | 176 |
 | כיסוי / coverage | 18% →0% |
-| טסטים עוברים / passing | 429 ✅ |
+| טסטים עוברים / passing | 444 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -200,7 +200,9 @@ _נוצר אוטומטית ב: 2026-09-10 14:12_
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
 | 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TarotCardPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotDeckGallery.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TarotGuide.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
 | 🟡 MEDIUM | `server/_core/aiProvider.ts` |
@@ -251,6 +253,7 @@ _נוצר אוטומטית ב: 2026-09-10 14:12_
 | 🟡 MEDIUM | `shared/iching/trigrams.ts` |
 | 🟡 MEDIUM | `shared/slug.ts` |
 | 🟡 MEDIUM | `shared/tarot/cards.ts` |
+| 🟡 MEDIUM | `shared/tarotGuide.ts` |
 | ⚪ LOW | `server/_core/auth/index.ts` |
 | ⚪ LOW | `server/_core/auth/types.ts` |
 | ⚪ LOW | `server/_core/index.ts` |
