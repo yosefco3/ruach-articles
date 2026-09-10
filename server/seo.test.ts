@@ -372,3 +372,19 @@ describe("tarot card page SEO — /tarot/card/<slug>", () => {
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/card/the-tower`);
   });
 });
+
+describe("static route SEO — /tarot/guide (pillar)", () => {
+  it("serves the guide head with FAQPage JSON-LD mirroring the shared FAQ", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const req = { method: "GET", path: "/tarot/guide" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("המדריך לקלפי הטארוט");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/guide`);
+    expect(html).toContain("FAQPage");
+    expect(html).toContain("האם הטארוט מגיד עתידות?");
+  });
+});

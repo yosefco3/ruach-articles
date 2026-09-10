@@ -2,6 +2,7 @@ import { type Request, type Response, type NextFunction } from "express";
 import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent } from "./db";
 import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
+import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
@@ -204,10 +205,33 @@ const ACCESSIBILITY_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const TAROT_GUIDE_SEO: SeoData = {
+  title: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים בעברית | רוח חכמה",
+  description:
+    "מה זה טארוט, מהי חפיסת ריידר־וייט (1909), מה ההבדל בין ארקנה גדולה לקטנה ואיך קוראים פריסת שלושה קלפים — מדריך מלא בעברית עם קישור לפירוש של כל אחד מ-78 הקלפים.",
+  ogTitle: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים",
+  ogDescription:
+    "מדריך מלא בעברית: מבנה החפיסה, שיטת שלושת הקלפים, ופירוש לכל 78 הקלפים.",
+  ogUrl: `${SITE_URL_PRODUCTION}/tarot/guide`,
+  ogType: "article",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/tarot/guide`,
+  jsonLd: [
+    siteLd(),
+    faqPageLd(TAROT_GUIDE_FAQ.map((f) => ({ question: f.question, answer: f.answer }))),
+    breadcrumbLd([
+      { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+      { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
+      { name: "המדריך לקלפים", url: `${SITE_URL_PRODUCTION}/tarot/guide` },
+    ]),
+  ],
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
   "/tarot/deck": TAROT_DECK_SEO,
+  "/tarot/guide": TAROT_GUIDE_SEO,
   "/derech": DERECH_SEO,
   "/accessibility": ACCESSIBILITY_SEO,
 };

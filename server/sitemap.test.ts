@@ -133,6 +133,7 @@ describe("sitemap — tarot card pages", () => {
     } as any;
     await serveSitemap({} as any, res);
     const xml = res.send.mock.calls[0][0] as string;
+    expect(xml).toContain("<loc>https://ruachwisdom.org/tarot/guide</loc>");
     expect(xml).toContain("<loc>https://ruachwisdom.org/tarot/card/the-fool</loc>");
     expect(xml).toContain("<loc>https://ruachwisdom.org/tarot/card/king-of-pentacles</loc>");
     expect((xml.match(/\/tarot\/card\//g) || []).length).toBe(78);

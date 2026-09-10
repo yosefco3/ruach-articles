@@ -263,9 +263,12 @@ export default function TarotDeckGallery() {
               English deck (ZIP)
             </a>
           </div>
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: 18, display: "flex", gap: 22, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/tarot" style={{ color: "oklch(0.45 0.10 55)", fontSize: 15.5, fontWeight: 600 }}>
               → לקריאה בקלפים
+            </Link>
+            <Link href="/tarot/guide" style={{ color: "oklch(0.45 0.10 55)", fontSize: 15.5, fontWeight: 600 }}>
+              → המדריך לקלפי הטארוט
             </Link>
           </div>
           <p style={{ maxWidth: 540, margin: "18px auto 0", fontSize: 14, lineHeight: 1.8, color: "oklch(0.45 0.03 58)" }}>

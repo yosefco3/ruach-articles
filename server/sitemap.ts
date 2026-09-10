@@ -86,6 +86,12 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     priority: 0.7, // the full-deck gallery
   });
 
+  entries.push({
+    loc: `${baseUrl}/tarot/guide`,
+    changefreq: "monthly",
+    priority: 0.8, // the pillar guide article
+  });
+
   // ── Tarot card pages — 78 SEO landing pages ──
   for (const card of CARDS) {
     entries.push({

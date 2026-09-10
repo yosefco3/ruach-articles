@@ -35,6 +35,7 @@ export async function serveLlmsTxt(req: Request, res: Response): Promise<void> {
     linkLine("קריאת אי צ'ינג", `${base}/iching`, "הטלת מטבעות וקריאה חיה בעברית — ספר התמורות"),
     linkLine("קריאה בקלפי טארוט", `${base}/tarot`, "שליפת שלושה קלפים מחפיסה מקורית — מראה סמלית להבנת המצב"),
     linkLine("החפיסה המלאה", `${base}/tarot/deck`, "כל 78 הקלפים של החפיסה המקורית, בסגנון גואש — כולל הורדה חופשית"),
+    linkLine("המדריך לקלפי הטארוט", `${base}/tarot/guide`, "מבנה החפיסה, שיטת שלושת הקלפים ופירוש כל 78 הקלפים בעברית"),
     linkLine("אודות", `${base}/about`, "על יוסף כהן והאתר"),
     linkLine("כל המאמרים", base),
     "",

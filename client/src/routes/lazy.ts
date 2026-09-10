@@ -14,6 +14,7 @@ export const LazyIChing = lazy(() => import("../pages/IChingReading"));
 export const LazyTarot = lazy(() => import("../pages/TarotReading"));
 export const LazyTarotDeck = lazy(() => import("../pages/TarotDeckGallery"));
 export const LazyTarotCard = lazy(() => import("../pages/TarotCardPage"));
+export const LazyTarotGuide = lazy(() => import("../pages/TarotGuide"));
 
 // ── Admin pages (separate chunk) ──────────────────────────
 export const LazyAdminPage = lazy(() => import("../pages/AdminPage"));

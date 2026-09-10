@@ -134,9 +134,14 @@ export default function TarotCardPage() {
           <Link href={`/tarot/card/${prev.slug}`} style={LINK_STYLE}>
             → {prev.name}
           </Link>
-          <Link href="/tarot/deck" style={{ ...LINK_STYLE, fontWeight: 500 }}>
-            כל 78 הקלפים
-          </Link>
+          <span style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "center" }}>
+            <Link href="/tarot/deck" style={{ ...LINK_STYLE, fontWeight: 500 }}>
+              כל 78 הקלפים
+            </Link>
+            <Link href="/tarot/guide" style={{ ...LINK_STYLE, fontWeight: 500 }}>
+              המדריך לקלפים
+            </Link>
+          </span>
           <Link href={`/tarot/card/${next.slug}`} style={LINK_STYLE}>
             {next.name} ←
           </Link>

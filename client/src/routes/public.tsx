@@ -12,6 +12,7 @@ import {
   LazyTarot,
   LazyTarotCard,
   LazyTarotDeck,
+  LazyTarotGuide,
   LazyUserProfile,
 } from "./lazy";
 
@@ -32,4 +33,5 @@ export const publicRoutes = [
   <Route key="tarot" path="/tarot" component={LazyTarot} />,
   <Route key="tarot-deck" path="/tarot/deck" component={LazyTarotDeck} />,
   <Route key="tarot-card" path="/tarot/card/:slug" component={LazyTarotCard} />,
+  <Route key="tarot-guide" path="/tarot/guide" component={LazyTarotGuide} />,
 ];
