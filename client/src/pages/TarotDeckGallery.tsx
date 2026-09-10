@@ -7,8 +7,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { DECK_ASSETS_VERSION, cardImagePath, type CardStruct } from "@shared/tarot";
-import { deckSections } from "@/pages/tarot/model";
+import { DECK_ASSETS_VERSION, cardImagePath, cardSlug, type CardStruct } from "@shared/tarot";
+import { cardAltText, deckSections } from "@/pages/tarot/model";
 
 const SERIF = "'Frank Ruhl Libre',serif";
 const SANS = "'Heebo',sans-serif";
@@ -21,7 +21,7 @@ function CardTile({ card, onOpen }: { card: CardStruct; onOpen: (c: CardStruct) 
     <figure style={{ margin: 0, textAlign: "center", cursor: "zoom-in" }} onClick={() => onOpen(card)}>
       <img
         src={cardImagePath(card.id)}
-        alt={`${card.he} — ${card.en}`}
+        alt={cardAltText(card)}
         loading="lazy"
         style={{
           width: "100%",
@@ -33,11 +33,23 @@ function CardTile({ card, onOpen }: { card: CardStruct; onOpen: (c: CardStruct) 
         }}
       />
       <figcaption style={{ marginTop: 8, lineHeight: 1.4 }}>
-        <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 15.5, color: "oklch(0.26 0.03 55)" }}>
+        {/* שם הקלף מקשר לדף הפירוש שלו (SEO פנימי); התמונה נשארת לייטבוקס */}
+        <Link
+          href={`/tarot/card/${cardSlug(card)}`}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            display: "block",
+            fontFamily: SERIF,
+            fontWeight: 700,
+            fontSize: 15.5,
+            color: "oklch(0.26 0.03 55)",
+            textDecoration: "none",
+          }}
+        >
           {card.arcana === "major" && typeof card.number === "number"
             ? `${ROMAN[card.number]} · ${card.he}`
             : card.he}
-        </div>
+        </Link>
         <div style={{ fontSize: 12, color: "oklch(0.52 0.03 60)" }}>{card.en}</div>
       </figcaption>
     </figure>
@@ -78,7 +90,7 @@ function Lightbox({ card, onClose }: { card: CardStruct; onClose: () => void }) 
     >
       <img
         src={cardImagePath(card.id)}
-        alt={`${card.he} — ${card.en}`}
+        alt={cardAltText(card)}
         style={{
           maxHeight: "82vh",
           maxWidth: "min(92vw, 480px)",

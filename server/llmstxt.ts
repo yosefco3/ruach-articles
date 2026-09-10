@@ -1,5 +1,7 @@
 import { type Request, type Response } from "express";
 import { getArticles } from "./db";
+import { listCardTexts } from "./db/tarot";
+import { CARDS, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 
 // ─── /llms.txt — AI-readable site index (llmstxt.org convention) ─────────────
@@ -47,6 +49,27 @@ export async function serveLlmsTxt(req: Request, res: Response): Promise<void> {
     }
   } catch (err) {
     console.warn("[llms.txt] Error fetching articles:", err);
+  }
+
+  // ── 78 דפי הקלפים — כל קלף עם התקציר שלו מה-DB (GEO: תשובה-קודם) ──
+  lines.push("", "## פירושי קלפי הטארוט", "");
+  let cardRows: { cardId: string; name: string; summary: string }[] = [];
+  try {
+    cardRows = await listCardTexts();
+  } catch (err) {
+    console.warn("[llms.txt] Error fetching tarot card texts:", err);
+  }
+  const rowById = new Map(cardRows.map((r) => [r.cardId, r]));
+  for (const card of CARDS) {
+    const row = rowById.get(card.id);
+    const name = row?.name.trim() ? row.name : card.he;
+    lines.push(
+      linkLine(
+        `${name} (${card.en})`,
+        `${base}/tarot/card/${cardSlug(card)}`,
+        row?.summary || undefined,
+      ),
+    );
   }
 
   lines.push(
