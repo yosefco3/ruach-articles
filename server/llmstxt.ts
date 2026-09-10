@@ -32,6 +32,7 @@ export async function serveLlmsTxt(req: Request, res: Response): Promise<void> {
     linkLine("דרך הרוח — הנבואה הטבעית", `${base}/derech`, "השיטה שמאחורי כל המאמרים: חמישה עקרונות ומבחן קבלה"),
     linkLine("קריאת אי צ'ינג", `${base}/iching`, "הטלת מטבעות וקריאה חיה בעברית — ספר התמורות"),
     linkLine("קריאה בקלפי טארוט", `${base}/tarot`, "שליפת שלושה קלפים מחפיסה מקורית — מראה סמלית להבנת המצב"),
+    linkLine("החפיסה המלאה", `${base}/tarot/deck`, "כל 78 הקלפים של החפיסה המקורית, בסגנון גואש — כולל הורדה חופשית"),
     linkLine("אודות", `${base}/about`, "על יוסף כהן והאתר"),
     linkLine("כל המאמרים", base),
     "",

@@ -50,15 +50,15 @@ describe("tarot card structure", () => {
     }
   });
 
-  it("uses our renamed cards (no religious imagery)", () => {
-    expect(cardById("major-05")?.he).toBe("המורה");
-    expect(cardById("major-13")?.he).toBe("המעבר");
-    expect(cardById("major-15")?.he).toBe("הצל");
-    expect(cardById("major-20")?.he).toBe("ההתעוררות");
+  it("uses the traditional Hebrew names for the sensitive majors", () => {
+    expect(cardById("major-05")?.he).toBe("הכהן הגדול");
+    expect(cardById("major-13")?.he).toBe("המוות");
+    expect(cardById("major-15")?.he).toBe("השטן");
+    expect(cardById("major-20")?.he).toBe("יום הדין");
   });
 
   it("looks up cards and builds image paths", () => {
-    expect(cardById("pents-09")?.he).toBe("תשעה במטבעות");
+    expect(cardById("pents-09")?.he).toBe("תשעה מטבעות");
     expect(cardById("nope")).toBeUndefined();
     expect(cardImagePath("major-00")).toBe("/tarot-cards/major-00.webp");
     expect(CARD_BACK_IMAGE).toBe("/tarot-cards/back.webp");

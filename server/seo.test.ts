@@ -292,3 +292,17 @@ describe("static route SEO — /tarot", () => {
     expect(html).toContain('og:type" content="website"');
   });
 });
+
+describe("static route SEO — /tarot/deck", () => {
+  it("seoMiddleware resolves a head for the deck gallery page", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const req = { method: "GET", path: "/tarot/deck" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("החפיסה המלאה — 78 קלפי הטארוט של רוּחַ");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/deck`);
+  });
+});
