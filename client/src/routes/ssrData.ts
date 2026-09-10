@@ -79,6 +79,15 @@ const routes: SsrRoute[] = [
       ),
   },
   {
+    // דף קלף בודד משתמש באותו getContent (כל 78 הטקסטים) — אותו query key,
+    // כך שה-hydration לא יורה בקשה כפולה.
+    pattern: "/tarot/card/:slug",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.tarot.getContent, undefined, "query"), () =>
+        client.tarot.getContent.query()
+      ),
+  },
+  {
     pattern: "/derech",
     prefetch: (qc, client) =>
       prefetch(qc, getQueryKey(trpc.derech.get, undefined, "query"), () =>

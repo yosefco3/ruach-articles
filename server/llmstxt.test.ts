@@ -4,6 +4,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("./db", () => ({
   getArticles: vi.fn(),
 }));
+vi.mock("./db/tarot", () => ({
+  listCardTexts: vi.fn().mockResolvedValue([]),
+}));
 
 import { serveLlmsTxt } from "./llmstxt";
 import { getArticles } from "./db";
@@ -70,5 +73,32 @@ describe("llms.txt", () => {
     const body = res.send.mock.calls[0][0] as string;
     expect(body).toContain("## עמודים מרכזיים");
     expect(body).toContain("## Optional");
+  });
+});
+
+describe("llms.txt — tarot card pages", () => {
+  it("lists all 78 card pages with DB summaries when available", async () => {
+    vi.mocked(getArticles).mockResolvedValue([]);
+    const { listCardTexts } = await import("./db/tarot");
+    vi.mocked(listCardTexts).mockResolvedValue([
+      { cardId: "major-00", name: "", summary: "התחלה חדשה", interpretation: "" },
+    ] as any);
+    const res = mockRes();
+    await serveLlmsTxt({} as any, res);
+    const md = res.send.mock.calls[0][0] as string;
+    expect(md).toContain("## פירושי קלפי הטארוט");
+    expect(md).toContain(`${SITE_URL_PRODUCTION}/tarot/card/the-fool`);
+    expect(md).toContain("התחלה חדשה");
+    expect((md.match(/\/tarot\/card\//g) || []).length).toBe(78);
+  });
+
+  it("still lists the 78 links when the tarot DB read fails", async () => {
+    vi.mocked(getArticles).mockResolvedValue([]);
+    const { listCardTexts } = await import("./db/tarot");
+    vi.mocked(listCardTexts).mockRejectedValue(new Error("db down"));
+    const res = mockRes();
+    await serveLlmsTxt({} as any, res);
+    const md = res.send.mock.calls[0][0] as string;
+    expect((md.match(/\/tarot\/card\//g) || []).length).toBe(78);
   });
 });

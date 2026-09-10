@@ -1,5 +1,8 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent } from "./db";
+import { getCardText } from "./db/tarot";
+import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
+import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
@@ -162,12 +165,12 @@ const DERECH_SEO: SeoData = {
 };
 
 const TAROT_SEO: SeoData = {
-  title: "קריאה בקלפי טארוט — רוּחַ",
+  title: "קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה",
   description:
-    "שלפו שלושה קלפים מחפיסת טארוט מקורית שצוירה לאתר — מראה סמלית להבנת נטיות וכיוונים, לא הגדת עתידות. חינם, והשאלה אינה נשמרת.",
-  ogTitle: "קריאה בקלפי טארוט — רוּחַ",
+    "קריאת טארוט אונליין בחינם: שלפו שלושה קלפים מחפיסת ריידר־וייט מקורית שצוירה לאתר, עם פירוש מלא בעברית לכל קלף. מראה סמלית להבנת המצב — לא הגדת עתידות, והשאלה אינה נשמרת.",
+  ogTitle: "קריאת טארוט אונליין חינם — רוח חכמה",
   ogDescription:
-    "שלפו שלושה קלפים מחפיסה מקורית — מראה סמלית להבנת המצב, בעברית ובחינם.",
+    "שלפו שלושה קלפים מחפיסה מקורית עם פירוש מלא בעברית — חינם, והשאלה אינה נשמרת.",
   ogUrl: `${SITE_URL_PRODUCTION}/tarot`,
   ogType: "website",
   ogLocale: "he_IL",
@@ -202,10 +205,33 @@ const ACCESSIBILITY_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const TAROT_GUIDE_SEO: SeoData = {
+  title: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים בעברית | רוח חכמה",
+  description:
+    "מה זה טארוט, מהי חפיסת ריידר־וייט (1909), מה ההבדל בין ארקנה גדולה לקטנה ואיך קוראים פריסת שלושה קלפים — מדריך מלא בעברית עם קישור לפירוש של כל אחד מ-78 הקלפים.",
+  ogTitle: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים",
+  ogDescription:
+    "מדריך מלא בעברית: מבנה החפיסה, שיטת שלושת הקלפים, ופירוש לכל 78 הקלפים.",
+  ogUrl: `${SITE_URL_PRODUCTION}/tarot/guide`,
+  ogType: "article",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/tarot/guide`,
+  jsonLd: [
+    siteLd(),
+    faqPageLd(TAROT_GUIDE_FAQ.map((f) => ({ question: f.question, answer: f.answer }))),
+    breadcrumbLd([
+      { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+      { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
+      { name: "המדריך לקלפים", url: `${SITE_URL_PRODUCTION}/tarot/guide` },
+    ]),
+  ],
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
   "/tarot/deck": TAROT_DECK_SEO,
+  "/tarot/guide": TAROT_GUIDE_SEO,
   "/derech": DERECH_SEO,
   "/accessibility": ACCESSIBILITY_SEO,
 };
@@ -272,10 +298,68 @@ export async function resolveDerechSeo(): Promise<SeoData> {
   };
 }
 
+// ─── Tarot card pages (/tarot/card/<slug>) ─────────────────────────────────
+
+/**
+ * SEO לדף קלף בודד — הכותרת מכוונת לשאילתת החיפוש ("פירוש קלף X בטארוט"),
+ * התיאור הוא שורת המהות מה-DB (fallback לתיאור גנרי), והתמונה היא איור
+ * הקלף המקורי. null לקלף לא-קיים → SPA 404.
+ */
+export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null> {
+  const card = cardBySlug(slug);
+  if (!card) return null;
+
+  let row: { name: string; summary: string } | undefined;
+  try {
+    row = await getCardText(card.id);
+  } catch (err) {
+    console.warn("[SEO] Error fetching tarot card text:", err);
+  }
+  const name = row?.name.trim() ? row.name : card.he;
+  const cardUrl = `${SITE_URL_PRODUCTION}/tarot/card/${cardSlug(card)}`;
+  const title = `${name} — פירוש הקלף בטארוט | רוח חכמה`;
+  const description = row?.summary.trim()
+    ? `${name} (${card.en}) — ${row.summary}. פירוש מלא של הקלף בחפיסת ריידר־וייט, מתוך חפיסת הטארוט המקורית של רוח חכמה.`
+    : `פירוש הקלף ${name} (${card.en}) בטארוט — משמעות, סמליות ומה הוא אומר בקריאה.`;
+  const image = toAbsoluteImageUrl(cardImagePath(card.id));
+
+  return {
+    title,
+    description,
+    ogTitle: title,
+    ogDescription: description,
+    ogImage: image,
+    ogImageAlt: `קלף ${name} — חפיסת הטארוט של רוח חכמה`,
+    ogUrl: cardUrl,
+    ogType: "article",
+    ogLocale: "he_IL",
+    canonicalUrl: cardUrl,
+    jsonLd: [
+      articleLd({
+        title,
+        url: cardUrl,
+        description,
+        image,
+        authorName: "יוסף כהן",
+      }),
+      breadcrumbLd([
+        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
+        { name, url: cardUrl },
+      ]),
+    ],
+  };
+}
+
 // ─── Route Matchers ─────────────────────────────────────────────────────────
 
 function matchArticleSlug(pathname: string): string | null {
   const match = pathname.match(/^\/article\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+export function matchTarotCardSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/tarot\/card\/([^/]+)$/);
   return match ? match[1] : null;
 }
 
@@ -402,11 +486,14 @@ export async function seoMiddleware(
   try {
     const articleSlug = matchArticleSlug(pathname);
     const categorySlug = matchCategorySlug(pathname);
+    const tarotCardSlug = matchTarotCardSlug(pathname);
 
     if (pathname === "/derech") {
       seo = await resolveDerechSeo();
     } else if (STATIC_ROUTE_SEO[pathname]) {
       seo = STATIC_ROUTE_SEO[pathname];
+    } else if (tarotCardSlug) {
+      seo = await resolveTarotCardSeo(tarotCardSlug);
     } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
     } else if (categorySlug) {

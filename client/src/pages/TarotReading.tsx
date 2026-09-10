@@ -5,9 +5,10 @@
  * רק לפירוש ה-AI בלחיצה מפורשת (צעד 11) — ואינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, draw, type TarotReading as Reading } from "@shared/tarot";
+import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, cardById, cardSlug, draw, type TarotReading as Reading } from "@shared/tarot";
 import {
   buildAiContext,
   resolvePanel,
@@ -35,7 +36,7 @@ function prefersReducedMotion(): boolean {
 
 export default function TarotReading() {
   const { data, isLoading } = trpc.tarot.getContent.useQuery();
-  useDocumentTitle("קריאה בקלפי טארוט — רוּחַ");
+  useDocumentTitle("קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה");
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [question, setQuestion] = useState(""); // נשלח רק לפירוש AI, בלחיצה מפורשת
@@ -501,6 +502,14 @@ function ResultView({
                 dangerouslySetInnerHTML={{ __html: panel.interpretationHtml }}
               />
               <div style={{ marginTop: 12, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>נכתב על ידי עורך האתר</div>
+              <div style={{ marginTop: 10 }}>
+                <Link
+                  href={`/tarot/card/${cardSlug(cardById(panel.id)!)}`}
+                  style={{ fontSize: 14.5, color: "oklch(0.45 0.10 55)", fontWeight: 600 }}
+                >
+                  לדף הקלף המלא ←
+                </Link>
+              </div>
             </>
           ) : panel.summary ? (
             <p style={{ fontSize: 17, color: "oklch(0.34 0.03 55)", margin: 0 }}>{panel.summary}</p>

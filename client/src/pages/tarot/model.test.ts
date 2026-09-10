@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { cardById, draw, type TarotReading } from "@shared/tarot";
 import {
   buildAiContext,
+  cardAltText,
   cardFallbackGlyph,
+  cardPageView,
   effectiveCardName,
   resolvePanel,
   suitLabel,
@@ -122,5 +124,39 @@ describe("deckSections (דף הגלריה)", () => {
     expect(sections[0].cards[0].id).toBe("major-00");
     expect(sections[0].cards[21].id).toBe("major-21");
     expect(sections[4].cards[13].id).toBe("pents-king");
+  });
+});
+
+describe("card page view (/tarot/card/<slug>)", () => {
+  it("merges struct + DB text by slug, with rich alt", () => {
+    const page = cardPageView(
+      contentWith([
+        { cardId: "major-00", name: "", summary: "התחלה", interpretation: "<p>גוף</p>" },
+      ]),
+      "the-fool",
+    )!;
+    expect(page.view.name).toBe("השוטה");
+    expect(page.view.summary).toBe("התחלה");
+    expect(page.view.interpretationHtml).toBe("<p>גוף</p>");
+    expect(page.alt).toBe("קלף השוטה (The Fool) — חפיסת הטארוט של רוח חכמה");
+    expect(page.view.imageUrl).toContain("/tarot-cards/major-00.webp");
+  });
+
+  it("prev/next are circular in deck order and honor name overrides", () => {
+    const page = cardPageView(
+      contentWith([{ cardId: "major-01", name: "המכשף", summary: "s", interpretation: "" }]),
+      "the-fool",
+    )!;
+    expect(page.next).toEqual({ slug: "the-magician", name: "המכשף" });
+    expect(page.prev.slug).toBe("king-of-pentacles"); // מעגלי: הקלף האחרון בחפיסה
+  });
+
+  it("returns null for an unknown slug", () => {
+    expect(cardPageView(contentWith([]), "nope")).toBeNull();
+  });
+
+  it("cardAltText prefers the override name and keeps the en name", () => {
+    expect(cardAltText(fool)).toContain("השוטה");
+    expect(cardAltText(fool, "התם")).toBe("קלף התם (The Fool) — חפיסת הטארוט של רוח חכמה");
   });
 });

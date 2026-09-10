@@ -7,6 +7,7 @@ vi.mock("./db", () => ({
   getCategoryBySlug: vi.fn(),
   getDerechContent: vi.fn(),
 }));
+vi.mock("./db/tarot", () => ({ getCardText: vi.fn() }));
 
 import {
   injectMetaTags,
@@ -287,7 +288,7 @@ describe("static route SEO — /tarot", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("קריאה בקלפי טארוט — רוּחַ");
+    expect(html).toContain("קריאת טארוט אונליין חינם");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot`);
     expect(html).toContain('og:type" content="website"');
   });
@@ -318,5 +319,72 @@ describe("static route SEO — /accessibility", () => {
     );
     expect(html).toContain("הצהרת נגישות | רוח חכמה");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/accessibility`);
+  });
+});
+
+describe("tarot card page SEO — /tarot/card/<slug>", () => {
+  it("builds a search-targeted head from the DB summary + card image", async () => {
+    const { resolveTarotCardSeo } = await import("./seo");
+    const { getCardText } = await import("./db/tarot");
+    vi.mocked(getCardText).mockResolvedValue({
+      cardId: "major-00",
+      name: "",
+      summary: "התחלה חדשה, תמימות",
+      interpretation: "<p>...</p>",
+    } as any);
+
+    const seo = await resolveTarotCardSeo("the-fool");
+    expect(seo).not.toBeNull();
+    expect(seo!.title).toBe("השוטה — פירוש הקלף בטארוט | רוח חכמה");
+    expect(seo!.description).toContain("התחלה חדשה");
+    expect(seo!.description).toContain("The Fool");
+    expect(seo!.canonicalUrl).toBe(`${SITE_URL_PRODUCTION}/tarot/card/the-fool`);
+    expect(seo!.ogImage).toContain("/tarot-cards/major-00.webp");
+    const lds = seo!.jsonLd as object[];
+    expect(JSON.stringify(lds)).toContain("BreadcrumbList");
+  });
+
+  it("falls back to a generic description when the DB is empty, and honors name overrides", async () => {
+    const { resolveTarotCardSeo } = await import("./seo");
+    const { getCardText } = await import("./db/tarot");
+    vi.mocked(getCardText).mockResolvedValue(undefined as any);
+    const seo = await resolveTarotCardSeo("ace-of-cups");
+    expect(seo!.title).toContain("אס הגביעים");
+    expect(seo!.description).toContain("Ace of Cups");
+  });
+
+  it("returns null for an unknown slug (SPA 404)", async () => {
+    const { resolveTarotCardSeo } = await import("./seo");
+    expect(await resolveTarotCardSeo("not-a-card")).toBeNull();
+  });
+
+  it("seoMiddleware routes /tarot/card/<slug> to the card resolver", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const { getCardText } = await import("./db/tarot");
+    vi.mocked(getCardText).mockResolvedValue(undefined as any);
+    const req = { method: "GET", path: "/tarot/card/the-tower" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("המגדל — פירוש הקלף בטארוט");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/card/the-tower`);
+  });
+});
+
+describe("static route SEO — /tarot/guide (pillar)", () => {
+  it("serves the guide head with FAQPage JSON-LD mirroring the shared FAQ", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const req = { method: "GET", path: "/tarot/guide" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("המדריך לקלפי הטארוט");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/guide`);
+    expect(html).toContain("FAQPage");
+    expect(html).toContain("האם הטארוט מגיד עתידות?");
   });
 });

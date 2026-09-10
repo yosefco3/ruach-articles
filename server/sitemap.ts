@@ -1,5 +1,6 @@
 import { type Request, type Response } from "express";
 import { getArticles, getCategories } from "./db";
+import { CARDS, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 
 interface SitemapEntry {
@@ -84,6 +85,21 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     changefreq: "monthly",
     priority: 0.7, // the full-deck gallery
   });
+
+  entries.push({
+    loc: `${baseUrl}/tarot/guide`,
+    changefreq: "monthly",
+    priority: 0.8, // the pillar guide article
+  });
+
+  // ── Tarot card pages — 78 SEO landing pages ──
+  for (const card of CARDS) {
+    entries.push({
+      loc: `${baseUrl}/tarot/card/${cardSlug(card)}`,
+      changefreq: "monthly",
+      priority: 0.6,
+    });
+  }
   entries.push({
     loc: `${baseUrl}/derech`,
     changefreq: "monthly",

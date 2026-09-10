@@ -26,7 +26,7 @@ describe("TarotCard", () => {
     expect(html).toContain("rotateY(0deg)");
     expect(html).toContain('aria-label="השוטה"');
     expect(html).toContain("/tarot-cards/major-00.webp");
-    expect(html).toContain('alt="השוטה"');
+    expect(html).toContain('alt="קלף השוטה (The Fool) — חפיסת הטארוט של רוח חכמה"');
   });
 
   it("undealt card is transparent and shifted; clickable card gets role=button", () => {

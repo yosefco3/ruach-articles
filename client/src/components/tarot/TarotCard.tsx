@@ -38,7 +38,7 @@ export function CardFace({ view }: { view: CardView }) {
   return (
     <img
       src={view.imageUrl}
-      alt={view.name}
+      alt={`קלף ${view.name} (${view.en}) — חפיסת הטארוט של רוח חכמה`}
       onError={() => setFailed(true)}
       style={{ width: "100%", aspectRatio: "600 / 1030", objectFit: "cover", borderRadius: 10, display: "block" }}
     />
