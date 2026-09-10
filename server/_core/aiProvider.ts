@@ -29,6 +29,14 @@ export async function withRetry<T>(
   throw lastErr;
 }
 
+/**
+ * מרווח לטוקני חשיבה: במודלים חושבים (deepseek-v4-pro) ה-reasoning נספר בתוך
+ * max_tokens, וחשיבה ארוכה עלולה לרוקן את תקציב התשובה ולהחזיר content ריק.
+ * המרווח מתווסף בשכבה הזו כדי ש-maxTokens של הקוראים יישאר "תקציב תשובה".
+ * נדיב בכוונה (החלטת 2026-09-10): המודל זול והחשיבה רצויה — שלא תיקטע.
+ */
+const REASONING_HEADROOM = 4000;
+
 /** קריאה ל-DeepSeek דרך ה-endpoint התואם-OpenAI. */
 async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<string> {
   const res = await fetch(`${env.DEEPSEEK_BASE_URL}/chat/completions`, {
@@ -42,7 +50,7 @@ async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<
       messages: [{ role: "user", content: prompt }],
       // ניתן לכוונן ב-env; ברירת מחדל 0.7 — טמפרטורה גבוהה (1.3) מפרקת את העברית של DeepSeek לג'יבריש.
       temperature: env.DEEPSEEK_TEMPERATURE,
-      max_tokens: maxTokens,
+      max_tokens: maxTokens + REASONING_HEADROOM,
     }),
   });
   if (!res.ok) {
@@ -52,10 +60,17 @@ async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<
     throw new Error(msg);
   }
   const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string; reasoning_content?: string } }[];
   };
-  const text = (data.choices?.[0]?.message?.content ?? "").trim();
-  if (!text) throw new Error("DeepSeek returned empty response");
+  const message = data.choices?.[0]?.message;
+  const text = (message?.content ?? "").trim();
+  if (!text) {
+    // חשיבה בלי תשובה = התקציב נגמר באמצע החשיבה — הודעה מאבחנת נפרדת.
+    if ((message?.reasoning_content ?? "").trim()) {
+      throw new Error("DeepSeek exhausted max_tokens during reasoning (no content)");
+    }
+    throw new Error("DeepSeek returned empty response");
+  }
   return text;
 }
 

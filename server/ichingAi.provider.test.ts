@@ -96,6 +96,31 @@ describe("generateIchingInterpretation — provider selection + retry", () => {
     await expect(generateIchingInterpretation(ctx)).rejects.toThrow(/empty/);
   });
 
+  it("adds reasoning headroom on top of the caller's answer budget (max_tokens)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(dsOk("פירוש"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await generateIchingInterpretation(ctx);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    // iching מבקש 3000 טוקני תשובה + REASONING_HEADROOM (4000) לחשיבת המודל.
+    expect(body.max_tokens).toBe(7000);
+  });
+
+  it("reports budget exhaustion when reasoning exists but content is empty", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { content: "", reasoning_content: "חשיבה ארוכה…" } }],
+        }),
+        text: async () => "",
+      }),
+    );
+    await expect(generateIchingInterpretation(ctx)).rejects.toThrow(/reasoning/);
+  });
+
   it("throws (without calling the network) when DEEPSEEK_API_KEY is missing", async () => {
     env.DEEPSEEK_API_KEY = "";
     const fetchMock = vi.fn();

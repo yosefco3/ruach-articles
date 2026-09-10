@@ -46,7 +46,8 @@ const envSchema = z.object({
 
   // DeepSeek AI (API תואם-OpenAI) — pay-per-use, ללא חסמי free-tier
   DEEPSEEK_API_KEY: z.string().optional(),
-  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  // deepseek-v4-pro (V4-Pro-0813) — מודל חושב: מחזיר reasoning_content לפני content
+  DEEPSEEK_MODEL: z.string().default('deepseek-v4-pro'),
   DEEPSEEK_BASE_URL: z.string().default('https://api.deepseek.com'),
   // 0.7 שמרני — עברית של DeepSeek מתפרקת בטמפרטורות גבוהות (1.3 → ג'יבריש). ניתן לכוונן עד ~1.0.
   DEEPSEEK_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
