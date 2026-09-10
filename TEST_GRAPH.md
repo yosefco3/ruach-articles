@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 13:39_
+_נוצר אוטומטית ב: 2026-09-10 14:12_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 211 |
+| קבצי קוד / source files | 212 |
 | מכוסים / covered | 39 |
-| ללא טסט / uncovered | 172 |
+| ללא טסט / uncovered | 173 |
 | כיסוי / coverage | 18% →0% |
-| טסטים עוברים / passing | 422 ✅ |
+| טסטים עוברים / passing | 429 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -32,6 +32,8 @@ _נוצר אוטומטית ב: 2026-09-10 13:39_
 | `(no source found for ichingAi.provider.test.ts)` | `server/ichingAi.provider.test.ts` |
 | `(no source found for ichingAi.refine.test.ts)` | `server/ichingAi.refine.test.ts` |
 | `(no source found for ichingUsage.test.ts)` | `server/ichingUsage.test.ts` |
+| `(no source found for imageAlt.test.ts)` | `client/src/components/editor/imageAlt.test.ts` |
+| `(no source found for index-html.test.ts)` | `server/index-html.test.ts` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
@@ -178,6 +180,7 @@ _נוצר אוטומטית ב: 2026-09-10 13:39_
 | 🟡 MEDIUM | `client/src/lib/trpcClient.ts` |
 | 🟡 MEDIUM | `client/src/lib/utils.ts` |
 | 🟡 MEDIUM | `client/src/pages/About.tsx` |
+| 🟡 MEDIUM | `client/src/pages/Accessibility.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleOrder.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminCategories.tsx` |
