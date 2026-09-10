@@ -69,16 +69,21 @@ export default function Home() {
             {settings?.heroSubtitle ||
               "מרחב לעומק, לשקט ולחיפוש הפנימי — מאמרים ברוחניות, פילוסופיה וריפוי"}
           </p>
-          <div className="mt-8 max-w-md mx-auto">
+          <form
+            role="search"
+            onSubmit={(e) => e.preventDefault()}
+            className="mt-8 max-w-md mx-auto"
+          >
             <input
-              type="text"
+              type="search"
+              aria-label="חיפוש מאמרים"
               placeholder="חיפוש מאמרים..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2 rounded-lg bg-background border border-border text-foreground placeholder-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               dir="rtl"
             />
-          </div>
+          </form>
         </div>
       </section>
 
@@ -231,6 +236,7 @@ export default function Home() {
             >
               <Input
                 type="text"
+                aria-label="שם (אופציונלי)"
                 placeholder="שם (אופציונלי)"
                 value={nlName}
                 onChange={(e) => setNlName(e.target.value)}
@@ -239,6 +245,7 @@ export default function Home() {
               />
               <Input
                 type="email"
+                aria-label="כתובת דוא״ל"
                 placeholder="כתובת דוא״ל"
                 value={nlEmail}
                 onChange={(e) => setNlEmail(e.target.value)}
