@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { CARD_BACK_IMAGE, draw, type TarotReading as Reading } from "@shared/tarot";
+import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, draw, type TarotReading as Reading } from "@shared/tarot";
 import {
   buildAiContext,
   resolvePanel,
@@ -286,7 +286,7 @@ function DeckDownload() {
         , להוריד, להדפיס ולהשתמש באופן חופשי, עם ייחוס לאתר.
       </p>
       <a
-        href="/tarot-cards/ruach-tarot-deck.zip?v=2"
+        href={`/tarot-cards/ruach-tarot-deck.zip?v=${DECK_ASSETS_VERSION}`}
         download
         style={{
           display: "inline-block",

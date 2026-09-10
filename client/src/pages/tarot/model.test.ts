@@ -68,7 +68,7 @@ describe("toCardViews", () => {
     expect(views[0].name).toBe("השוטה");
     expect(views[0].interpretationHtml).toBe(""); // אין שורת DB — לא מתפוצץ
     expect(views[1].summary).toBe("עצמאות");
-    expect(views[1].imageUrl).toBe("/tarot-cards/pents-09.webp?v=2");
+    expect(views[1].imageUrl).toBe("/tarot-cards/pents-09.webp?v=3");
     expect(views[2].suitLabel).toBe("גביעים · מים");
   });
 });
