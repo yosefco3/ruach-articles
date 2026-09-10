@@ -15,6 +15,14 @@ export const createTarotRouter = (deps: RouterDeps) =>
       return { cards, intro, aiMonthlyLimit: deps.tarotAiMonthlyLimit };
     }),
 
+    // ── מחובר: יתרת המכסה החודשית — להצגה בפאנל עוד לפני הלחיצה ──
+    myUsage: protectedProcedure.query(async ({ ctx }) => {
+      const limit = deps.tarotAiMonthlyLimit;
+      const unlimited = ctx.user.role === "admin";
+      const used = unlimited ? 0 : await deps.db.getTarotMonthlyUsage(ctx.user.dbId);
+      return { used, limit, remaining: Math.max(0, limit - used), unlimited };
+    }),
+
     // ── מחובר: פירוש AI לפריסה, מוגבל במכסה חודשית נפרדת ──
     interpret: protectedProcedure
       .input(

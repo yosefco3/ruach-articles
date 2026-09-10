@@ -39,6 +39,14 @@ export const createIchingRouter = (deps: RouterDeps) =>
         return await deps.evaluateIchingQuestion(input.question);
       }),
 
+    // ── מחובר: יתרת המכסה החודשית — להצגה בפאנל עוד לפני הלחיצה ──
+    myUsage: protectedProcedure.query(async ({ ctx }) => {
+      const limit = deps.ichingAiMonthlyLimit;
+      const unlimited = ctx.user.role === "admin";
+      const used = unlimited ? 0 : await deps.db.getMonthlyUsage(ctx.user.dbId);
+      return { used, limit, remaining: Math.max(0, limit - used), unlimited };
+    }),
+
     // ── מחובר: פירוש AI מותאם-אישית, מוגבל במכסה חודשית ──
     interpret: protectedProcedure
       .input(

@@ -5,15 +5,15 @@ import { httpBatchLink } from "@trpc/client";
 import { getQueryKey } from "@trpc/react-query";
 import superjson from "superjson";
 import { trpc } from "@/lib/trpc";
-import { TarotAiPanel } from "./TarotAiPanel";
+import { IChingAiPanel } from "./IChingAiPanel";
 
 type Usage = { used: number; limit: number; remaining: number; unlimited: boolean };
 
 /** עטיפת providers מינימלית — הרינדור סטטי, אף בקשה לא נשלחת בפועל. */
-function renderPanel(props: Partial<Parameters<typeof TarotAiPanel>[0]> = {}, usage?: Usage) {
+function renderPanel(props: Partial<Parameters<typeof IChingAiPanel>[0]> = {}, usage?: Usage) {
   const queryClient = new QueryClient();
   if (usage) {
-    queryClient.setQueryData(getQueryKey(trpc.tarot.myUsage, undefined, "query"), usage);
+    queryClient.setQueryData(getQueryKey(trpc.iching.myUsage, undefined, "query"), usage);
   }
   const client = trpc.createClient({
     links: [httpBatchLink({ url: "http://localhost:0/api/trpc", transformer: superjson })],
@@ -21,13 +21,15 @@ function renderPanel(props: Partial<Parameters<typeof TarotAiPanel>[0]> = {}, us
   return renderToString(
     <trpc.Provider client={client} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <TarotAiPanel
+        <IChingAiPanel
           question="מה נכון להבין?"
-          cards={[
-            { name: "השוטה", summary: "התחלה", text: "פירוש" },
-            { name: "המגדל", summary: "טלטלה", text: "פירוש" },
-            { name: "הכוכב", summary: "תקווה", text: "פירוש" },
-          ]}
+          context={{
+            baseName: "1 · הבורא",
+            baseText: "פירוש",
+            resultName: "",
+            resultText: "",
+            changingLines: [],
+          }}
           isAuthenticated={false}
           monthlyLimit={5}
           {...props}
@@ -37,36 +39,21 @@ function renderPanel(props: Partial<Parameters<typeof TarotAiPanel>[0]> = {}, us
   );
 }
 
-describe("TarotAiPanel (static render)", () => {
+describe("IChingAiPanel (static render)", () => {
   it("guest: blocked with a login invite carrying the server-configured limit", () => {
     const html = renderPanel({ isAuthenticated: false, monthlyLimit: 7 });
     expect(html).toContain("התחבר עם גוגל");
-    expect(html).toContain("7"); // המספר מהשרת, לא מקובע
-    expect(html).not.toContain("קבל פירוש AI לפריסה כולה");
-  });
-
-  it("authenticated: shows the interpret button and the privacy note", () => {
-    const html = renderPanel({ isAuthenticated: true });
-    expect(html).toContain("קבל פירוש AI לפריסה כולה");
-    expect(html).toContain("אינם נשמרים");
-    expect(html).toContain("נוצר על ידי בינה מלאכותית");
+    expect(html).toContain("7");
+    expect(html).not.toContain("קבל פירוש AI מותאם אישית");
   });
 
   it("authenticated with remaining quota: shows the remaining-readings counter", () => {
     const html = renderPanel(
       { isAuthenticated: true },
-      { used: 2, limit: 5, remaining: 3, unlimited: false },
+      { used: 1, limit: 5, remaining: 4, unlimited: false },
     );
-    expect(html).toContain("נותרו לך 3 קריאות AI חינמיות החודש");
-    expect(html).toContain("קבל פירוש AI לפריסה כולה");
-  });
-
-  it("authenticated with a single remaining reading: singular phrasing", () => {
-    const html = renderPanel(
-      { isAuthenticated: true },
-      { used: 4, limit: 5, remaining: 1, unlimited: false },
-    );
-    expect(html).toContain("נותרה לך קריאת AI חינמית אחת החודש");
+    expect(html).toContain("נותרו לך 4 קריאות AI חינמיות החודש");
+    expect(html).toContain("קבל פירוש AI מותאם אישית");
   });
 
   it("quota exhausted: shows the exhausted message and a disabled button", () => {
@@ -87,7 +74,6 @@ describe("TarotAiPanel (static render)", () => {
     );
     expect(html).not.toContain("נותרו לך");
     expect(html).not.toContain("ניצלת את");
-    expect(html).toContain("קבל פירוש AI לפריסה כולה");
     expect(html).not.toMatch(/<button[^>]*disabled/);
   });
 });

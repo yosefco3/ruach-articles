@@ -44,12 +44,26 @@ const actionButtonStyle: React.CSSProperties = {
   boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
 };
 
+const disabledButtonStyle: React.CSSProperties = {
+  ...actionButtonStyle,
+  background: "oklch(0.80 0.01 70)",
+  cursor: "not-allowed",
+  boxShadow: "none",
+};
+
 const errorTextStyle: React.CSSProperties = {
   margin: 0,
   fontSize: 16.5,
   lineHeight: 1.85,
   color: "oklch(0.42 0.08 45)",
 };
+
+/** "נותרו לך 4 קריאות AI חינמיות החודש" / יחיד תקין ל-1. */
+function remainingLabel(remaining: number): string {
+  return remaining === 1
+    ? "נותרה לך קריאת AI חינמית אחת החודש"
+    : `נותרו לך ${remaining} קריאות AI חינמיות החודש`;
+}
 
 function PanelHeader() {
   return (
@@ -104,6 +118,9 @@ export function TarotAiPanel({
 }) {
   // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
   const [failures, setFailures] = useState(0);
+  const utils = trpc.useUtils();
+  // היתרה החודשית — נטענת רק למחוברים, ומרועננת אחרי כל פירוש מוצלח.
+  const usageQuery = trpc.tarot.myUsage.useQuery(undefined, { enabled: isAuthenticated });
   const mutation = trpc.tarot.interpret.useMutation({
     onError: (err) => {
       const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
@@ -112,6 +129,7 @@ export function TarotAiPanel({
     onSuccess: (data) => {
       setFailures(0);
       onResult?.(data.interpretation);
+      void utils.tarot.myUsage.invalidate();
     },
   });
   const runInterpret = () => mutation.mutate({ question, cards });
@@ -155,6 +173,10 @@ export function TarotAiPanel({
   const isQuotaError =
     mutation.error?.data?.code === "FORBIDDEN" ||
     mutation.error?.message === "QUOTA_EXCEEDED";
+
+  // מיצוי מכסה ידוע עוד לפני לחיצה (מה-query) — מציגים הודעה וכפתור מושבת.
+  const usage = usageQuery.data;
+  const exhausted = !!usage && !usage.unlimited && usage.remaining <= 0;
 
   return (
     <div dir="rtl" style={cardStyle}>
@@ -225,11 +247,27 @@ export function TarotAiPanel({
             נסה שוב
           </button>
         </div>
+      ) : exhausted ? (
+        // ── המכסה נוצלה (ידוע מראש): הודעה + כפתור מושבת ──
+        <div>
+          <p style={{ ...errorTextStyle, marginBottom: 16 }}>
+            ניצלת את {usage.limit} הקריאות החינמיות שלך לחודש זה. תוכל להמשיך ליהנות מפירושי
+            הקלפים שבאתר — המכסה מתחדשת בתחילת החודש הבא.
+          </p>
+          <button disabled style={disabledButtonStyle}>
+            קבל פירוש AI לפריסה כולה
+          </button>
+        </div>
       ) : (
         <div>
           <button onClick={runInterpret} style={actionButtonStyle}>
             קבל פירוש AI לפריסה כולה
           </button>
+          {usage && !usage.unlimited && (
+            <div style={{ marginTop: 10, fontSize: 13.5, fontWeight: 600, color: "oklch(0.46 0.09 58)" }}>
+              {remainingLabel(usage.remaining)}
+            </div>
+          )}
           <div style={{ marginTop: 10, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>
             השאלה והקלפים נשלחים לפירוש בלחיצה זו בלבד — ואינם נשמרים.
           </div>
