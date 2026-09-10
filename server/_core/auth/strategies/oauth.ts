@@ -11,6 +11,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { env } from '../../env.js';
 import { upsertUser, getUserByOpenId } from '../../../db.js';
+import { safeReturnTo } from '../returnTo.js';
 
 // Create MySQL session store
 const MySQLStore = MySQLStoreFactory(session);
@@ -125,8 +126,17 @@ export function setupOAuth(app: express.Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Start Google login flow
-  app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+  // Start Google login flow. ?returnTo=/tarot (נתיב פנימי בלבד) נשמר בסשן
+  // כדי להחזיר את המשתמש לאותו דף אחרי ההתחברות במקום לדף הבית.
+  app.get(
+    '/api/auth/google',
+    (req, _res, next) => {
+      const returnTo = safeReturnTo(req.query.returnTo);
+      if (returnTo) (req.session as any).returnTo = returnTo;
+      next();
+    },
+    passport.authenticate('google', { scope: ['profile', 'email'] }),
+  );
 
   // Google callback
   app.get(
@@ -140,11 +150,13 @@ export function setupOAuth(app: express.Express) {
         sessionID: req.sessionID,
       });
 
+      const returnTo = safeReturnTo((req.session as any).returnTo) ?? '/';
+      delete (req.session as any).returnTo;
       req.session.save((err) => {
         if (err) {
           console.error('[OAuth] Session save error:', err);
         }
-        res.redirect('/');
+        res.redirect(returnTo);
       });
     },
   );

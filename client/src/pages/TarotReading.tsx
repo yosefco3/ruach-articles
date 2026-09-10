@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
 import { buildTarotPrintHtml, printHtmlDocument } from "@/lib/printReading";
+import { savePendingTarot, takePendingTarot } from "@/lib/pendingReading";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, cardById, cardSlug, draw, type TarotReading as Reading } from "@shared/tarot";
 import {
@@ -51,6 +52,18 @@ export default function TarotReading() {
 
   const cancelDeal = useRef<() => void>(() => {});
   useEffect(() => () => cancelDeal.current(), []);
+
+  // שחזור פריסה שנשמרה לפני התחברות גוגל (returnTo מחזיר לכאן) — פעם אחת בעלייה.
+  useEffect(() => {
+    const pending = takePendingTarot();
+    if (pending) {
+      setReading(pending.reading);
+      setQuestion(pending.q);
+      setQSaved(pending.q);
+      setSelected(null);
+      setPhase("result");
+    }
+  }, []);
 
   function onDraw() {
     cancelDeal.current();
@@ -170,6 +183,29 @@ export default function TarotReading() {
                 boxShadow: "0 10px 36px oklch(0.3 0.04 55 / 0.08)",
               }}
             >
+              {content.intro.aiEnabled && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 18,
+                    padding: "12px 16px",
+                    background: "oklch(0.95 0.03 82)",
+                    border: "1px solid oklch(0.80 0.06 78)",
+                    borderRadius: 10,
+                    fontSize: 14.5,
+                    lineHeight: 1.7,
+                    color: "oklch(0.36 0.05 55)",
+                  }}
+                >
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
+                  <span>
+                    חדש באתר: <strong>פירוש AI אישי לפריסה</strong> — שלפו קלפים וקבלו פירוש
+                    המחבר את שלושת הקלפים לשאלתכם (חינם, למשתמשים מחוברים).
+                  </span>
+                </div>
+              )}
               <label
                 style={{ display: "block", fontFamily: SERIF, fontWeight: 700, fontSize: 22, marginBottom: 14, color: "oklch(0.26 0.03 55)" }}
               >
@@ -471,6 +507,7 @@ function ResultView({
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
           onResult={setAiMd}
+          onBeforeLogin={() => savePendingTarot(qSaved, reading)}
         />
       )}
 
