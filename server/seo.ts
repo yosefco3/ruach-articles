@@ -1,5 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent } from "./db";
+import { getCardText } from "./db/tarot";
+import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
@@ -272,10 +274,68 @@ export async function resolveDerechSeo(): Promise<SeoData> {
   };
 }
 
+// ─── Tarot card pages (/tarot/card/<slug>) ─────────────────────────────────
+
+/**
+ * SEO לדף קלף בודד — הכותרת מכוונת לשאילתת החיפוש ("פירוש קלף X בטארוט"),
+ * התיאור הוא שורת המהות מה-DB (fallback לתיאור גנרי), והתמונה היא איור
+ * הקלף המקורי. null לקלף לא-קיים → SPA 404.
+ */
+export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null> {
+  const card = cardBySlug(slug);
+  if (!card) return null;
+
+  let row: { name: string; summary: string } | undefined;
+  try {
+    row = await getCardText(card.id);
+  } catch (err) {
+    console.warn("[SEO] Error fetching tarot card text:", err);
+  }
+  const name = row?.name.trim() ? row.name : card.he;
+  const cardUrl = `${SITE_URL_PRODUCTION}/tarot/card/${cardSlug(card)}`;
+  const title = `${name} — פירוש הקלף בטארוט | רוח חכמה`;
+  const description = row?.summary.trim()
+    ? `${name} (${card.en}) — ${row.summary}. פירוש מלא של הקלף בחפיסת ריידר־וייט, מתוך חפיסת הטארוט המקורית של רוח חכמה.`
+    : `פירוש הקלף ${name} (${card.en}) בטארוט — משמעות, סמליות ומה הוא אומר בקריאה.`;
+  const image = toAbsoluteImageUrl(cardImagePath(card.id));
+
+  return {
+    title,
+    description,
+    ogTitle: title,
+    ogDescription: description,
+    ogImage: image,
+    ogImageAlt: `קלף ${name} — חפיסת הטארוט של רוח חכמה`,
+    ogUrl: cardUrl,
+    ogType: "article",
+    ogLocale: "he_IL",
+    canonicalUrl: cardUrl,
+    jsonLd: [
+      articleLd({
+        title,
+        url: cardUrl,
+        description,
+        image,
+        authorName: "יוסף כהן",
+      }),
+      breadcrumbLd([
+        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
+        { name, url: cardUrl },
+      ]),
+    ],
+  };
+}
+
 // ─── Route Matchers ─────────────────────────────────────────────────────────
 
 function matchArticleSlug(pathname: string): string | null {
   const match = pathname.match(/^\/article\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+export function matchTarotCardSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/tarot\/card\/([^/]+)$/);
   return match ? match[1] : null;
 }
 
@@ -402,11 +462,14 @@ export async function seoMiddleware(
   try {
     const articleSlug = matchArticleSlug(pathname);
     const categorySlug = matchCategorySlug(pathname);
+    const tarotCardSlug = matchTarotCardSlug(pathname);
 
     if (pathname === "/derech") {
       seo = await resolveDerechSeo();
     } else if (STATIC_ROUTE_SEO[pathname]) {
       seo = STATIC_ROUTE_SEO[pathname];
+    } else if (tarotCardSlug) {
+      seo = await resolveTarotCardSeo(tarotCardSlug);
     } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
     } else if (categorySlug) {
