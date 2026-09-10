@@ -10,6 +10,9 @@ import type { Request, Response } from "express";
 import { buildStoreZip, type ZipEntry } from "./_core/zip";
 
 export const DECK_ZIP_ROUTE = "/tarot-cards/ruach-tarot-deck.zip";
+export const DECK_ZIP_ROUTE_EN = "/tarot-cards/ruach-tarot-deck-en.zip";
+
+export type DeckVariant = "he" | "en";
 
 const IMAGE_EXTS = new Set([".webp", ".png", ".jpg", ".jpeg"]);
 
@@ -64,34 +67,46 @@ async function dirSignature(dir: string, files: string[]): Promise<string> {
   return files.map((f, i) => `${f}:${stats[i].mtimeMs}:${stats[i].size}`).join("|");
 }
 
-let cache: { signature: string; zip: Buffer } | null = null;
+const caches: Partial<Record<DeckVariant, { signature: string; zip: Buffer }>> = {};
 
 /** לבדיקות: איפוס ה-cache. */
 export function resetDeckZipCache(): void {
-  cache = null;
+  delete caches.he;
+  delete caches.en;
 }
 
 /** בונה (או מחזיר מה-cache) את ה-ZIP; null כשאין נכסים כלל. */
-export async function buildDeckZip(baseDir?: string): Promise<Buffer | null> {
+export async function buildDeckZip(baseDir?: string, variant: DeckVariant = "he"): Promise<Buffer | null> {
   const root = baseDir ?? (await resolveAssetsDir());
   if (!root) return null;
 
-  // print/ עם קבצים → מעדיפים את גרסת ההדפסה המלאה
   let dir = root;
-  try {
-    const printDir = path.join(root, "print");
-    if ((await fs.stat(printDir)).isDirectory() && (await listImages(printDir)).length > 0) {
-      dir = printDir;
+  if (variant === "en") {
+    // הגרסה עם השמות באנגלית חיה בתת-תיקיית en/
+    dir = path.join(root, "en");
+    try {
+      if (!(await fs.stat(dir)).isDirectory()) return null;
+    } catch {
+      return null;
     }
-  } catch {
-    /* אין print/ */
+  } else {
+    // print/ עם קבצים → מעדיפים את גרסת ההדפסה המלאה
+    try {
+      const printDir = path.join(root, "print");
+      if ((await fs.stat(printDir)).isDirectory() && (await listImages(printDir)).length > 0) {
+        dir = printDir;
+      }
+    } catch {
+      /* אין print/ */
+    }
   }
 
   const files = await listImages(dir);
   if (files.length === 0) return null;
 
   const signature = `${dir}::${await dirSignature(dir, files)}`;
-  if (cache?.signature === signature) return cache.zip;
+  const cached = caches[variant];
+  if (cached?.signature === signature) return cached.zip;
 
   const entries: ZipEntry[] = [
     { name: "README.txt", data: Buffer.from(readmeText(), "utf-8") },
@@ -100,27 +115,32 @@ export async function buildDeckZip(baseDir?: string): Promise<Buffer | null> {
     entries.push({ name: f, data: await fs.readFile(path.join(dir, f)) });
   }
   const zip = buildStoreZip(entries);
-  cache = { signature, zip };
+  caches[variant] = { signature, zip };
   return zip;
 }
 
-export async function serveDeckZip(_req: Request, res: Response): Promise<void> {
-  try {
-    const zip = await buildDeckZip();
-    if (!zip) {
-      res.status(404).send("Deck assets are not available yet.");
-      return;
+function makeServeDeckZip(variant: DeckVariant, filename: string) {
+  return async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const zip = await buildDeckZip(undefined, variant);
+      if (!zip) {
+        res.status(404).send("Deck assets are not available yet.");
+        return;
+      }
+      res
+        .status(200)
+        .set({
+          "Content-Type": "application/zip",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "public, max-age=3600",
+        })
+        .send(zip);
+    } catch (err) {
+      console.error("[tarot] deck zip failed:", err);
+      res.status(500).send("Failed to build the deck archive.");
     }
-    res
-      .status(200)
-      .set({
-        "Content-Type": "application/zip",
-        "Content-Disposition": 'attachment; filename="ruach-tarot-deck.zip"',
-        "Cache-Control": "public, max-age=3600",
-      })
-      .send(zip);
-  } catch (err) {
-    console.error("[tarot] deck zip failed:", err);
-    res.status(500).send("Failed to build the deck archive.");
-  }
+  };
 }
+
+export const serveDeckZip = makeServeDeckZip("he", "ruach-tarot-deck.zip");
+export const serveDeckZipEn = makeServeDeckZip("en", "ruach-tarot-deck-en.zip");

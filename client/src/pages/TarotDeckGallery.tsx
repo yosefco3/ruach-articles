@@ -4,6 +4,7 @@
  * גביעים·מים, חרבות·אוויר, מטבעות·אדמה). סטטי לחלוטין — המבנה והשמות
  * מ-`shared/tarot` (deckSections), התמונות מ-/tarot-cards/<id>.webp.
  */
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { cardImagePath, type CardStruct } from "@shared/tarot";
@@ -15,9 +16,9 @@ const SANS = "'Heebo',sans-serif";
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
   "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"];
 
-function CardTile({ card }: { card: CardStruct }) {
+function CardTile({ card, onOpen }: { card: CardStruct; onOpen: (c: CardStruct) => void }) {
   return (
-    <figure style={{ margin: 0, textAlign: "center" }}>
+    <figure style={{ margin: 0, textAlign: "center", cursor: "zoom-in" }} onClick={() => onOpen(card)}>
       <img
         src={cardImagePath(card.id)}
         alt={`${card.he} — ${card.en}`}
@@ -43,9 +44,60 @@ function CardTile({ card }: { card: CardStruct }) {
   );
 }
 
+/** לייטבוקס: הקלף בהגדלה; נסגר בלחיצה או ב-Escape. */
+function Lightbox({ card, onClose }: { card: CardStruct; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+  return (
+    <div
+      role="dialog"
+      aria-label={card.he}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 80,
+        background: "oklch(0.15 0.02 55 / 0.86)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 14,
+        padding: 20,
+        cursor: "zoom-out",
+        animation: "fadeUp 0.25s ease both",
+      }}
+    >
+      <img
+        src={cardImagePath(card.id)}
+        alt={`${card.he} — ${card.en}`}
+        style={{
+          maxHeight: "82vh",
+          maxWidth: "min(92vw, 480px)",
+          borderRadius: 14,
+          boxShadow: "0 24px 70px oklch(0 0 0 / 0.55)",
+        }}
+      />
+      <div style={{ textAlign: "center", color: "oklch(0.95 0.01 80)" }}>
+        <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 20 }}>{card.he}</div>
+        <div style={{ fontSize: 13.5, opacity: 0.75 }}>{card.en}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function TarotDeckGallery() {
   useDocumentTitle("החפיסה המלאה — 78 קלפי הטארוט של רוּחַ");
   const sections = deckSections();
+  const [open, setOpen] = useState<CardStruct | null>(null);
 
   return (
     <div
@@ -146,7 +198,7 @@ export default function TarotDeckGallery() {
               }}
             >
               {section.cards.map((card) => (
-                <CardTile key={card.id} card={card} />
+                <CardTile key={card.id} card={card} onOpen={setOpen} />
               ))}
             </div>
           </section>
@@ -161,24 +213,44 @@ export default function TarotDeckGallery() {
             paddingTop: 40,
           }}
         >
-          <a
-            href="/tarot-cards/ruach-tarot-deck.zip"
-            download
-            style={{
-              display: "inline-block",
-              padding: "13px 34px",
-              fontFamily: SERIF,
-              fontWeight: 700,
-              fontSize: 18,
-              color: "oklch(0.98 0.008 80)",
-              background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
-              borderRadius: 10,
-              textDecoration: "none",
-              boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
-            }}
-          >
-            הורדת החפיסה (ZIP)
-          </a>
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            <a
+              href="/tarot-cards/ruach-tarot-deck.zip?v=2"
+              download
+              style={{
+                display: "inline-block",
+                padding: "13px 34px",
+                fontFamily: SERIF,
+                fontWeight: 700,
+                fontSize: 18,
+                color: "oklch(0.98 0.008 80)",
+                background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
+                borderRadius: 10,
+                textDecoration: "none",
+                boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
+              }}
+            >
+              הורדת החפיסה (ZIP)
+            </a>
+            <a
+              href="/tarot-cards/ruach-tarot-deck-en.zip?v=2"
+              download
+              style={{
+                display: "inline-block",
+                padding: "13px 30px",
+                fontFamily: SERIF,
+                fontWeight: 700,
+                fontSize: 17,
+                color: "oklch(0.40 0.09 52)",
+                background: "oklch(0.99 0.008 80)",
+                border: "1.5px solid oklch(0.55 0.08 55)",
+                borderRadius: 10,
+                textDecoration: "none",
+              }}
+            >
+              English deck (ZIP)
+            </a>
+          </div>
           <div style={{ marginTop: 18 }}>
             <Link href="/tarot" style={{ color: "oklch(0.45 0.10 55)", fontSize: 15.5, fontWeight: 600 }}>
               → לקריאה בקלפים
@@ -189,6 +261,7 @@ export default function TarotDeckGallery() {
           </p>
         </div>
       </div>
+      {open && <Lightbox card={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }
