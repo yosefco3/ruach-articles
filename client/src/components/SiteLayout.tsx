@@ -382,6 +382,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               >
                 יצירת קשר
               </Link>
+              <Link
+                href="/accessibility"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                הצהרת נגישות
+              </Link>
             </nav>
           </div>
 

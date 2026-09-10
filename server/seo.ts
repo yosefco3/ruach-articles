@@ -189,11 +189,25 @@ const TAROT_DECK_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const ACCESSIBILITY_SEO: SeoData = {
+  title: "הצהרת נגישות | רוח חכמה",
+  description:
+    "הצהרת הנגישות של אתר רוח חכמה: מה נגיש באתר, מה בתהליך הנגשה, ולאן פונים בכל קושי או הצעה.",
+  ogTitle: "הצהרת נגישות | רוח חכמה",
+  ogDescription: "מה נגיש באתר רוח חכמה, מה בתהליך, ודרכי פנייה.",
+  ogUrl: `${SITE_URL_PRODUCTION}/accessibility`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/accessibility`,
+  jsonLd: siteLd(),
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
   "/tarot/deck": TAROT_DECK_SEO,
   "/derech": DERECH_SEO,
+  "/accessibility": ACCESSIBILITY_SEO,
 };
 
 // ─── /derech FAQPage (GEO) ──────────────────────────────────────────────────

@@ -7,6 +7,7 @@ export const LazyCategoryPage = lazy(() => import("../pages/CategoryPage"));
 export const LazyAbout = lazy(() => import("../pages/About"));
 export const LazyDerech = lazy(() => import("../pages/Derech"));
 export const LazyContact = lazy(() => import("../pages/Contact"));
+export const LazyAccessibility = lazy(() => import("../pages/Accessibility"));
 export const LazyGuestPostForm = lazy(() => import("../pages/GuestPostForm"));
 export const LazyUserProfile = lazy(() => import("../pages/UserProfile"));
 export const LazyIChing = lazy(() => import("../pages/IChingReading"));
