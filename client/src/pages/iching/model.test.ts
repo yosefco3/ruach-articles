@@ -169,6 +169,7 @@ describe("the question only leaves the browser on explicit user actions", () => 
     expect(ichingKeys.sort()).toEqual(
       [
         "iching.getContent",
+        "iching.myUsage",
         "iching.refineQuestion",
         "iching.interpret",
         "iching.updateIntro",
@@ -178,6 +179,8 @@ describe("the question only leaves the browser on explicit user actions", () => 
     );
     // טעינת הדף משתמשת רק ב-query הזה — ללא קלט שאלה.
     expect(appRouter._def.procedures["iching.getContent"]._def.type).toBe("query");
+    // יתרת המכסה — query ללא קלט כלל; השאלה לא עוברת דרכו.
+    expect(appRouter._def.procedures["iching.myUsage"]._def.type).toBe("query");
     // השאלה נשלחת רק דרך mutations מפורשים שהמשתמש יוזם (הטלה / כפתור ה-AI); השרת לא שומר אותה.
     expect(appRouter._def.procedures["iching.refineQuestion"]._def.type).toBe("mutation");
     expect(appRouter._def.procedures["iching.interpret"]._def.type).toBe("mutation");
