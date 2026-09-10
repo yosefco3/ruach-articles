@@ -250,7 +250,12 @@ export default function RichTextEditor({
 
   const addImage = () => {
     const url = prompt("הזינו את כתובת התמונה:");
-    if (url) editor.chain().focus().setImage({ src: url }).run();
+    if (!url) return;
+    // Alt text is collected up front so article bodies never accumulate
+    // unlabeled images; an empty value is a declared-decorative alt="".
+    const alt =
+      prompt("תיאור התמונה לקוראי מסך (טקסט חלופי; השאירו ריק לתמונה דקורטיבית):") ?? "";
+    editor.chain().focus().setImage({ src: url, alt }).run();
   };
 
   const insertTable = () => {

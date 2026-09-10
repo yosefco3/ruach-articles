@@ -80,9 +80,18 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
 
       {/* New Comment Form */}
       {isAuthenticated ? (
-        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-          <h3 className="font-medium text-foreground">הוסף תגובה</h3>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmitComment();
+          }}
+          className="bg-card border border-border rounded-xl p-6 space-y-4"
+        >
+          <label htmlFor="new-comment" className="block font-medium text-foreground">
+            הוסף תגובה
+          </label>
           <Textarea
+            id="new-comment"
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="כתוב את דעתך..."
@@ -92,7 +101,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
           />
           <div className="flex justify-end">
             <Button
-              onClick={handleSubmitComment}
+              type="submit"
               disabled={createCommentMutation.isPending}
               className="gap-2"
             >
@@ -100,7 +109,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
               שלח תגובה
             </Button>
           </div>
-        </div>
+        </form>
       ) : (
         <div className="bg-accent/20 border border-accent/30 rounded-xl p-6 text-center">
           <p className="text-foreground mb-4">כדי להוסיף תגובה, אנא התחבר</p>

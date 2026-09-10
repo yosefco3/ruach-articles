@@ -26,6 +26,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <a href="#main" className="skip-link">
+        דילוג לתוכן הראשי
+      </a>
       {/* ── Top Navigation ── */}
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container">
@@ -44,7 +47,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav aria-label="ניווט ראשי" className="hidden md:flex items-center gap-1">
               <Link
                 href="/iching"
                 className={`inline-flex items-center gap-1.5 px-4 py-2 me-1 rounded-full text-sm font-semibold border transition-colors ${
@@ -223,6 +226,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 variant="ghost"
                 size="icon"
                 className="md:hidden"
+                aria-label={mobileOpen ? "סגירת תפריט" : "פתיחת תפריט"}
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav"
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -233,7 +239,11 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-card px-4 py-3 flex flex-col gap-1">
+          <nav
+            id="mobile-nav"
+            aria-label="ניווט נייד"
+            className="md:hidden border-t border-border bg-card px-4 py-3 flex flex-col gap-1"
+          >
             <Link
               href="/iching"
               onClick={() => setMobileOpen(false)}
@@ -307,12 +317,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 לוח ניהול
               </Link>
             )}
-          </div>
+          </nav>
         )}
       </header>
 
       {/* ── Main Content ── */}
-      <main className="flex-1">{children}</main>
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
 
       {/* ── Footer ── */}
       <footer className="bg-card border-t border-border mt-16">
@@ -330,7 +342,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               </p>
             </div>
 
-            <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            <nav aria-label="ניווט תחתון" className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               {(categories ?? []).map((cat) => (
                 <Link
                   key={cat.slug}
@@ -369,6 +381,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 יצירת קשר
+              </Link>
+              <Link
+                href="/accessibility"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                הצהרת נגישות
               </Link>
             </nav>
           </div>

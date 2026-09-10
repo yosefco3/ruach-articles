@@ -1,6 +1,7 @@
 import { Route } from "wouter";
 import {
   LazyAbout,
+  LazyAccessibility,
   LazyArticlePage,
   LazyDerech,
   LazyCategoryPage,
@@ -23,6 +24,7 @@ export const publicRoutes = [
   <Route key="derech" path="/derech" component={LazyDerech} />,
   <Route key="about" path="/about" component={LazyAbout} />,
   <Route key="contact" path="/contact" component={LazyContact} />,
+  <Route key="accessibility" path="/accessibility" component={LazyAccessibility} />,
   <Route key="guest-post" path="/guest-post" component={LazyGuestPostForm} />,
   <Route key="profile" path="/profile/:id" component={LazyUserProfile} />,
   <Route key="iching" path="/iching" component={LazyIChing} />,

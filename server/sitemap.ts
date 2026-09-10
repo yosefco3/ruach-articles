@@ -94,6 +94,11 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     changefreq: "monthly",
     priority: 0.5,
   });
+  entries.push({
+    loc: `${baseUrl}/accessibility`,
+    changefreq: "yearly",
+    priority: 0.3, // accessibility statement
+  });
 
   // ── Category pages ──
   try {

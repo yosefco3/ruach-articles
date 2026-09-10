@@ -54,8 +54,9 @@ export default function GuestPostForm() {
 
       <div className="bg-card border border-border rounded-xl p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">כותרת המאמר</label>
+          <label htmlFor="guest-title" className="block text-sm font-medium text-foreground mb-2">כותרת המאמר</label>
           <Input
+            id="guest-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="כותרת מעניינת..."
@@ -66,8 +67,9 @@ export default function GuestPostForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">שמך</label>
+            <label htmlFor="guest-author-name" className="block text-sm font-medium text-foreground mb-2">שמך</label>
             <Input
+              id="guest-author-name"
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder="שם מלא"
@@ -76,8 +78,9 @@ export default function GuestPostForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">דוא״ל</label>
+            <label htmlFor="guest-author-email" className="block text-sm font-medium text-foreground mb-2">דוא״ל</label>
             <Input
+              id="guest-author-email"
               type="email"
               value={authorEmail}
               onChange={(e) => setAuthorEmail(e.target.value)}
@@ -89,9 +92,9 @@ export default function GuestPostForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">קטגוריה</label>
+          <label id="guest-category-label" className="block text-sm font-medium text-foreground mb-2">קטגוריה</label>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger dir="rtl">
+            <SelectTrigger dir="rtl" aria-labelledby="guest-category-label">
               <SelectValue placeholder="בחרו קטגוריה" />
             </SelectTrigger>
             <SelectContent>

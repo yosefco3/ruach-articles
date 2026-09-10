@@ -306,3 +306,17 @@ describe("static route SEO — /tarot/deck", () => {
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/deck`);
   });
 });
+
+describe("static route SEO — /accessibility", () => {
+  it("seoMiddleware resolves a head for the accessibility statement page", async () => {
+    const { seoMiddleware, applySeoToHtml } = await import("./seo");
+    const req = { method: "GET", path: "/accessibility" } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    const html = applySeoToHtml(
+      `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
+      req,
+    );
+    expect(html).toContain("הצהרת נגישות | רוח חכמה");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/accessibility`);
+  });
+});
