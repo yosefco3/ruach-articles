@@ -151,6 +151,21 @@
 }
 
 @layer utilities {
+  .skip-link {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: 600;
+    border-radius: 0 0 var(--radius) var(--radius);
+    transform: translateY(-150%);
+  }
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
   .font-display {
     font-family: 'Frank Ruhl Libre', serif;
   }
