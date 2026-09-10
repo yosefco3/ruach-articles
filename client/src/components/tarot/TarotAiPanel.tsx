@@ -9,11 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import type { TarotAiCardContext } from "@/pages/tarot/model";
 
-const LOADING_LINES = [
-  "ה-AI מתבונן בשלושת הקלפים…",
-  "בוחר מסגרת קריאה לפריסה…",
-  "מחבר את הקלפים לשאלתך…",
-];
+const LOADING_MESSAGE = "ה-AI מכין את הפירוש לפריסה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -95,6 +91,7 @@ export function TarotAiPanel({
   isAuthenticated,
   monthlyLimit,
   onResult,
+  onBeforeLogin,
 }: {
   question: string;
   cards: TarotAiCardContext[];
@@ -102,6 +99,8 @@ export function TarotAiPanel({
   monthlyLimit: number;
   /** מדווח להורה על פירוש שהתקבל (markdown) — למשל לצורך הדפסת הפריסה. */
   onResult?: (interpretation: string) => void;
+  /** נקרא רגע לפני הניווט להתחברות גוגל — ההורה שומר את הפריסה לשחזור בחזרה. */
+  onBeforeLogin?: () => void;
 }) {
   // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
   const [failures, setFailures] = useState(0);
@@ -116,20 +115,11 @@ export function TarotAiPanel({
     },
   });
   const runInterpret = () => mutation.mutate({ question, cards });
-  const [loadingLine, setLoadingLine] = useState(0);
 
   const reduced = useRef(false);
   useEffect(() => {
     reduced.current = prefersReducedMotion();
   }, []);
-
-  useEffect(() => {
-    if (!mutation.isPending || reduced.current) return;
-    const id = setInterval(() => {
-      setLoadingLine((i) => (i + 1) % LOADING_LINES.length);
-    }, 1800);
-    return () => clearInterval(id);
-  }, [mutation.isPending]);
 
   // ── אורח: חסום עם הזמנה להתחברות ──
   if (!isAuthenticated) {
@@ -140,7 +130,8 @@ export function TarotAiPanel({
           לקבלת פירוש AI לפריסה כולה, אנא התחבר עם חשבון גוגל (מוגבל ל-{monthlyLimit} קריאות חינם בחודש).
         </p>
         <a
-          href={getLoginUrl()}
+          href={getLoginUrl(typeof window !== "undefined" ? window.location.pathname : "/tarot")}
+          onClick={onBeforeLogin}
           style={{
             display: "inline-block",
             padding: "12px 30px",
@@ -196,7 +187,7 @@ export function TarotAiPanel({
             }}
           />
           <span style={{ fontSize: 16, fontStyle: "italic", color: "oklch(0.46 0.05 58)" }}>
-            {LOADING_LINES[loadingLine]}
+            {LOADING_MESSAGE}
           </span>
         </div>
       ) : isQuotaError ? (

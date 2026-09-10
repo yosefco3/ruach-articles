@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 15:29_
+_נוצר אוטומטית ב: 2026-09-10 15:37_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 216 |
-| מכוסים / covered | 40 |
+| קבצי קוד / source files | 218 |
+| מכוסים / covered | 42 |
 | ללא טסט / uncovered | 176 |
-| כיסוי / coverage | 18% →0% |
-| טסטים עוברים / passing | 453 ✅ |
+| כיסוי / coverage | 19% ↑1% |
+| טסטים עוברים / passing | 461 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -53,12 +53,14 @@ _נוצר אוטומטית ב: 2026-09-10 15:29_
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
+| `client/src/lib/pendingReading.ts` | `client/src/lib/pendingReading.test.ts` |
 | `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |
 | `client/src/pages/tarot/reveal.ts` | `client/src/pages/tarot/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
+| `server/_core/auth/returnTo.ts` | `server/_core/auth/returnTo.test.ts` |
 | `server/_core/vite.ts` | `server/_core/vite.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |

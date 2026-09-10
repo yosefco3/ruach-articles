@@ -8,11 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import type { AiContext } from "@/pages/iching/model";
 
-const LOADING_LINES = [
-  "ה-AI מנתח את ההקסגרמות…",
-  "קורא את המעבר בין הקווים…",
-  "מחבר את הפירוש לשאלתך…",
-];
+const LOADING_MESSAGE = "ה-AI מכין את הפירוש לקריאה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -94,6 +90,7 @@ export function IChingAiPanel({
   isAuthenticated,
   monthlyLimit,
   onResult,
+  onBeforeLogin,
 }: {
   question: string;
   context: AiContext;
@@ -101,6 +98,8 @@ export function IChingAiPanel({
   monthlyLimit: number;
   /** מדווח להורה על פירוש שהתקבל (markdown) — למשל לצורך הדפסת הקריאה. */
   onResult?: (interpretation: string) => void;
+  /** נקרא רגע לפני הניווט להתחברות גוגל — ההורה שומר את הקריאה לשחזור בחזרה. */
+  onBeforeLogin?: () => void;
 }) {
   // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
   const [failures, setFailures] = useState(0);
@@ -115,20 +114,11 @@ export function IChingAiPanel({
     },
   });
   const runInterpret = () => mutation.mutate({ question, ...context });
-  const [loadingLine, setLoadingLine] = useState(0);
 
   const reduced = useRef(false);
   useEffect(() => {
     reduced.current = prefersReducedMotion();
   }, []);
-
-  useEffect(() => {
-    if (!mutation.isPending || reduced.current) return;
-    const id = setInterval(() => {
-      setLoadingLine((i) => (i + 1) % LOADING_LINES.length);
-    }, 1800);
-    return () => clearInterval(id);
-  }, [mutation.isPending]);
 
   // ── אורח: חסום עם הזמנה להתחברות ──
   if (!isAuthenticated) {
@@ -139,7 +129,8 @@ export function IChingAiPanel({
           לקבלת פירוש AI מותאם לשאלתך, אנא התחבר עם חשבון גוגל (מוגבל ל-{monthlyLimit} קריאות חינם בחודש).
         </p>
         <a
-          href={getLoginUrl()}
+          href={getLoginUrl(typeof window !== "undefined" ? window.location.pathname : "/iching")}
+          onClick={onBeforeLogin}
           style={{
             display: "inline-block",
             padding: "12px 30px",
@@ -195,7 +186,7 @@ export function IChingAiPanel({
             }}
           />
           <span style={{ fontSize: 16, fontStyle: "italic", color: "oklch(0.46 0.05 58)" }}>
-            {LOADING_LINES[loadingLine]}
+            {LOADING_MESSAGE}
           </span>
         </div>
       ) : isQuotaError ? (
