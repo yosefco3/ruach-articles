@@ -38,6 +38,7 @@ describe("llms.txt", () => {
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/derech)`);
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/iching)`);
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/tarot)`);
+    expect(body).toContain(`(${SITE_URL_PRODUCTION}/tarot/deck)`);
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/rss.xml)`);
   });
 

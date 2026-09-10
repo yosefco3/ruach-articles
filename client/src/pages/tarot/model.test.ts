@@ -109,3 +109,18 @@ describe("cardFallbackGlyph + draw integration", () => {
     expect(cardFallbackGlyph("wands-01")).toBe("🜂");
   });
 });
+
+describe("deckSections (דף הגלריה)", () => {
+  it("returns 5 sections in fixed order with full counts (22 + 4×14 = 78)", async () => {
+    const { deckSections } = await import("./model");
+    const sections = deckSections();
+    expect(sections.map((s) => s.key)).toEqual(["major", "wands", "cups", "swords", "pents"]);
+    expect(sections.map((s) => s.cards.length)).toEqual([22, 14, 14, 14, 14]);
+    expect(sections[0].title).toBe("אַרְקָנָה גְּדוֹלָה");
+    expect(sections[1].title).toBe("מטות · אש");
+    // ארקנה גדולה בסדר מספרי; סדרות מסתיימות במלך
+    expect(sections[0].cards[0].id).toBe("major-00");
+    expect(sections[0].cards[21].id).toBe("major-21");
+    expect(sections[4].cards[13].id).toBe("pents-king");
+  });
+});

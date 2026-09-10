@@ -69,6 +69,19 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("<loc>https://ruachwisdom.org/tarot</loc>");
   });
 
+  it("includes the /tarot/deck gallery page", async () => {
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as any;
+
+    await serveSitemap({} as any, res);
+
+    const xml = res.send.mock.calls[0][0] as string;
+    expect(xml).toContain("<loc>https://ruachwisdom.org/tarot/deck</loc>");
+  });
+
   it("includes the /derech method page", async () => {
     const res = {
       status: vi.fn().mockReturnThis(),

@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-09 19:51_
+_נוצר אוטומטית ב: 2026-09-10 12:30_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 210 |
+| קבצי קוד / source files | 211 |
 | מכוסים / covered | 39 |
-| ללא טסט / uncovered | 171 |
-| כיסוי / coverage | 18% ↑3% |
-| טסטים עוברים / passing | 415 ✅ |
+| ללא טסט / uncovered | 172 |
+| כיסוי / coverage | 18% →0% |
+| טסטים עוברים / passing | 418 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -197,6 +197,7 @@ _נוצר אוטומטית ב: 2026-09-09 19:51_
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
 | 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TarotDeckGallery.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
 | 🟡 MEDIUM | `server/_core/aiProvider.ts` |

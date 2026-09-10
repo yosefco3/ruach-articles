@@ -3,6 +3,7 @@
  * הקומפוננטות (TarotReading/TarotCard) דקות מעל המודול הזה.
  */
 import {
+  CARDS,
   SUITS,
   cardById,
   cardImagePath,
@@ -102,4 +103,24 @@ export function cardFallbackGlyph(cardId: string): string {
   const struct = cardById(cardId);
   if (!struct || struct.arcana === "major") return "✶";
   return { wands: "🜂", cups: "🜄", swords: "🜁", pents: "🜃" }[struct.suit!];
+}
+
+// ── דף הגלריה (/tarot/deck): חלוקת החפיסה לקבוצות תצוגה ──
+
+export interface DeckSection {
+  key: string;
+  /** "אַרְקָנָה גְּדוֹלָה" או "מָטוֹת · אֵשׁ" */
+  title: string;
+  cards: CardStruct[];
+}
+
+/** 5 קבוצות בסדר קבוע: ארקנה גדולה ואז ארבע הסדרות (בסדר SUITS). */
+export function deckSections(): DeckSection[] {
+  const majors = CARDS.filter((c) => c.arcana === "major");
+  const suits = (Object.keys(SUITS) as (keyof typeof SUITS)[]).map((suit) => ({
+    key: suit,
+    title: `${SUITS[suit].he} · ${SUITS[suit].element}`,
+    cards: CARDS.filter((c) => c.suit === suit),
+  }));
+  return [{ key: "major", title: "אַרְקָנָה גְּדוֹלָה", cards: majors }, ...suits];
 }

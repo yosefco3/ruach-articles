@@ -9,6 +9,7 @@ import {
   LazyHome,
   LazyIChing,
   LazyTarot,
+  LazyTarotDeck,
   LazyUserProfile,
 } from "./lazy";
 
@@ -26,4 +27,5 @@ export const publicRoutes = [
   <Route key="profile" path="/profile/:id" component={LazyUserProfile} />,
   <Route key="iching" path="/iching" component={LazyIChing} />,
   <Route key="tarot" path="/tarot" component={LazyTarot} />,
+  <Route key="tarot-deck" path="/tarot/deck" component={LazyTarotDeck} />,
 ];

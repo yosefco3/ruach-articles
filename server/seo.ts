@@ -175,9 +175,24 @@ const TAROT_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+const TAROT_DECK_SEO: SeoData = {
+  title: "החפיסה המלאה — 78 קלפי הטארוט של רוּחַ",
+  description:
+    "כל 78 הקלפים של חפיסת הטארוט המקורית שצוירה לאתר בסגנון גואש — ארקנה גדולה וארבע הסדרות, צמודים לקומפוזיציות הקלאסיות של ריידר־וייט, בלי צלבים ובלי עירום. כולל הורדה חופשית.",
+  ogTitle: "החפיסה המלאה — 78 קלפי הטארוט של רוּחַ",
+  ogDescription:
+    "כל 78 הקלפים של החפיסה המקורית של האתר, בסגנון גואש — כולל הורדה חופשית.",
+  ogUrl: `${SITE_URL_PRODUCTION}/tarot/deck`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/tarot/deck`,
+  jsonLd: siteLd(),
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
+  "/tarot/deck": TAROT_DECK_SEO,
   "/derech": DERECH_SEO,
 };
 
