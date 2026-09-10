@@ -4,7 +4,9 @@ import {
   CARD_BACK_IMAGE,
   SUITS,
   cardById,
+  cardBySlug,
   cardImagePath,
+  cardSlug,
 } from "./cards";
 
 describe("tarot card structure", () => {
@@ -62,5 +64,24 @@ describe("tarot card structure", () => {
     expect(cardById("nope")).toBeUndefined();
     expect(cardImagePath("major-00")).toBe("/tarot-cards/major-00.webp?v=6");
     expect(CARD_BACK_IMAGE).toBe("/tarot-cards/back.webp?v=6");
+  });
+});
+
+describe("card slugs (/tarot/card/<slug>)", () => {
+  it("derives kebab-case slugs from the canonical en names", () => {
+    expect(cardSlug(cardById("major-00")!)).toBe("the-fool");
+    expect(cardSlug(cardById("wands-01")!)).toBe("ace-of-wands");
+    expect(cardSlug(cardById("pents-queen")!)).toBe("queen-of-pentacles");
+  });
+
+  it("all 78 slugs are unique, lowercase and URL-safe", () => {
+    const slugs = CARDS.map(cardSlug);
+    expect(new Set(slugs).size).toBe(78);
+    for (const s of slugs) expect(s).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+  });
+
+  it("cardBySlug round-trips every card and rejects unknowns", () => {
+    for (const c of CARDS) expect(cardBySlug(cardSlug(c))).toBe(c);
+    expect(cardBySlug("not-a-card")).toBeUndefined();
   });
 });

@@ -140,6 +140,22 @@ export function cardById(id: string): CardStruct | undefined {
 }
 
 /**
+ * Slug ל-URL של דף הקלף (/tarot/card/<slug>) — נגזר משם ה-en הקנוני:
+ * "The Fool" → "the-fool", "Ace of Wands" → "ace-of-wands". ייחודי לכל 78.
+ */
+export function cardSlug(card: CardStruct): string {
+  return card.en.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+const CARD_BY_SLUG: ReadonlyMap<string, CardStruct> = new Map(
+  CARDS.map((c) => [cardSlug(c), c]),
+);
+
+export function cardBySlug(slug: string): CardStruct | undefined {
+  return CARD_BY_SLUG.get(slug);
+}
+
+/**
  * גרסת נכסי החפיסה — מעלים אותה אחרי כל החלפת תמונות כדי לעקוף את מטמון
  * ה-CDN (Cloudflare) והדפדפן: שם הקובץ נשאר, ה-query string משתנה.
  */
