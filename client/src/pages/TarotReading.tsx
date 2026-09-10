@@ -25,6 +25,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
 
+// הקלף האמצעי "נושא את התשובה" (שיטת הפירוש) — לכן הוא נפתח בחוץ אוטומטית עם התוצאה.
+const CENTER_CARD = 1;
+
 // ── סגנונות (השפה של דף האי-צ'ינג) ──
 const SERIF = "'Frank Ruhl Libre',serif";
 const SANS = "'Heebo',sans-serif";
@@ -60,7 +63,7 @@ export default function TarotReading() {
       setReading(pending.reading);
       setQuestion(pending.q);
       setQSaved(pending.q);
-      setSelected(null);
+      setSelected(CENTER_CARD);
       setPhase("result");
     }
   }, []);
@@ -79,7 +82,10 @@ export default function TarotReading() {
         onShuffleStart: () => {},
         onDeal: (i) => setDealtCount(i + 1),
         onFlip: (i) => setFlippedCount(i + 1),
-        onDone: () => setPhase("result"),
+        onDone: () => {
+          setSelected(CENTER_CARD);
+          setPhase("result");
+        },
       },
       { reducedMotion: prefersReducedMotion() },
     );
@@ -89,6 +95,7 @@ export default function TarotReading() {
     cancelDeal.current();
     setDealtCount(SPREAD);
     setFlippedCount(SPREAD);
+    setSelected(CENTER_CARD);
     setPhase("result");
   }
 
