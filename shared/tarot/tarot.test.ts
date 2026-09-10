@@ -60,7 +60,7 @@ describe("tarot card structure", () => {
   it("looks up cards and builds image paths", () => {
     expect(cardById("pents-09")?.he).toBe("תשעה מטבעות");
     expect(cardById("nope")).toBeUndefined();
-    expect(cardImagePath("major-00")).toBe("/tarot-cards/major-00.webp?v=3");
-    expect(CARD_BACK_IMAGE).toBe("/tarot-cards/back.webp?v=3");
+    expect(cardImagePath("major-00")).toBe("/tarot-cards/major-00.webp?v=4");
+    expect(CARD_BACK_IMAGE).toBe("/tarot-cards/back.webp?v=4");
   });
 });

@@ -256,7 +256,12 @@ export default function TarotDeckGallery() {
               → לקריאה בקלפים
             </Link>
           </div>
-          <p style={{ marginTop: 26, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
+          <p style={{ maxWidth: 540, margin: "18px auto 0", fontSize: 14, lineHeight: 1.8, color: "oklch(0.45 0.03 58)" }}>
+            השימוש בחפיסה חופשי — להורדה, להדפסה, לשיתוף וליצירה — בתנאי אחד:
+            בכל פרסום או שימוש פומבי יש לציין את <strong>רוּחַ</strong> כמקור ולצרף
+            קישור פעיל אל <a href="https://ruachwisdom.org/tarot" style={{ color: "oklch(0.45 0.10 55)", fontWeight: 600 }}>ruachwisdom.org/tarot</a>.
+          </p>
+          <p style={{ marginTop: 14, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
             התמונות צוירו על ידי המודלים Claude Fable 5 (עיצוב הסצנות והבימוי) ו־Z-Image Turbo (הציור).
           </p>
         </div>
