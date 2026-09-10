@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 16:20_
+_נוצר אוטומטית ב: 2026-09-10 18:43_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
 | קבצי קוד / source files | 218 |
-| מכוסים / covered | 43 |
-| ללא טסט / uncovered | 175 |
-| כיסוי / coverage | 19% →0% |
-| טסטים עוברים / passing | 466 ✅ |
+| מכוסים / covered | 44 |
+| ללא טסט / uncovered | 174 |
+| כיסוי / coverage | 20% ↑1% |
+| טסטים עוברים / passing | 481 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -47,6 +47,7 @@ _נוצר אוטומטית ב: 2026-09-10 16:20_
 | `client/src/components/ArticleActionsBar.tsx` | `client/src/components/ArticleActionsBar.test.tsx` |
 | `client/src/components/editor/collapsibleQuote.ts` | `client/src/components/editor/collapsibleQuote.test.ts` |
 | `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
+| `client/src/components/iching/IChingAiPanel.tsx` | `client/src/components/iching/IChingAiPanel.test.tsx` |
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
 | `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
@@ -118,7 +119,6 @@ _נוצר אוטומטית ב: 2026-09-10 16:20_
 | 🟡 MEDIUM | `client/src/components/SiteLayout.tsx` |
 | 🟡 MEDIUM | `client/src/components/iching/Coins.tsx` |
 | 🟡 MEDIUM | `client/src/components/iching/Hexagram.tsx` |
-| 🟡 MEDIUM | `client/src/components/iching/IChingAiPanel.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/accordion.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert-dialog.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/alert.tsx` |
