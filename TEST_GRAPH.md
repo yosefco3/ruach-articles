@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 15:41_
+_נוצר אוטומטית ב: 2026-09-10 16:20_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
 | קבצי קוד / source files | 218 |
-| מכוסים / covered | 42 |
-| ללא טסט / uncovered | 176 |
+| מכוסים / covered | 43 |
+| ללא טסט / uncovered | 175 |
 | כיסוי / coverage | 19% →0% |
-| טסטים עוברים / passing | 463 ✅ |
+| טסטים עוברים / passing | 466 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -50,6 +50,7 @@ _נוצר אוטומטית ב: 2026-09-10 15:41_
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
 | `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
+| `client/src/const.ts` | `client/src/const.test.ts` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
@@ -171,7 +172,6 @@ _נוצר אוטומטית ב: 2026-09-10 15:41_
 | 🟡 MEDIUM | `client/src/components/ui/toggle-group.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/toggle.tsx` |
 | 🟡 MEDIUM | `client/src/components/ui/tooltip.tsx` |
-| 🟡 MEDIUM | `client/src/const.ts` |
 | 🟡 MEDIUM | `client/src/contexts/ThemeContext.tsx` |
 | 🟡 MEDIUM | `client/src/entry-client.tsx` |
 | 🟡 MEDIUM | `client/src/hooks/useComposition.ts` |
