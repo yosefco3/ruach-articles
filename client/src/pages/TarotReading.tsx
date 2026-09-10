@@ -36,7 +36,7 @@ function prefersReducedMotion(): boolean {
 
 export default function TarotReading() {
   const { data, isLoading } = trpc.tarot.getContent.useQuery();
-  useDocumentTitle("קריאה בקלפי טארוט — רוּחַ");
+  useDocumentTitle("קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה");
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [question, setQuestion] = useState(""); // נשלח רק לפירוש AI, בלחיצה מפורשת

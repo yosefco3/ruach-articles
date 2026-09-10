@@ -288,7 +288,7 @@ describe("static route SEO — /tarot", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("קריאה בקלפי טארוט — רוּחַ");
+    expect(html).toContain("קריאת טארוט אונליין חינם");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot`);
     expect(html).toContain('og:type" content="website"');
   });
