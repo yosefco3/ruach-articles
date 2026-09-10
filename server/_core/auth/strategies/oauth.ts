@@ -126,17 +126,16 @@ export function setupOAuth(app: express.Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Start Google login flow. ?returnTo=/tarot (נתיב פנימי בלבד) נשמר בסשן
-  // כדי להחזיר את המשתמש לאותו דף אחרי ההתחברות במקום לדף הבית.
-  app.get(
-    '/api/auth/google',
-    (req, _res, next) => {
-      const returnTo = safeReturnTo(req.query.returnTo);
-      if (returnTo) (req.session as any).returnTo = returnTo;
-      next();
-    },
-    passport.authenticate('google', { scope: ['profile', 'email'] }),
-  );
+  // Start Google login flow. ?returnTo=/tarot (נתיב פנימי בלבד) עובר לגוגל
+  // בפרמטר ה-state של OAuth וחוזר ב-callback — לא דרך הסשן, כי passport 0.6+
+  // מחדש (regenerate) את הסשן בעת login וכל מה שנשמר בו לפני כן נמחק.
+  app.get('/api/auth/google', (req, res, next) => {
+    const returnTo = safeReturnTo(req.query.returnTo);
+    passport.authenticate('google', {
+      scope: ['profile', 'email'],
+      ...(returnTo ? { state: returnTo } : {}),
+    })(req, res, next);
+  });
 
   // Google callback
   app.get(
@@ -150,8 +149,7 @@ export function setupOAuth(app: express.Express) {
         sessionID: req.sessionID,
       });
 
-      const returnTo = safeReturnTo((req.session as any).returnTo) ?? '/';
-      delete (req.session as any).returnTo;
+      const returnTo = safeReturnTo(req.query.state) ?? '/';
       req.session.save((err) => {
         if (err) {
           console.error('[OAuth] Session save error:', err);
