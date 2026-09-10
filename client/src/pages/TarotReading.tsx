@@ -97,6 +97,9 @@ export default function TarotReading() {
     setPhase("intro");
     setReading(null);
     setSelected(null);
+    // שליפה חדשה מתחילה נקייה — בלי לרשת את השאלה מהסבב הקודם.
+    setQuestion("");
+    setQSaved("");
   }
 
   if (isLoading || !data) {

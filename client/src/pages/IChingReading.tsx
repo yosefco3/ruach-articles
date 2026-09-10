@@ -223,6 +223,9 @@ export default function IChingReading() {
     setPhase("intro");
     setReading(null);
     setRevealCount(0);
+    // הטלה חדשה מתחילה נקייה — בלי לרשת את השאלה מהסבב הקודם.
+    setQuestion("");
+    setQSaved("");
   }
 
   if (isLoading || !data) {
