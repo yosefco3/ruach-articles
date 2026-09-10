@@ -93,11 +93,14 @@ export function IChingAiPanel({
   context,
   isAuthenticated,
   monthlyLimit,
+  onResult,
 }: {
   question: string;
   context: AiContext;
   isAuthenticated: boolean;
   monthlyLimit: number;
+  /** מדווח להורה על פירוש שהתקבל (markdown) — למשל לצורך הדפסת הקריאה. */
+  onResult?: (interpretation: string) => void;
 }) {
   // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
   const [failures, setFailures] = useState(0);
@@ -106,7 +109,10 @@ export function IChingAiPanel({
       const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
       if (!quota) setFailures((n) => n + 1);
     },
-    onSuccess: () => setFailures(0),
+    onSuccess: (data) => {
+      setFailures(0);
+      onResult?.(data.interpretation);
+    },
   });
   const runInterpret = () => mutation.mutate({ question, ...context });
   const [loadingLine, setLoadingLine] = useState(0);

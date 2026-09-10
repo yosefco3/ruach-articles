@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 14:35_
+_נוצר אוטומטית ב: 2026-09-10 15:29_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 215 |
-| מכוסים / covered | 39 |
+| קבצי קוד / source files | 216 |
+| מכוסים / covered | 40 |
 | ללא טסט / uncovered | 176 |
 | כיסוי / coverage | 18% →0% |
-| טסטים עוברים / passing | 444 ✅ |
+| טסטים עוברים / passing | 453 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -53,6 +53,7 @@ _נוצר אוטומטית ב: 2026-09-10 14:35_
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
+| `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |

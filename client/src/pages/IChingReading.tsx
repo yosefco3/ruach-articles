@@ -5,7 +5,9 @@
  * הניסוח לפני ההטלה (כשהפיצר דלוק) ולפירוש ה-AI (`IChingAiPanel`) — ואינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
+import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
+import { buildIchingPrintHtml, printHtmlDocument } from "@/lib/printReading";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   cast,
@@ -488,6 +490,31 @@ function ResultView({
   const cLabel = changingLabel(reading, content);
   const { isAuthenticated } = useAuth();
   const aiContext = buildAiContext(reading, content);
+  // פירוש ה-AI שהתקבל (markdown) — נשמר רק כדי לצרפו להדפסה; מתאפס עם קריאה חדשה (unmount).
+  const [aiMd, setAiMd] = useState<string | null>(null);
+
+  function onPrint() {
+    printHtmlDocument(
+      buildIchingPrintHtml({
+        question: qSaved,
+        primary: {
+          name: effectiveHexName(reading.primary.number, content.hexagrams),
+          number: reading.primary.number,
+          lines: reading.lines,
+        },
+        derived:
+          hasChanging && reading.resulting && reading.resultLines
+            ? {
+                name: effectiveHexName(reading.resulting.number, content.hexagrams),
+                number: reading.resulting.number,
+                lines: reading.resultLines,
+              }
+            : null,
+        changingLabel: cLabel,
+        aiHtml: aiMd ? (marked.parse(aiMd) as string) : null,
+      }),
+    );
+  }
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -587,6 +614,7 @@ function ResultView({
           context={aiContext}
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
+          onResult={setAiMd}
         />
       )}
 
@@ -633,7 +661,7 @@ function ResultView({
         )}
       </div>
 
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", marginTop: 40 }}>
         <button
           onClick={onReset}
           style={{
@@ -649,6 +677,23 @@ function ResultView({
           }}
         >
           קְרִיאָה חֲדָשָׁה
+        </button>
+        <button
+          onClick={onPrint}
+          title={aiMd ? "הדפסת הקריאה כולל פירוש ה-AI" : "הדפסת הקריאה"}
+          style={{
+            padding: "14px 30px",
+            fontFamily: "'Frank Ruhl Libre',serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "oklch(0.42 0.09 55)",
+            background: "transparent",
+            border: "1.5px solid oklch(0.62 0.08 60)",
+            borderRadius: 999,
+            cursor: "pointer",
+          }}
+        >
+          🖨️ הַדְפָּסַת הַקְּרִיאָה
         </button>
       </div>
     </div>
