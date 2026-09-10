@@ -143,7 +143,7 @@ export function cardById(id: string): CardStruct | undefined {
  * גרסת נכסי החפיסה — מעלים אותה אחרי כל החלפת תמונות כדי לעקוף את מטמון
  * ה-CDN (Cloudflare) והדפדפן: שם הקובץ נשאר, ה-query string משתנה.
  */
-export const DECK_ASSETS_VERSION = 5;
+export const DECK_ASSETS_VERSION = 6;
 
 /** נתיב התמונה הציבורי של קלף; הנכסים מגיעים מצנרת tarot-deck. */
 export function cardImagePath(id: string): string {
