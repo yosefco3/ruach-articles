@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { cardImagePath, type CardStruct } from "@shared/tarot";
+import { DECK_ASSETS_VERSION, cardImagePath, type CardStruct } from "@shared/tarot";
 import { deckSections } from "@/pages/tarot/model";
 
 const SERIF = "'Frank Ruhl Libre',serif";
@@ -215,7 +215,7 @@ export default function TarotDeckGallery() {
         >
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <a
-              href="/tarot-cards/ruach-tarot-deck.zip?v=2"
+              href={`/tarot-cards/ruach-tarot-deck.zip?v=${DECK_ASSETS_VERSION}`}
               download
               style={{
                 display: "inline-block",
@@ -233,7 +233,7 @@ export default function TarotDeckGallery() {
               הורדת החפיסה (ZIP)
             </a>
             <a
-              href="/tarot-cards/ruach-tarot-deck-en.zip?v=2"
+              href={`/tarot-cards/ruach-tarot-deck-en.zip?v=${DECK_ASSETS_VERSION}`}
               download
               style={{
                 display: "inline-block",
