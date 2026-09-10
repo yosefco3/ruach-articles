@@ -6,7 +6,9 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
+import { buildTarotPrintHtml, printHtmlDocument } from "@/lib/printReading";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, cardById, cardSlug, draw, type TarotReading as Reading } from "@shared/tarot";
 import {
@@ -410,6 +412,18 @@ function ResultView({
   const views = toCardViews(reading, content);
   const panel = resolvePanel(views, selected);
   const { isAuthenticated } = useAuth();
+  // פירוש ה-AI שהתקבל (markdown) — נשמר רק כדי לצרפו להדפסה; מתאפס עם שליפה חדשה (unmount).
+  const [aiMd, setAiMd] = useState<string | null>(null);
+
+  function onPrint() {
+    printHtmlDocument(
+      buildTarotPrintHtml({
+        question: qSaved,
+        cards: views.map((v) => ({ name: v.name, suitLabel: v.suitLabel, imageUrl: v.imageUrl })),
+        aiHtml: aiMd ? (marked.parse(aiMd) as string) : null,
+      }),
+    );
+  }
 
   return (
     <div style={{ marginTop: 40 }}>
@@ -456,6 +470,7 @@ function ResultView({
           cards={buildAiContext(views)}
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
+          onResult={setAiMd}
         />
       )}
 
@@ -521,7 +536,7 @@ function ResultView({
         </div>
       )}
 
-      <div style={{ textAlign: "center", marginTop: 40 }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", marginTop: 40 }}>
         <button
           onClick={onReset}
           style={{
@@ -537,6 +552,23 @@ function ResultView({
           }}
         >
           שְׁלִיפָה חֲדָשָׁה
+        </button>
+        <button
+          onClick={onPrint}
+          title={aiMd ? "הדפסת הפריסה כולל פירוש ה-AI" : "הדפסת הפריסה"}
+          style={{
+            padding: "14px 30px",
+            fontFamily: SERIF,
+            fontWeight: 700,
+            fontSize: 18,
+            color: "oklch(0.42 0.09 55)",
+            background: "transparent",
+            border: "1.5px solid oklch(0.62 0.08 60)",
+            borderRadius: 999,
+            cursor: "pointer",
+          }}
+        >
+          🖨️ הַדְפָּסַת הַפְּרִיסָה
         </button>
       </div>
     </div>
