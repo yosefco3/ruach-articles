@@ -302,7 +302,7 @@ describe("static route SEO — /tarot/deck", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("החפיסה המלאה — 78 קלפי הטארוט של רוּחַ");
+    expect(html).toContain("החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/deck`);
   });
 });
