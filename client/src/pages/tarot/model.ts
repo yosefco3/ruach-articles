@@ -6,7 +6,9 @@ import {
   CARDS,
   SUITS,
   cardById,
+  cardBySlug,
   cardImagePath,
+  cardSlug,
   type CardStruct,
   type TarotReading,
 } from "@shared/tarot";
@@ -103,6 +105,54 @@ export function cardFallbackGlyph(cardId: string): string {
   const struct = cardById(cardId);
   if (!struct || struct.arcana === "major") return "✶";
   return { wands: "🜂", cups: "🜄", swords: "🜁", pents: "🜃" }[struct.suit!];
+}
+
+// ── דף קלף בודד (/tarot/card/<slug>) + alt מלא לתמונות ──
+
+/** alt עשיר לתמונת קלף — שם + שם אנגלי + מקור החפיסה (SEO תמונות). */
+export function cardAltText(struct: CardStruct, name?: string): string {
+  return `קלף ${name?.trim() || struct.he} (${struct.en}) — חפיסת הטארוט של רוח חכמה`;
+}
+
+export interface CardPageView {
+  view: CardView;
+  struct: CardStruct;
+  slug: string;
+  alt: string;
+  prev: { slug: string; name: string };
+  next: { slug: string; name: string };
+}
+
+/**
+ * ה-view המלא של דף קלף: מיזוג מבנה+טקסט לפי slug, עם שכן קודם/הבא
+ * (מעגלי, בסדר החפיסה הקבוע). null ל-slug לא מוכר → 404.
+ */
+export function cardPageView(content: TarotContent, slug: string): CardPageView | null {
+  const struct = cardBySlug(slug);
+  if (!struct) return null;
+  const row = findCardText(content.cards, struct.id);
+  const name = effectiveCardName(struct, row);
+  const idx = CARDS.findIndex((c) => c.id === struct.id);
+  const neighbor = (offset: number) => {
+    const s = CARDS[(idx + offset + CARDS.length) % CARDS.length];
+    return { slug: cardSlug(s), name: effectiveCardName(s, findCardText(content.cards, s.id)) };
+  };
+  return {
+    struct,
+    slug,
+    alt: cardAltText(struct, name),
+    prev: neighbor(-1),
+    next: neighbor(1),
+    view: {
+      id: struct.id,
+      name,
+      en: struct.en,
+      summary: row?.summary ?? "",
+      interpretationHtml: row?.interpretation ?? "",
+      imageUrl: cardImagePath(struct.id),
+      suitLabel: suitLabel(struct),
+    },
+  };
 }
 
 // ── דף הגלריה (/tarot/deck): חלוקת החפיסה לקבוצות תצוגה ──
