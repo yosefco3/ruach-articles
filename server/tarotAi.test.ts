@@ -17,8 +17,8 @@ describe("buildTarotPrompt (pure)", () => {
     }
     expect(p.indexOf("השוטה")).toBeLessThan(p.indexOf("המגדל"));
     expect(p.indexOf("המגדל")).toBeLessThan(p.indexOf("הכוכב"));
-    expect(p).toContain("קלף 1 (לפי סדר השליפה)");
-    expect(p).toContain("קלף 3 (לפי סדר השליפה)");
+    expect(p).toContain("קלף 1 (מסייע");
+    expect(p).toContain("קלף 3 (מסייע");
   });
 
   it("an empty question becomes a general-reading line, not an empty quote", () => {
@@ -27,11 +27,13 @@ describe("buildTarotPrompt (pure)", () => {
     expect(p).not.toContain('""');
   });
 
-  it("instructs the model to choose its own frame — no fixed position roles", () => {
+  it("fixes the center-card method: card 2 carries the answer, sides assist", () => {
     const p = buildTarotPrompt({ question: "ש", cards });
-    expect(p).toContain("ללא תפקידים קבועים");
-    expect(p).toContain("בחר/י בעצמך");
-    // אין תפקידי עמדות מוזרקים כחלק מהמבנה
+    expect(p).toContain("קלף 2 (הקלף המרכזי — נושא התשובה)");
+    expect(p).toContain("שיטת הקריאה — קלף מרכזי ושני מסייעים");
+    expect(p).toContain("תומך ומתנגד");
+    expect(p).toContain("סדר עבודה פנימי");
+    // אין תפקידי עבר/הווה/עתיד — השיטה היא מרכזי+מסייעים
     expect(p).not.toContain("קלף העבר");
     expect(p).not.toContain("קלף ההווה");
     expect(p).not.toContain("קלף העתיד");
