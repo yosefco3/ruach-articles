@@ -34,8 +34,10 @@ export async function withRetry<T>(
  * max_tokens, וחשיבה ארוכה עלולה לרוקן את תקציב התשובה ולהחזיר content ריק.
  * המרווח מתווסף בשכבה הזו כדי ש-maxTokens של הקוראים יישאר "תקציב תשובה".
  * נדיב בכוונה (החלטת 2026-09-10): המודל זול והחשיבה רצויה — שלא תיקטע.
+ * הוגדל 4000→12000 (2026-09-10) אחרי מקרה אמת שבו חשיבה ארוכה קטעה פירוש
+ * טארוט אחרי שורת המהות; finish_reason="length" נבדק עכשיו במפורש.
  */
-const REASONING_HEADROOM = 4000;
+const REASONING_HEADROOM = 12000;
 
 /** קריאה ל-DeepSeek דרך ה-endpoint התואם-OpenAI. */
 async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<string> {
@@ -60,10 +62,21 @@ async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<
     throw new Error(msg);
   }
   const data = (await res.json()) as {
-    choices?: { message?: { content?: string; reasoning_content?: string } }[];
+    choices?: {
+      message?: { content?: string; reasoning_content?: string };
+      finish_reason?: string;
+    }[];
   };
-  const message = data.choices?.[0]?.message;
+  const choice = data.choices?.[0];
+  const message = choice?.message;
   const text = (message?.content ?? "").trim();
+  if (choice?.finish_reason === "length") {
+    // תקציב הטוקנים נגמר באמצע הפקה — התשובה קטועה (או ריקה). אורך החשיבה משתנה
+    // בין ריצות, ולכן ניסיון חוזר סביר שיצליח; אסור להחזיר טקסט קטוע כהצלחה.
+    throw new RetryableError(
+      `DeepSeek hit max_tokens (finish_reason=length): reasoning=${(message?.reasoning_content ?? "").length} chars, content=${text.length} chars`,
+    );
+  }
   if (!text) {
     // חשיבה בלי תשובה = התקציב נגמר באמצע החשיבה — הודעה מאבחנת נפרדת.
     if ((message?.reasoning_content ?? "").trim()) {

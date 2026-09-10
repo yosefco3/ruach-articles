@@ -102,8 +102,54 @@ describe("generateIchingInterpretation — provider selection + retry", () => {
 
     await generateIchingInterpretation(ctx);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    // iching מבקש 3000 טוקני תשובה + REASONING_HEADROOM (4000) לחשיבת המודל.
-    expect(body.max_tokens).toBe(7000);
+    // iching מבקש 3000 טוקני תשובה + REASONING_HEADROOM (12000) לחשיבת המודל.
+    expect(body.max_tokens).toBe(15000);
+  });
+
+  it("retries a truncated response (finish_reason=length) instead of returning partial text", async () => {
+    vi.useFakeTimers();
+    const dsTruncated = {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [
+          {
+            message: { content: "**שורת מהות", reasoning_content: "חשיבה ארוכה…" },
+            finish_reason: "length",
+          },
+        ],
+      }),
+      text: async () => "",
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(dsTruncated)
+      .mockResolvedValueOnce(dsOk("פירוש מלא"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = generateIchingInterpretation(ctx);
+    await vi.runAllTimersAsync();
+    await expect(p).resolves.toBe("פירוש מלא");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws (not partial text) when every attempt is truncated by max_tokens", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { content: "קטוע" }, finish_reason: "length" }],
+      }),
+      text: async () => "",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = generateIchingInterpretation(ctx);
+    const assertion = expect(p).rejects.toThrow(/finish_reason=length/);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("reports budget exhaustion when reasoning exists but content is empty", async () => {
