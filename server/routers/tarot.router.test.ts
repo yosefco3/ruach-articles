@@ -24,6 +24,44 @@ describe("tarot.getContent", () => {
   });
 });
 
+describe("tarot.myUsage", () => {
+  it("rejects guests with UNAUTHORIZED", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(caller.tarot.myUsage()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("returns the remaining quota for a regular user", async () => {
+    const { caller } = makeCaller(
+      userCtx(),
+      { getTarotMonthlyUsage: async () => 3 },
+      { tarotAiMonthlyLimit: 5 },
+    );
+    expect(await caller.tarot.myUsage()).toEqual({
+      used: 3,
+      limit: 5,
+      remaining: 2,
+      unlimited: false,
+    });
+  });
+
+  it("clamps remaining to 0 when usage exceeds the limit", async () => {
+    const { caller } = makeCaller(
+      userCtx(),
+      { getTarotMonthlyUsage: async () => 9 },
+      { tarotAiMonthlyLimit: 5 },
+    );
+    expect((await caller.tarot.myUsage()).remaining).toBe(0);
+  });
+
+  it("admins are unlimited and the counter is not read", async () => {
+    const { caller, db } = makeCaller(adminCtx(), {}, { tarotAiMonthlyLimit: 5 });
+    const res = await caller.tarot.myUsage();
+    expect(res.unlimited).toBe(true);
+    expect(res.remaining).toBe(5);
+    expect(db.getTarotMonthlyUsage).not.toHaveBeenCalled();
+  });
+});
+
 describe("tarot.interpret", () => {
   it("rejects guests with UNAUTHORIZED", async () => {
     const { caller } = makeCaller(publicCtx());

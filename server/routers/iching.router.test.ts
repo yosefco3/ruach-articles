@@ -116,6 +116,34 @@ describe("iching admin guards", () => {
   });
 });
 
+describe("iching.myUsage", () => {
+  it("rejects guests with UNAUTHORIZED", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(caller.iching.myUsage()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("returns the remaining quota for a regular user", async () => {
+    const { caller } = makeCaller(
+      userCtx(),
+      { getMonthlyUsage: async () => 4 },
+      { ichingAiMonthlyLimit: 5 },
+    );
+    expect(await caller.iching.myUsage()).toEqual({
+      used: 4,
+      limit: 5,
+      remaining: 1,
+      unlimited: false,
+    });
+  });
+
+  it("admins are unlimited and the counter is not read", async () => {
+    const { caller, db } = makeCaller(adminCtx(), {}, { ichingAiMonthlyLimit: 5 });
+    const res = await caller.iching.myUsage();
+    expect(res.unlimited).toBe(true);
+    expect(db.getMonthlyUsage).not.toHaveBeenCalled();
+  });
+});
+
 describe("iching.interpret", () => {
   const input = {
     question: "האם כדאי לי להחליף עבודה?",
