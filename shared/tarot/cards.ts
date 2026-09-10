@@ -139,9 +139,15 @@ export function cardById(id: string): CardStruct | undefined {
   return CARD_BY_ID.get(id);
 }
 
+/**
+ * גרסת נכסי החפיסה — מעלים אותה אחרי כל החלפת תמונות כדי לעקוף את מטמון
+ * ה-CDN (Cloudflare) והדפדפן: שם הקובץ נשאר, ה-query string משתנה.
+ */
+export const DECK_ASSETS_VERSION = 2;
+
 /** נתיב התמונה הציבורי של קלף; הנכסים מגיעים מצנרת tarot-deck. */
 export function cardImagePath(id: string): string {
-  return `/tarot-cards/${id}.webp`;
+  return `/tarot-cards/${id}.webp?v=${DECK_ASSETS_VERSION}`;
 }
 
-export const CARD_BACK_IMAGE = "/tarot-cards/back.webp";
+export const CARD_BACK_IMAGE = `/tarot-cards/back.webp?v=${DECK_ASSETS_VERSION}`;

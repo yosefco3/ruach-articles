@@ -87,6 +87,25 @@ describe("buildDeckZip", () => {
     expect(names).not.toContain("major-00.webp");
   });
 
+  it("en variant packs the en/ subfolder, independent of the Hebrew cache", async () => {
+    writeFileSync(path.join(dir, "major-00.webp"), Buffer.from("he-img"));
+    mkdirSync(path.join(dir, "en"));
+    writeFileSync(path.join(dir, "en", "major-00.webp"), Buffer.from("en-img"));
+    writeFileSync(path.join(dir, "en", "back.webp"), Buffer.from("en-back"));
+    const he = (await buildDeckZip(dir))!;
+    const en = (await buildDeckZip(dir, "en"))!;
+    const enNames = listZip(en).map((e) => e.name);
+    expect(enNames).toContain("major-00.webp");
+    expect(enNames).toContain("back.webp");
+    expect(enNames).toContain("README.txt");
+    expect(en.equals(he)).toBe(false); // תוכן שונה
+  });
+
+  it("en variant returns null when en/ is missing", async () => {
+    writeFileSync(path.join(dir, "major-00.webp"), Buffer.from("he-img"));
+    expect(await buildDeckZip(dir, "en")).toBeNull();
+  });
+
   it("returns null for an empty directory and caches a built zip", async () => {
     expect(await buildDeckZip(dir)).toBeNull();
     writeFileSync(path.join(dir, "back.webp"), Buffer.from("x"));

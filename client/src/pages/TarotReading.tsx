@@ -286,7 +286,7 @@ function DeckDownload() {
         , להוריד, להדפיס ולהשתמש באופן חופשי, עם ייחוס לאתר.
       </p>
       <a
-        href="/tarot-cards/ruach-tarot-deck.zip"
+        href="/tarot-cards/ruach-tarot-deck.zip?v=2"
         download
         style={{
           display: "inline-block",
