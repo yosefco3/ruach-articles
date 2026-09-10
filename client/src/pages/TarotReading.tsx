@@ -283,7 +283,8 @@ function DeckDownload() {
         <a href="/tarot/deck" style={{ color: "oklch(0.45 0.10 55)", fontWeight: 700 }}>
           לצפות בכל 78 הקלפים
         </a>
-        , להוריד, להדפיס ולהשתמש באופן חופשי, עם ייחוס לאתר.
+        , להוריד, להדפיס ולהשתמש באופן חופשי — בתנאי ייחוס לרוּחַ וצירוף
+        קישור פעיל לאתר בכל פרסום או שימוש פומבי.
       </p>
       <a
         href={`/tarot-cards/ruach-tarot-deck.zip?v=${DECK_ASSETS_VERSION}`}
