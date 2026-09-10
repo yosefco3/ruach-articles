@@ -16,7 +16,7 @@ export function CardFace({ view }: { view: CardView }) {
       <div
         style={{
           width: "100%",
-          aspectRatio: "2 / 3",
+          aspectRatio: "600 / 1030",
           borderRadius: 10,
           display: "flex",
           flexDirection: "column",
@@ -40,7 +40,7 @@ export function CardFace({ view }: { view: CardView }) {
       src={view.imageUrl}
       alt={view.name}
       onError={() => setFailed(true)}
-      style={{ width: "100%", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 10, display: "block" }}
+      style={{ width: "100%", aspectRatio: "600 / 1030", objectFit: "cover", borderRadius: 10, display: "block" }}
     />
   );
 }
@@ -54,7 +54,7 @@ export function CardBack() {
         aria-hidden
         style={{
           width: "100%",
-          aspectRatio: "2 / 3",
+          aspectRatio: "600 / 1030",
           borderRadius: 10,
           display: "flex",
           alignItems: "center",
@@ -77,7 +77,7 @@ export function CardBack() {
       alt=""
       aria-hidden
       onError={() => setFailed(true)}
-      style={{ width: "100%", aspectRatio: "2 / 3", objectFit: "cover", borderRadius: 10, display: "block" }}
+      style={{ width: "100%", aspectRatio: "600 / 1030", objectFit: "cover", borderRadius: 10, display: "block" }}
     />
   );
 }
@@ -114,7 +114,7 @@ export function TarotCard({
         style={{
           position: "relative",
           width: "100%",
-          aspectRatio: "2 / 3",
+          aspectRatio: "600 / 1030",
           transformStyle: "preserve-3d",
           transition: "transform .7s cubic-bezier(.2,.7,.25,1)",
           transform: faceUp ? "rotateY(0deg)" : "rotateY(180deg)",
