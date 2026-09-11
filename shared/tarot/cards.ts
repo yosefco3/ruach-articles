@@ -63,7 +63,7 @@ export const CARDS: CardStruct[] = [
   major(13, "המוות", "Death"),
   major(14, "האיזון", "Temperance"),
   major(15, "השטן", "The Devil"),
-  major(16, "המגדל", "The Tower"),
+  major(16, "המגדל הבוער", "The Tower"),
   major(17, "הכוכב", "The Star"),
   major(18, "הירח", "The Moon"),
   major(19, "השמש", "The Sun"),
@@ -159,7 +159,7 @@ export function cardBySlug(slug: string): CardStruct | undefined {
  * גרסת נכסי החפיסה — מעלים אותה אחרי כל החלפת תמונות כדי לעקוף את מטמון
  * ה-CDN (Cloudflare) והדפדפן: שם הקובץ נשאר, ה-query string משתנה.
  */
-export const DECK_ASSETS_VERSION = 6;
+export const DECK_ASSETS_VERSION = 7;
 
 /** נתיב התמונה הציבורי של קלף; הנכסים מגיעים מצנרת tarot-deck. */
 export function cardImagePath(id: string): string {
