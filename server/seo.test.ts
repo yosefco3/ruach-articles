@@ -368,7 +368,7 @@ describe("tarot card page SEO — /tarot/card/<slug>", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("המגדל — פירוש הקלף בטארוט");
+    expect(html).toContain("המגדל הבוער — פירוש הקלף בטארוט");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/card/the-tower`);
   });
 });
