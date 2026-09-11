@@ -1,10 +1,10 @@
 /**
  * דף הגלריה של החפיסה המלאה — /tarot/deck.
  * מציג את כל 78 הקלפים בקבוצות: ארקנה גדולה ואז ארבע הסדרות (מטות·אש,
- * גביעים·מים, חרבות·אוויר, מטבעות·אדמה). סטטי לחלוטין — המבנה והשמות
+ * גביעים·מים, חרבות·אוויר, מטבעות·אדמה). כל אריח הוא קישור לדף הקלף
+ * (/tarot/card/<slug>). סטטי לחלוטין — המבנה והשמות
  * מ-`shared/tarot` (deckSections), התמונות מ-/tarot-cards/<id>.webp.
  */
-import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { DECK_ASSETS_VERSION, cardImagePath, cardSlug, type CardStruct } from "@shared/tarot";
@@ -16,100 +16,49 @@ const SANS = "'Heebo',sans-serif";
 const ROMAN = ["0", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
   "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI"];
 
-function CardTile({ card, onOpen }: { card: CardStruct; onOpen: (c: CardStruct) => void }) {
+function CardTile({ card }: { card: CardStruct }) {
   return (
-    <figure style={{ margin: 0, textAlign: "center", cursor: "zoom-in" }} onClick={() => onOpen(card)}>
-      <img
-        src={cardImagePath(card.id)}
-        alt={cardAltText(card)}
-        loading="lazy"
-        style={{
-          width: "100%",
-          height: "auto",
-          borderRadius: 10,
-          border: "1px solid oklch(0.86 0.024 75)",
-          boxShadow: "0 6px 18px oklch(0.3 0.04 55 / 0.10)",
-          background: "oklch(0.93 0.014 80)",
-        }}
-      />
-      <figcaption style={{ marginTop: 8, lineHeight: 1.4 }}>
-        {/* שם הקלף מקשר לדף הפירוש שלו (SEO פנימי); התמונה נשארת לייטבוקס */}
-        <Link
-          href={`/tarot/card/${cardSlug(card)}`}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            display: "block",
-            fontFamily: SERIF,
-            fontWeight: 700,
-            fontSize: 15.5,
-            color: "oklch(0.26 0.03 55)",
-            textDecoration: "none",
-          }}
-        >
-          {card.arcana === "major" && typeof card.number === "number"
-            ? `${ROMAN[card.number]} · ${card.he}`
-            : card.he}
-        </Link>
-        <div style={{ fontSize: 12, color: "oklch(0.52 0.03 60)" }}>{card.en}</div>
-      </figcaption>
-    </figure>
-  );
-}
-
-/** לייטבוקס: הקלף בהגדלה; נסגר בלחיצה או ב-Escape. */
-function Lightbox({ card, onClose }: { card: CardStruct; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-  return (
-    <div
-      role="dialog"
-      aria-label={card.he}
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 80,
-        background: "oklch(0.15 0.02 55 / 0.86)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 14,
-        padding: 20,
-        cursor: "zoom-out",
-        animation: "fadeUp 0.25s ease both",
-      }}
+    <Link
+      href={`/tarot/card/${cardSlug(card)}`}
+      style={{ display: "block", textAlign: "center", textDecoration: "none", color: "inherit" }}
     >
-      <img
-        src={cardImagePath(card.id)}
-        alt={cardAltText(card)}
-        style={{
-          maxHeight: "82vh",
-          maxWidth: "min(92vw, 480px)",
-          borderRadius: 14,
-          boxShadow: "0 24px 70px oklch(0 0 0 / 0.55)",
-        }}
-      />
-      <div style={{ textAlign: "center", color: "oklch(0.95 0.01 80)" }}>
-        <div style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 20 }}>{card.he}</div>
-        <div style={{ fontSize: 13.5, opacity: 0.75 }}>{card.en}</div>
-      </div>
-    </div>
+      <figure style={{ margin: 0 }}>
+        <img
+          src={cardImagePath(card.id)}
+          alt={cardAltText(card)}
+          loading="lazy"
+          style={{
+            width: "100%",
+            height: "auto",
+            borderRadius: 10,
+            border: "1px solid oklch(0.86 0.024 75)",
+            boxShadow: "0 6px 18px oklch(0.3 0.04 55 / 0.10)",
+            background: "oklch(0.93 0.014 80)",
+          }}
+        />
+        <figcaption style={{ marginTop: 8, lineHeight: 1.4 }}>
+          <div
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 700,
+              fontSize: 15.5,
+              color: "oklch(0.26 0.03 55)",
+            }}
+          >
+            {card.arcana === "major" && typeof card.number === "number"
+              ? `${ROMAN[card.number]} · ${card.he}`
+              : card.he}
+          </div>
+          <div style={{ fontSize: 12, color: "oklch(0.52 0.03 60)" }}>{card.en}</div>
+        </figcaption>
+      </figure>
+    </Link>
   );
 }
 
 export default function TarotDeckGallery() {
   useDocumentTitle("החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה");
   const sections = deckSections();
-  const [open, setOpen] = useState<CardStruct | null>(null);
 
   return (
     <div
@@ -210,7 +159,7 @@ export default function TarotDeckGallery() {
               }}
             >
               {section.cards.map((card) => (
-                <CardTile key={card.id} card={card} onOpen={setOpen} />
+                <CardTile key={card.id} card={card} />
               ))}
             </div>
           </section>
@@ -281,7 +230,6 @@ export default function TarotDeckGallery() {
           </p>
         </div>
       </div>
-      {open && <Lightbox card={open} onClose={() => setOpen(null)} />}
     </div>
   );
 }
