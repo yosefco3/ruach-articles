@@ -96,6 +96,7 @@ describe("tarot.interpret", () => {
     expect(generateTarotInterpretation).toHaveBeenCalledWith({
       question: "מה נכון להבין?",
       cards: CARDS,
+      spread: { kind: "three", options: [] },
     });
     expect(db.incrementTarotMonthlyUsage).toHaveBeenCalledOnce();
   });
@@ -235,5 +236,48 @@ describe("tarot.chooseSpread", () => {
   it("rejects an empty question", async () => {
     const { caller } = makeCaller(userCtx(), { getTarotIntro: async () => ({ aiEnabled: true }) });
     await expect(caller.tarot.chooseSpread({ question: "   " })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+});
+
+describe("tarot.interpret — spread plans", () => {
+  const SIX = [...CARDS, ...CARDS];
+  const CHOICE = { kind: "choice" as const, options: ["לעבור דירה", "להישאר"] };
+  const enabled = () => ({
+    getTarotIntro: async () => ({ aiEnabled: true }),
+    getTarotMonthlyUsage: async () => 0,
+    incrementTarotMonthlyUsage: async () => 1,
+  });
+
+  it("choice with 6 cards passes and the AI service receives the spread", async () => {
+    const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
+    const res = await caller.tarot.interpret({ question: "ש", cards: SIX, spread: CHOICE });
+    expect(res.interpretation).toBe("פירוש טארוט לדוגמה");
+    expect(generateTarotInterpretation).toHaveBeenCalledWith({ question: "ש", cards: SIX, spread: CHOICE });
+  });
+
+  it("card count must match the plan: choice with 3 cards, or no spread with 6 cards → BAD_REQUEST", async () => {
+    const { caller, generateTarotInterpretation, db } = makeCaller(userCtx(), enabled());
+    await expect(caller.tarot.interpret({ question: "ש", cards: CARDS, spread: CHOICE })).rejects.toMatchObject({
+      message: "SPREAD_SIZE_MISMATCH",
+    });
+    await expect(caller.tarot.interpret({ question: "ש", cards: SIX })).rejects.toMatchObject({
+      message: "SPREAD_SIZE_MISMATCH",
+    });
+    expect(generateTarotInterpretation).not.toHaveBeenCalled();
+    expect(db.incrementTarotMonthlyUsage).not.toHaveBeenCalled();
+  });
+
+  it("a choice spread with a single option is normalized to three (so 3 cards pass, 4 do not)", async () => {
+    const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
+    await caller.tarot.interpret({ question: "ש", cards: CARDS, spread: { kind: "choice", options: ["רק אחת"] } });
+    expect(generateTarotInterpretation.mock.calls[0][0]).toMatchObject({ spread: { kind: "three" } });
+  });
+
+  it("rejects more than 10 cards at the schema level", async () => {
+    const { caller } = makeCaller(userCtx(), enabled());
+    const eleven = Array.from({ length: 11 }, () => CARDS[0]);
+    await expect(caller.tarot.interpret({ question: "ש", cards: eleven })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
   });
 });

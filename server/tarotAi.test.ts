@@ -122,3 +122,54 @@ describe("chooseTarotSpread (fail-open)", () => {
     await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
   });
 });
+
+describe("buildTarotPrompt — choice spread", () => {
+  const six = [
+    { name: "השוטה", summary: "התחלה", text: "פירוש השוטה" },
+    { name: "המגדל", summary: "טלטלה", text: "פירוש המגדל" },
+    { name: "הכוכב", summary: "תקווה", text: "פירוש הכוכב" },
+    { name: "הקיסרית", summary: "שפע", text: "פירוש הקיסרית" },
+    { name: "הנזיר", summary: "התבודדות", text: "פירוש הנזיר" },
+    { name: "העולם", summary: "השלמה", text: "פירוש העולם" },
+  ];
+  const ctx: TarotAiContext = {
+    question: "לעבור לתל אביב או להישאר בירושלים?",
+    cards: six,
+    spread: { kind: "choice", options: ["לעבור לתל אביב", "להישאר בירושלים"] },
+  };
+
+  it("names both options, the shared positions, and all six cards in plan order", () => {
+    const p = buildTarotPrompt(ctx);
+    expect(p).toContain('דרך א׳: "לעבור לתל אביב"');
+    expect(p).toContain('דרך ב׳: "להישאר בירושלים"');
+    expect(p).toContain("פְּרִיסַת שְׁתֵּי הַדְּרָכִים");
+    expect(p).toContain("קלף 1 — מקומך עכשיו");
+    expect(p).toContain("קלף 6 — מה שאינך רואה");
+    for (const c of six) expect(p).toContain(c.text);
+    // סדר: הצומת → א׳ (2) → ב׳ (2) → מה שאינך רואה
+    const idx = six.map((c) => p.indexOf(c.text));
+    expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    // תפקידי הדרכים תואמים לקלפים 2-5
+    expect(p).toMatch(/קלף 2 — דרך א׳ \("לעבור לתל אביב"\) — מה הדרך מציעה/);
+    expect(p).toMatch(/קלף 5 — דרך ב׳ \("להישאר בירושלים"\) — לאן הדרך מובילה/);
+  });
+
+  it("uses the comparison method, not the center-card method", () => {
+    const p = buildTarotPrompt(ctx);
+    expect(p).toContain("השוואת דרכים באותם תפקידים");
+    expect(p).toContain("ההכרעה נשארת בידי השואל");
+    expect(p).not.toContain("הקלף המרכזי — נושא התשובה");
+    expect(p).not.toContain("תומך ומתנגד");
+    // גדרות משותפות + חוזה פלט
+    expect(p).toContain("שורת מהות");
+    expect(p).toContain("דרך פעולה");
+    expect(p).toContain("אל תבטיח/י ודאות");
+    expect(p).toContain("Markdown");
+  });
+
+  it("spread=three (or none) keeps the center-card prompt", () => {
+    const withThree = buildTarotPrompt({ question: "ש", cards, spread: { kind: "three", options: [] } });
+    expect(withThree).toBe(buildTarotPrompt({ question: "ש", cards }));
+    expect(withThree).toContain("קלף 2 (הקלף המרכזי — נושא התשובה)");
+  });
+});
