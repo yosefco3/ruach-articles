@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardById, draw, spreadPlan, THREE_SPREAD, type TarotReading } from "@shared/tarot";
+import { DECK_ASSETS_VERSION, cardById, draw, spreadPlan, THREE_SPREAD, type TarotReading } from "@shared/tarot";
 import {
   buildAiContext,
   choiceLayout,
@@ -72,7 +72,7 @@ describe("toCardViews", () => {
     expect(views[0].name).toBe("השוטה");
     expect(views[0].interpretationHtml).toBe(""); // אין שורת DB — לא מתפוצץ
     expect(views[1].summary).toBe("עצמאות");
-    expect(views[1].imageUrl).toBe("/tarot-cards/pents-09.webp?v=12");
+    expect(views[1].imageUrl).toBe(`/tarot-cards/pents-09.webp?v=${DECK_ASSETS_VERSION}`);
     expect(views[2].suitLabel).toBe("גביעים · מים");
   });
 });
