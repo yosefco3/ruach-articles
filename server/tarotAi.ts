@@ -195,9 +195,14 @@ export async function chooseTarotSpread(question: string): Promise<SpreadChoice>
   try {
     const text = await generateText(buildSpreadChoicePrompt(question), { maxTokens: 300 });
     const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return THREE_SPREAD;
+    if (!match) {
+      console.warn("[tarot] chooseSpread: no JSON in reply", text.slice(0, 200));
+      return THREE_SPREAD;
+    }
     return normalizeSpreadChoice(JSON.parse(match[0]));
-  } catch {
+  } catch (err) {
+    // Fail-open, אבל משאירים עקבות בלוג — אחרת אי אפשר להבין למה נפרסו שלושה קלפים.
+    console.warn("[tarot] chooseSpread failed:", err instanceof Error ? err.message : err);
     return THREE_SPREAD;
   }
 }

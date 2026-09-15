@@ -34,8 +34,15 @@ export const createTarotRouter = (deps: RouterDeps) =>
         if (!intro.aiEnabled) return THREE_SPREAD;
         // מעבר לתקרה לא חוסם שליפה — פשוט מפסיק לבזבז קריאות AI.
         const key = `tarot-spread:${ctx.user.dbId}`;
-        if (!rateLimit(key, deps.spreadRatePerHour, 3_600_000)) return THREE_SPREAD;
-        return await deps.chooseTarotSpread(input.question);
+        if (!rateLimit(key, deps.spreadRatePerHour, 3_600_000)) {
+          console.warn("[tarot] chooseSpread: rate-limited user", ctx.user.dbId);
+          return THREE_SPREAD;
+        }
+        const t0 = Date.now();
+        const chosen = await deps.chooseTarotSpread(input.question);
+        // משך + תוצאה (בלי השאלה — פרטיות) — כדי לכייל את ה-timeout בקליינט.
+        console.log(`[tarot] chooseSpread → ${chosen.kind}(${chosen.options.length}) in ${Date.now() - t0}ms`);
+        return chosen;
       }),
 
     // ── מחובר: פירוש AI לפריסה, מוגבל במכסה חודשית נפרדת ──
