@@ -26,9 +26,9 @@ export const JOB_TTL_MS = 15 * 60 * 1000;
 const jobs = new Map<string, JobRecord>();
 
 function sweep(now: number): void {
-  for (const [id, job] of jobs) {
+  jobs.forEach((job, id) => {
     if (job.finishedAt !== undefined && now - job.finishedAt > JOB_TTL_MS) jobs.delete(id);
-  }
+  });
 }
 
 /** מתחיל עבודה מיד (לא ממתין ל-poll) ומחזיר את המזהה. `run` לא אמור לזרוק — אבל אם כן, זו שגיאת עבודה. */
