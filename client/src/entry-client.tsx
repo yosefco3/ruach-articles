@@ -46,6 +46,14 @@ queryClient.getMutationCache().subscribe(event => {
 
 const trpcClient = makeTrpcClient();
 
+// טאב שנשאר פתוח לרוחב פריסה חדשה: הצ'אנקים הישנים כבר לא קיימים (404) — Vite מרים
+// את האירוע הזה כשטעינת צ'אנק עצל נכשלת. טעינה מחדש מביאה את הבאנדל העדכני במקום דף שבור.
+// (לא מכסה קוד שכבר טעון ומדבר עם API שהשתנה — לכך צריך רענון ידני.)
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  window.location.reload();
+});
+
 const rootEl = document.getElementById("root")!;
 const tree = <AppTree queryClient={queryClient} trpcClient={trpcClient} />;
 
