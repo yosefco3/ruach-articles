@@ -222,6 +222,20 @@ ${footerHtml()}`;
  * מדפיס מסמך HTML דרך iframe נסתר: כותב, ממתין לתמונות ולפונטים (עד 4 שניות),
  * קורא ל-print ומנקה. לא נפתח חלון חדש — עמיד לחוסמי-פופאפים.
  */
+/** מחלץ את <title> ממסמך ההדפסה (כבר escaped בשלב הבנייה; מחזירים טקסט). */
+export function extractDocTitle(html: string): string | null {
+  const m = html.match(/<title>([^<]*)<\/title>/);
+  if (!m) return null;
+  const t = m[1]
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .trim();
+  return t || null;
+}
+
 export function printHtmlDocument(html: string): void {
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
@@ -238,17 +252,30 @@ export function printHtmlDocument(html: string): void {
   doc.write(html);
   doc.close();
 
+  // כרום (ובעיקר אנדרואיד) לוקח את שם הקובץ ב"שמור כ-PDF" מכותרת הדף הראשי, לא מה-iframe —
+  // לכן מחליפים זמנית את כותרת הדף לכותרת המסמך ומחזירים אחרי ההדפסה.
+  const printTitle = extractDocTitle(html);
+  const pageTitle = document.title;
   let printed = false;
+  let restored = false;
+  const cleanup = () => {
+    if (restored) return;
+    restored = true;
+    if (printTitle && document.title === printTitle) document.title = pageTitle;
+    frame.remove();
+  };
   const doPrint = () => {
     if (printed) return;
     printed = true;
+    if (printTitle) document.title = printTitle;
     try {
       win.focus();
       win.print();
     } finally {
       // afterprint לא אמין בכל הדפדפנים — משאירים את ה-iframe לזמן דיאלוג נדיב ואז מנקים.
-      win.addEventListener?.("afterprint", () => frame.remove());
-      setTimeout(() => frame.remove(), 60_000);
+      win.addEventListener?.("afterprint", cleanup);
+      window.addEventListener?.("afterprint", cleanup);
+      setTimeout(cleanup, 60_000);
     }
   };
 
