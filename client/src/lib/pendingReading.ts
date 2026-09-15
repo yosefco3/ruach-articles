@@ -3,7 +3,7 @@
  * וה-state של React אובד. לפני הניווט שומרים את הקריאה ב-sessionStorage, ואחרי
  * החזרה (returnTo לאותו דף) הדף משחזר אותה פעם אחת ומוחק. תוקף: 30 דקות.
  */
-import { cardById, type TarotReading } from "@shared/tarot";
+import { THREE_SPREAD, cardById, normalizeSpreadChoice, type SpreadChoice, type TarotReading } from "@shared/tarot";
 import type { Reading as IchingReading } from "@shared/iching";
 
 const TAROT_KEY = "tarot:pending-reading";
@@ -33,22 +33,31 @@ function storageTake(key: string): { q: string; ts: number; payload: unknown } |
   }
 }
 
-// ── טארוט: שומרים רק את מזהי הקלפים ומרכיבים מחדש מ-shared ──
+// ── טארוט: שומרים רק את מזהי הקלפים + הפריסה, ומרכיבים מחדש מ-shared ──
 
-export function savePendingTarot(q: string, reading: TarotReading): void {
-  storageSet(TAROT_KEY, { q, ts: Date.now(), payload: reading.cards.map((c) => c.card.id) });
+export function savePendingTarot(q: string, reading: TarotReading, spread: SpreadChoice = THREE_SPREAD): void {
+  storageSet(TAROT_KEY, {
+    q,
+    ts: Date.now(),
+    payload: { ids: reading.cards.map((c) => c.card.id), spread },
+  });
 }
 
-export function takePendingTarot(): { q: string; reading: TarotReading } | null {
+export function takePendingTarot(): { q: string; reading: TarotReading; spread: SpreadChoice } | null {
   const saved = storageTake(TAROT_KEY);
-  if (!saved || !Array.isArray(saved.payload) || saved.payload.length === 0) return null;
+  if (!saved) return null;
+  // תאימות לאחור: payload ישן היה מערך מזהים בלבד (= פריסת שלושה קלפים).
+  const raw = saved.payload as { ids?: unknown; spread?: unknown } | unknown[] | null;
+  const ids = Array.isArray(raw) ? raw : Array.isArray(raw?.ids) ? raw.ids : null;
+  if (!ids || ids.length === 0) return null;
+  const spread = Array.isArray(raw) ? THREE_SPREAD : normalizeSpreadChoice(raw?.spread);
   const cards = [];
-  for (let i = 0; i < saved.payload.length; i++) {
-    const struct = typeof saved.payload[i] === "string" ? cardById(saved.payload[i]) : undefined;
+  for (let i = 0; i < ids.length; i++) {
+    const struct = typeof ids[i] === "string" ? cardById(ids[i] as string) : undefined;
     if (!struct) return null;
     cards.push({ card: struct, position: i, orientation: "upright" as const });
   }
-  return { q: saved.q, reading: { cards } };
+  return { q: saved.q, reading: { cards }, spread };
 }
 
 // ── אי-צ'ינג: הקריאה היא אובייקט JSON טהור — נשמרת כמות שהיא ──

@@ -35,13 +35,40 @@ describe("pending tarot reading", () => {
     expect(restored?.reading.cards.map((c) => c.card.id)).toEqual(
       reading.cards.map((c) => c.card.id),
     );
+    expect(restored?.spread).toEqual({ kind: "three", options: [] }); // ברירת מחדל
     expect(takePendingTarot()).toBeNull(); // חד-פעמי
+  });
+
+  it("פריסת בחירה: 6 קלפים + התוכנית משוחזרים יחד", () => {
+    const reading = draw(6);
+    const spread = { kind: "choice" as const, options: ["לעבור", "להישאר"] };
+    savePendingTarot("לעבור או להישאר?", reading, spread);
+    const restored = takePendingTarot();
+    expect(restored?.reading.cards).toHaveLength(6);
+    expect(restored?.spread).toEqual(spread);
+  });
+
+  it("payload ישן (מערך מזהים בלבד) → משוחזר כפריסת שלושה קלפים", () => {
+    const ids = draw().cards.map((c) => c.card.id);
+    sessionStorage.setItem("tarot:pending-reading", JSON.stringify({ q: "ש", ts: Date.now(), payload: ids }));
+    const restored = takePendingTarot();
+    expect(restored?.reading.cards.map((c) => c.card.id)).toEqual(ids);
+    expect(restored?.spread).toEqual({ kind: "three", options: [] });
+  });
+
+  it("תוכנית פגומה בפריסה שמורה → נופל ל-three (לא null)", () => {
+    const ids = draw().cards.map((c) => c.card.id);
+    sessionStorage.setItem(
+      "tarot:pending-reading",
+      JSON.stringify({ q: "ש", ts: Date.now(), payload: { ids, spread: { kind: "choice", options: ["אחת"] } } }),
+    );
+    expect(takePendingTarot()?.spread.kind).toBe("three");
   });
 
   it("מזהה קלף לא מוכר → null", () => {
     sessionStorage.setItem(
       "tarot:pending-reading",
-      JSON.stringify({ q: "", ts: Date.now(), payload: ["no-such-card", "x", "y"] }),
+      JSON.stringify({ q: "", ts: Date.now(), payload: { ids: ["no-such-card", "x", "y"], spread: null } }),
     );
     expect(takePendingTarot()).toBeNull();
   });
