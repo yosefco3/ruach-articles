@@ -8,6 +8,7 @@ import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import type { TarotAiCardContext } from "@/pages/tarot/model";
+import { THREE_SPREAD, type SpreadChoice } from "@shared/tarot";
 
 const LOADING_MESSAGE = "ה-AI מכין את הפירוש לפריסה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
 
@@ -102,6 +103,7 @@ function PanelHeader() {
 export function TarotAiPanel({
   question,
   cards,
+  spread = THREE_SPREAD,
   isAuthenticated,
   monthlyLimit,
   onResult,
@@ -109,6 +111,8 @@ export function TarotAiPanel({
 }: {
   question: string;
   cards: TarotAiCardContext[];
+  /** הפריסה שנפרסה (ברירת מחדל three) — השרת מאמת שמספר הקלפים תואם לה. */
+  spread?: SpreadChoice;
   isAuthenticated: boolean;
   monthlyLimit: number;
   /** מדווח להורה על פירוש שהתקבל (markdown) — למשל לצורך הדפסת הפריסה. */
@@ -132,7 +136,7 @@ export function TarotAiPanel({
       void utils.tarot.myUsage.invalidate();
     },
   });
-  const runInterpret = () => mutation.mutate({ question, cards });
+  const runInterpret = () => mutation.mutate({ question, cards, spread });
 
   const reduced = useRef(false);
   useEffect(() => {

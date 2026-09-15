@@ -11,11 +11,26 @@ import { trpc } from "@/lib/trpc";
 import { buildTarotPrintHtml, printHtmlDocument } from "@/lib/printReading";
 import { savePendingTarot, takePendingTarot } from "@/lib/pendingReading";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { CARD_BACK_IMAGE, DECK_ASSETS_VERSION, cardById, cardSlug, draw, type TarotReading as Reading } from "@shared/tarot";
+import {
+  CARD_BACK_IMAGE,
+  DECK_ASSETS_VERSION,
+  THREE_SPREAD,
+  cardById,
+  cardSlug,
+  draw,
+  normalizeSpreadChoice,
+  spreadPlan,
+  type SpreadChoice,
+  type SpreadPlan,
+  type TarotReading as Reading,
+} from "@shared/tarot";
 import {
   buildAiContext,
+  choiceLayout,
+  positionLabels,
   resolvePanel,
   toCardViews,
+  type CardView,
   type TarotContent,
 } from "@/pages/tarot/model";
 import { runDeal, SPREAD } from "@/pages/tarot/reveal";
@@ -25,8 +40,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
 
-// הקלף האמצעי "נושא את התשובה" (שיטת הפירוש) — לכן הוא נפתח בחוץ אוטומטית עם התוצאה.
-const CENTER_CARD = 1;
+// הקלף שנפתח אוטומטית עם התוצאה: בשלושה קלפים — האמצעי ("נושא את התשובה");
+// בפריסת בחירה — "הצומת" (הראשון).
+function focusIndex(plan: SpreadPlan): number {
+  return plan.kind === "choice" ? 0 : 1;
+}
+
+/** כמה זמן ממתינים לבחירת הפריסה ע"י ה-AI לפני שנופלים לשלושה קלפים (fail-open). */
+const CHOOSE_SPREAD_TIMEOUT_MS = 8000;
 
 // ── סגנונות (השפה של דף האי-צ'ינג) ──
 const SERIF = "'Frank Ruhl Libre',serif";
@@ -44,10 +65,15 @@ export default function TarotReading() {
   const { data, isLoading } = trpc.tarot.getContent.useQuery();
   useDocumentTitle("קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה");
 
+  const { isAuthenticated } = useAuth();
   const [phase, setPhase] = useState<Phase>("intro");
   const [question, setQuestion] = useState(""); // נשלח רק לפירוש AI, בלחיצה מפורשת
   const [qSaved, setQSaved] = useState("");
   const [reading, setReading] = useState<Reading | null>(null);
+  // הפריסה שנפרסה — three כברירת מחדל; ה-AI בוחר אחרת רק כשהוא זמין (מתג + מחובר).
+  const [spread, setSpread] = useState<SpreadChoice>(THREE_SPREAD);
+  const [choosing, setChoosing] = useState(false); // "ה-AI בוחר את הפריסה…"
+  const chooseMut = trpc.tarot.chooseSpread.useMutation();
   const [selected, setSelected] = useState<number | null>(null);
   // מצב אנימציית השליפה: כמה קלפים נפרסו / נחשפו
   const [dealtCount, setDealtCount] = useState(0);
@@ -61,16 +87,43 @@ export default function TarotReading() {
     const pending = takePendingTarot();
     if (pending) {
       setReading(pending.reading);
+      setSpread(pending.spread);
       setQuestion(pending.q);
       setQSaved(pending.q);
-      setSelected(CENTER_CARD);
+      setSelected(focusIndex(spreadPlan(pending.spread)));
       setPhase("result");
     }
   }, []);
 
-  function onDraw() {
+  /**
+   * בלי AI זמין — תמיד שלושה קלפים. עם AI (מתג דלוק + מחובר + יש שאלה) — ה-AI בוחר
+   * את הפריסה מהקטלוג. Fail-open: שגיאה / איטיות מעל 8 שניות → שלושה קלפים.
+   */
+  async function onDraw() {
+    if (choosing) return;
+    const q = question.trim();
+    const aiAvailable = !!(data as TarotContent | undefined)?.intro.aiEnabled && isAuthenticated && q.length > 0;
+    let chosen: SpreadChoice = THREE_SPREAD;
+    if (aiAvailable) {
+      setChoosing(true);
+      try {
+        const timeout = new Promise<SpreadChoice>((resolve) =>
+          setTimeout(() => resolve(THREE_SPREAD), CHOOSE_SPREAD_TIMEOUT_MS),
+        );
+        chosen = normalizeSpreadChoice(await Promise.race([chooseMut.mutateAsync({ question: q }), timeout]));
+      } catch {
+        chosen = THREE_SPREAD;
+      }
+      setChoosing(false);
+    }
+    startDeal(chosen);
+  }
+
+  function startDeal(chosen: SpreadChoice) {
     cancelDeal.current();
-    setReading(draw());
+    const plan = spreadPlan(chosen);
+    setSpread(chosen);
+    setReading(draw(plan.positions.length));
     setQSaved(question);
     setSelected(null);
     setDealtCount(0);
@@ -83,19 +136,20 @@ export default function TarotReading() {
         onDeal: (i) => setDealtCount(i + 1),
         onFlip: (i) => setFlippedCount(i + 1),
         onDone: () => {
-          setSelected(CENTER_CARD);
+          setSelected(focusIndex(plan));
           setPhase("result");
         },
       },
-      { reducedMotion: prefersReducedMotion() },
+      { reducedMotion: prefersReducedMotion(), count: plan.positions.length },
     );
   }
 
   function onSkip() {
     cancelDeal.current();
-    setDealtCount(SPREAD);
-    setFlippedCount(SPREAD);
-    setSelected(CENTER_CARD);
+    const count = reading?.cards.length ?? SPREAD;
+    setDealtCount(count);
+    setFlippedCount(count);
+    setSelected(focusIndex(spreadPlan(spread)));
     setPhase("result");
   }
 
@@ -103,6 +157,7 @@ export default function TarotReading() {
     cancelDeal.current();
     setPhase("intro");
     setReading(null);
+    setSpread(THREE_SPREAD);
     setSelected(null);
     // שליפה חדשה מתחילה נקייה — בלי לרשת את השאלה מהסבב הקודם.
     setQuestion("");
@@ -212,7 +267,8 @@ export default function TarotReading() {
                   <span style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
                   <span>
                     חדש באתר: <strong>פירוש AI אישי לפריסה</strong> — שלפו קלפים וקבלו פירוש
-                    המחבר את שלושת הקלפים לשאלתכם (חינם, למשתמשים מחוברים).
+                    המחבר את הקלפים לשאלתכם; ה-AI גם בוחר את הפריסה המתאימה לשאלה (למשל
+                    פריסת בחירה בין דרכים). חינם, למשתמשים מחוברים.
                   </span>
                 </div>
               )}
@@ -246,6 +302,8 @@ export default function TarotReading() {
               </div>
               <button
                 onClick={onDraw}
+                disabled={choosing}
+                aria-busy={choosing}
                 style={{
                   marginTop: 24,
                   width: "100%",
@@ -255,14 +313,16 @@ export default function TarotReading() {
                   fontSize: 20,
                   letterSpacing: "0.02em",
                   color: "oklch(0.98 0.008 80)",
-                  background: "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
+                  background: choosing
+                    ? "oklch(0.62 0.05 60)"
+                    : "linear-gradient(135deg, oklch(0.48 0.10 58), oklch(0.40 0.09 52))",
                   border: "none",
                   borderRadius: 10,
-                  cursor: "pointer",
-                  boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
+                  cursor: choosing ? "wait" : "pointer",
+                  boxShadow: choosing ? "none" : "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
                 }}
               >
-                {content.intro.buttonLabel}
+                {choosing ? "ה-AI בוחר את הפריסה המתאימה לשאלה…" : content.intro.buttonLabel}
               </button>
             </div>
           </div>
@@ -281,6 +341,7 @@ export default function TarotReading() {
         {phase === "result" && reading && (
           <ResultView
             reading={reading}
+            spread={spread}
             qSaved={qSaved}
             content={content}
             selected={selected}
@@ -410,9 +471,9 @@ function DrawingView({
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", justifyContent: "center", gap: "clamp(10px,3vw,22px)" }}>
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "clamp(10px,3vw,22px)" }}>
           {views.map((v, i) => (
-            <div key={v.id} style={{ width: "clamp(96px,22vw,150px)" }}>
+            <div key={v.id} style={{ width: views.length > 3 ? "clamp(72px,14vw,110px)" : "clamp(96px,22vw,150px)" }}>
               <TarotCard view={v} faceUp={i < flippedCount} dealt={i < dealtCount} />
             </div>
           ))}
@@ -440,8 +501,37 @@ function DrawingView({
   );
 }
 
+/** קלף אחד בתוצאה: תווית התפקיד מעל, שם וסדרה מתחת. */
+function CardSlot({
+  view,
+  label,
+  selected,
+  onSelect,
+  width,
+}: {
+  view: CardView;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+  width: string;
+}) {
+  return (
+    <div style={{ textAlign: "center", width }}>
+      <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 12 }}>
+        {label}
+      </div>
+      <TarotCard view={view} faceUp selected={selected} onClick={onSelect} />
+      <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 19, color: "oklch(0.24 0.03 55)", marginTop: 12 }}>
+        {view.name}
+      </div>
+      <div style={{ fontSize: 12.5, color: "oklch(0.52 0.03 60)", marginTop: 2 }}>{view.suitLabel}</div>
+    </div>
+  );
+}
+
 function ResultView({
   reading,
+  spread,
   qSaved,
   content,
   selected,
@@ -449,6 +539,7 @@ function ResultView({
   onReset,
 }: {
   reading: Reading;
+  spread: SpreadChoice;
   qSaved: string;
   content: TarotContent;
   selected: number | null;
@@ -457,6 +548,9 @@ function ResultView({
 }) {
   const views = toCardViews(reading, content);
   const panel = resolvePanel(views, selected);
+  const plan = spreadPlan(spread);
+  const labels = positionLabels(plan, views.length);
+  const layout = choiceLayout(plan);
   const { isAuthenticated } = useAuth();
   // פירוש ה-AI שהתקבל (markdown) — נשמר רק כדי לצרפו להדפסה; מתאפס עם שליפה חדשה (unmount).
   const [aiMd, setAiMd] = useState<string | null>(null);
@@ -484,40 +578,107 @@ function ResultView({
         </div>
       )}
 
-      {/* ── שלושת הקלפים, מימין (הראשון) לשמאל ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          gap: "clamp(12px,3.5vw,28px)",
-          flexWrap: "wrap",
-          animation: "fadeUp 0.6s ease both",
-        }}
-      >
-        {views.map((v, i) => (
-          <div key={v.id} style={{ textAlign: "center", width: "clamp(120px,26vw,190px)" }}>
-            <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 12 }}>
-              {`קְלָף ${["רִאשׁוֹן", "שֵׁנִי", "שְׁלִישִׁי"][i]}`}
-            </div>
-            <TarotCard view={v} faceUp selected={selected === i} onClick={() => setSelected(i)} />
-            <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 19, color: "oklch(0.24 0.03 55)", marginTop: 12 }}>
-              {v.name}
-            </div>
-            <div style={{ fontSize: 12.5, color: "oklch(0.52 0.03 60)", marginTop: 2 }}>{v.suitLabel}</div>
+      {layout ? (
+        /* ── פריסת בחירה: הצומת → עמודה לכל דרך → מה שאינך רואה ── */
+        <div style={{ animation: "fadeUp 0.6s ease both" }}>
+          <div style={{ textAlign: "center", fontFamily: SERIF, fontWeight: 700, fontSize: 20, color: "oklch(0.42 0.09 55)", marginBottom: 22 }}>
+            {plan.title}
           </div>
-        ))}
-      </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <CardSlot
+              view={views[layout.now]}
+              label={labels[layout.now]}
+              selected={selected === layout.now}
+              onSelect={() => setSelected(layout.now)}
+              width="clamp(110px,24vw,160px)"
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: "clamp(14px,4vw,34px)",
+              marginTop: 34,
+            }}
+          >
+            {layout.columns.map((col) => (
+              <div
+                key={col.letter}
+                style={{
+                  padding: "18px 14px 14px",
+                  borderRadius: 14,
+                  border: "1px solid oklch(0.86 0.024 75)",
+                  background: "oklch(0.985 0.010 82)",
+                }}
+              >
+                <div style={{ textAlign: "center", marginBottom: 14 }}>
+                  <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 18, color: "oklch(0.24 0.03 55)" }}>
+                    {`דֶּרֶךְ ${col.letter}`}
+                  </div>
+                  <div style={{ fontSize: 14, color: "oklch(0.42 0.04 58)", marginTop: 2, maxWidth: 260 }}>{col.option}</div>
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", gap: "clamp(10px,2.5vw,18px)" }}>
+                  {col.indices.map((i) => (
+                    <CardSlot
+                      key={views[i].id}
+                      view={views[i]}
+                      label={labels[i]}
+                      selected={selected === i}
+                      onSelect={() => setSelected(i)}
+                      width={layout.columns.length > 2 ? "clamp(78px,15vw,120px)" : "clamp(96px,20vw,140px)"}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 34 }}>
+            <CardSlot
+              view={views[layout.hidden]}
+              label={labels[layout.hidden]}
+              selected={selected === layout.hidden}
+              onSelect={() => setSelected(layout.hidden)}
+              width="clamp(110px,24vw,160px)"
+            />
+          </div>
+        </div>
+      ) : (
+        /* ── שלושת הקלפים, מימין (הראשון) לשמאל ── */
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            gap: "clamp(12px,3.5vw,28px)",
+            flexWrap: "wrap",
+            animation: "fadeUp 0.6s ease both",
+          }}
+        >
+          {views.map((v, i) => (
+            <CardSlot
+              key={v.id}
+              view={v}
+              label={labels[i]}
+              selected={selected === i}
+              onSelect={() => setSelected(i)}
+              width="clamp(120px,26vw,190px)"
+            />
+          ))}
+        </div>
+      )}
 
       {/* ── פירוש AI לפריסה — תמיד מעל פירושי הקלפים, לעולם לא מחביא אותם ── */}
       {content.intro.aiEnabled && (
         <TarotAiPanel
           question={qSaved}
           cards={buildAiContext(views)}
+          spread={spread}
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
           onResult={setAiMd}
-          onBeforeLogin={() => savePendingTarot(qSaved, reading)}
+          onBeforeLogin={() => savePendingTarot(qSaved, reading, spread)}
         />
       )}
 
