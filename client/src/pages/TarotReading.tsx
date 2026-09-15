@@ -47,7 +47,7 @@ function focusIndex(plan: SpreadPlan): number {
 }
 
 /** כמה זמן ממתינים לבחירת הפריסה ע"י ה-AI לפני שנופלים לשלושה קלפים (fail-open). */
-const CHOOSE_SPREAD_TIMEOUT_MS = 8000;
+const CHOOSE_SPREAD_TIMEOUT_MS = 15000;
 
 // ── סגנונות (השפה של דף האי-צ'ינג) ──
 const SERIF = "'Frank Ruhl Libre',serif";
@@ -97,7 +97,7 @@ export default function TarotReading() {
 
   /**
    * בלי AI זמין — תמיד שלושה קלפים. עם AI (מתג דלוק + מחובר + יש שאלה) — ה-AI בוחר
-   * את הפריסה מהקטלוג. Fail-open: שגיאה / איטיות מעל 8 שניות → שלושה קלפים.
+   * את הפריסה מהקטלוג. Fail-open: שגיאה / איטיות מעל 15 שניות (המודל חושב ~3-9ש') → שלושה קלפים.
    */
   async function onDraw() {
     if (choosing) return;
