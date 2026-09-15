@@ -6,6 +6,7 @@ import type * as db from "../db";
 import type { ArticleEmailPayload } from "../newsletterEmail";
 import type { IchingAiContext, QuestionRefineResult } from "../ichingAi";
 import type { TarotAiContext } from "../tarotAi";
+import type { SpreadChoice } from "@shared/tarot";
 
 export interface RouterDeps {
   db: typeof db;
@@ -19,4 +20,8 @@ export interface RouterDeps {
   generateTarotInterpretation: (c: TarotAiContext) => Promise<string>;
   /** מכסת פירושי טארוט חודשית — נפרדת ממכסת האי-צ'ינג. */
   tarotAiMonthlyLimit: number;
+  /** ה-AI בוחר פריסה לשאלה לפני השליפה (fail-open ל-three, לעולם לא זורק). */
+  chooseTarotSpread: (question: string) => Promise<SpreadChoice>;
+  /** תקרת קריאות בחירת-פריסה לכל משתמש בשעה. */
+  spreadRatePerHour: number;
 }

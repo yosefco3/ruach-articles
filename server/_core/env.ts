@@ -59,6 +59,10 @@ const envSchema = z.object({
 
   // שכלול ניסוח השאלה לפני ההטלה — חופשי לכולם, מוגן רק בהגבלת-קצב פר-IP (לשעה).
   ICHING_REFINE_RATE_PER_HOUR: z.coerce.number().int().positive().default(30),
+
+  // בחירת פריסת טארוט ע"י ה-AI לפני השליפה (מחוברים בלבד) — לא נספרת במכסה; מוגנת
+  // בהגבלת-קצב למשתמש (לשעה).
+  TAROT_SPREAD_RATE_PER_HOUR: z.coerce.number().int().positive().default(30),
 });
 
 function loadEnv() {

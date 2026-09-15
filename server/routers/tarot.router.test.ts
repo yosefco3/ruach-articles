@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { __resetRateLimit } from "../_core/rateLimit";
 import { adminCtx, makeCaller, publicCtx, userCtx } from "../test-helpers/trpc";
 
 const CARDS = [
@@ -187,5 +188,52 @@ describe("tarot admin procedures", () => {
     const res = await caller.tarot.updateIntro({ aiEnabled: true });
     expect(db.updateTarotIntro).toHaveBeenCalledWith({ aiEnabled: true });
     expect(res).toEqual({ aiEnabled: true });
+  });
+});
+
+describe("tarot.chooseSpread", () => {
+  beforeEach(() => __resetRateLimit());
+
+  it("rejects guests with UNAUTHORIZED (the AI chooses only for signed-in users)", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(caller.tarot.chooseSpread({ question: "א או ב?" })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  it("AI master switch off → three, without calling the AI", async () => {
+    const { caller, chooseTarotSpread } = makeCaller(userCtx(), {
+      getTarotIntro: async () => ({ aiEnabled: false }),
+    });
+    expect(await caller.tarot.chooseSpread({ question: "א או ב?" })).toEqual({ kind: "three", options: [] });
+    expect(chooseTarotSpread).not.toHaveBeenCalled();
+  });
+
+  it("returns what the AI service chose when the switch is on", async () => {
+    const choice = { kind: "choice", options: ["א", "ב"] };
+    const { caller, chooseTarotSpread } = makeCaller(
+      userCtx(),
+      { getTarotIntro: async () => ({ aiEnabled: true }) },
+      { chooseTarotSpread: async () => choice },
+    );
+    expect(await caller.tarot.chooseSpread({ question: "א או ב?" })).toEqual(choice);
+    expect(chooseTarotSpread).toHaveBeenCalledWith("א או ב?");
+  });
+
+  it("over the per-user hourly cap → three (fail-open), AI not called", async () => {
+    const { caller, chooseTarotSpread } = makeCaller(
+      userCtx(),
+      { getTarotIntro: async () => ({ aiEnabled: true }) },
+      { chooseTarotSpread: async () => ({ kind: "choice", options: ["א", "ב"] }), spreadRatePerHour: 2 },
+    );
+    await caller.tarot.chooseSpread({ question: "ש" });
+    await caller.tarot.chooseSpread({ question: "ש" });
+    expect(await caller.tarot.chooseSpread({ question: "ש" })).toEqual({ kind: "three", options: [] });
+    expect(chooseTarotSpread).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects an empty question", async () => {
+    const { caller } = makeCaller(userCtx(), { getTarotIntro: async () => ({ aiEnabled: true }) });
+    await expect(caller.tarot.chooseSpread({ question: "   " })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

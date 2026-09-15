@@ -2,6 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
+import { rateLimit } from "../_core/rateLimit";
+import { THREE_SPREAD } from "@shared/tarot";
 import type { RouterDeps } from "./context";
 
 export const createTarotRouter = (deps: RouterDeps) =>
@@ -22,6 +24,19 @@ export const createTarotRouter = (deps: RouterDeps) =>
       const used = unlimited ? 0 : await deps.db.getTarotMonthlyUsage(ctx.user.dbId);
       return { used, limit, remaining: Math.max(0, limit - used), unlimited };
     }),
+
+    // ── מחובר: ה-AI בוחר את הפריסה לשאלה, לפני השליפה. לא נספר במכסה; fail-open ל-three ──
+    chooseSpread: protectedProcedure
+      .input(z.object({ question: z.string().trim().min(1).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        // מתג ה-AI הראשי כבוי → בלי AI תמיד שלושה קלפים (וגם בלי קריאה לספק).
+        const intro = await deps.db.getTarotIntro();
+        if (!intro.aiEnabled) return THREE_SPREAD;
+        // מעבר לתקרה לא חוסם שליפה — פשוט מפסיק לבזבז קריאות AI.
+        const key = `tarot-spread:${ctx.user.dbId}`;
+        if (!rateLimit(key, deps.spreadRatePerHour, 3_600_000)) return THREE_SPREAD;
+        return await deps.chooseTarotSpread(input.question);
+      }),
 
     // ── מחובר: פירוש AI לפריסה, מוגבל במכסה חודשית נפרדת ──
     interpret: protectedProcedure

@@ -1,4 +1,11 @@
 import { generateText } from "./_core/aiProvider";
+import {
+  MAX_CHOICE_OPTIONS,
+  MIN_CHOICE_OPTIONS,
+  THREE_SPREAD,
+  normalizeSpreadChoice,
+  type SpreadChoice,
+} from "@shared/tarot";
 
 export interface TarotAiCard {
   /** שם אפקטיבי (override מה-DB או ברירת המחדל מ-shared). */
@@ -81,4 +88,49 @@ export function buildTarotPrompt(c: TarotAiContext): string {
  */
 export async function generateTarotInterpretation(c: TarotAiContext): Promise<string> {
   return generateText(buildTarotPrompt(c), { maxTokens: 3000 });
+}
+
+// ── בחירת הפריסה (לפני השליפה): ה-AI מסווג את השאלה ובוחר מהקטלוג ──
+
+/**
+ * פרומפט סיווג קצר: האם השאלה היא הכרעה בין אפשרויות מפורשות (פריסת בחירה) או
+ * שאלת מצב/כיוון/הבנה (שלושה קלפים). טהורה — בלי רשת, בלי env.
+ */
+export function buildSpreadChoicePrompt(question: string): string {
+  return [
+    `את/ה קורא/ת טארוט. לפניך שאלה של שואל, ועליך לבחור את הפריסה המתאימה לה מתוך הקטלוג — בלי לפרש ובלי לענות על השאלה.`,
+    ``,
+    `שאלת השואל: "${question}"`,
+    ``,
+    `הקטלוג:`,
+    `- "three" — פריסת שלושה קלפים (ברירת המחדל): שאלת מצב, כיוון, הבנה, תהליך, "מה נכון להבין / איך לפעול / מה מתפתח", וגם כל שאלה עמומה או כללית.`,
+    `- "choice" — פריסת בחירה: השואל מתלבט במפורש בין ${MIN_CHOICE_OPTIONS} עד ${MAX_CHOICE_OPTIONS} אפשרויות מוגדרות ("לעבור לתל אביב או להישאר בירושלים", "איזה מסלול לבחור: הנדסה, רפואה או משפטים", "להישאר בעבודה, לעבור לחברה החדשה או לפתוח עסק").`,
+    ``,
+    `כללי הכרעה:`,
+    `- "X או לא?" / "האם לעשות X?" היא שאלת כן/לא על דרך אחת — לא בחירה בין דרכים → "three".`,
+    `- "מה עדיף" בלי אפשרויות שאפשר לנסח — → "three".`,
+    `- יותר מ-${MAX_CHOICE_OPTIONS} אפשרויות → "three".`,
+    `- בספק — "three".`,
+    ``,
+    `ב-"choice": נסח/י כל אפשרות בקצרה (עד 8 מילים, בעברית, כפי שהשואל התכוון, בסדר שבו הזכיר אותן), למשל ["לעבור לתל אביב", "להישאר בירושלים"].`,
+    ``,
+    `החזר/י JSON תקין בלבד, ללא טקסט נוסף וללא סימוני קוד:`,
+    `{"kind": "three" | "choice", "options": string[]}`,
+    `כאשר kind="three" החזר/י options ריק ([]).`,
+  ].join("\n");
+}
+
+/**
+ * בוחר פריסה לשאלה דרך ה-AI. Fail-open לחלוטין: שגיאה / JSON פגום / בחירה לא תקינה
+ * → THREE_SPREAD. הפונקציה לעולם לא זורקת — "שלושה קלפים" הוא תמיד מוצא בטוח.
+ */
+export async function chooseTarotSpread(question: string): Promise<SpreadChoice> {
+  try {
+    const text = await generateText(buildSpreadChoicePrompt(question), { maxTokens: 300 });
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return THREE_SPREAD;
+    return normalizeSpreadChoice(JSON.parse(match[0]));
+  } catch {
+    return THREE_SPREAD;
+  }
 }

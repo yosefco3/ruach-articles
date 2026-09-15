@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { buildTarotPrompt, type TarotAiContext } from "./tarotAi";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildSpreadChoicePrompt, buildTarotPrompt, type TarotAiContext } from "./tarotAi";
 
 const cards = [
   { name: "השוטה", summary: "התחלה חדשה", text: "פירוש השוטה המלא" },
@@ -74,5 +74,51 @@ describe("generateTarotInterpretation", () => {
     expect(prompt).toContain("השוטה");
     expect(opts).toEqual({ maxTokens: 3000 });
     vi.doUnmock("./_core/aiProvider");
+  });
+});
+
+describe("buildSpreadChoicePrompt (pure)", () => {
+  it("carries the question, both catalog kinds, the yes/no rule and the JSON contract", () => {
+    const p = buildSpreadChoicePrompt("לעבור לתל אביב או להישאר בירושלים?");
+    expect(p).toContain('"לעבור לתל אביב או להישאר בירושלים?"');
+    expect(p).toContain('"three"');
+    expect(p).toContain('"choice"');
+    expect(p).toContain("או לא?");
+    expect(p).toContain("JSON");
+    expect(p).toContain("בספק");
+  });
+});
+
+describe("chooseTarotSpread (fail-open)", () => {
+  async function withProvider(reply: () => Promise<string>) {
+    vi.resetModules();
+    const generateText = vi.fn(reply);
+    vi.doMock("./_core/aiProvider", () => ({ generateText }));
+    const mod = await import("./tarotAi");
+    return { chooseTarotSpread: mod.chooseTarotSpread, generateText };
+  }
+  afterEach(() => vi.doUnmock("./_core/aiProvider"));
+
+  it("returns the normalized choice from valid JSON (even inside a code fence)", async () => {
+    const { chooseTarotSpread, generateText } = await withProvider(async () =>
+      '```json\n{"kind":"choice","options":[" לעבור לתל אביב ","להישאר בירושלים"]}\n```',
+    );
+    await expect(chooseTarotSpread("ש")).resolves.toEqual({
+      kind: "choice",
+      options: ["לעבור לתל אביב", "להישאר בירושלים"],
+    });
+    expect(generateText.mock.calls[0][1]).toEqual({ maxTokens: 300 });
+  });
+
+  it("falls back to three on malformed JSON, provider errors, or an invalid choice", async () => {
+    const three = { kind: "three", options: [] };
+    let t = await withProvider(async () => "לא JSON בכלל");
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
+    t = await withProvider(async () => {
+      throw new Error("boom");
+    });
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
+    t = await withProvider(async () => '{"kind":"choice","options":["רק אחת"]}');
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
   });
 });
