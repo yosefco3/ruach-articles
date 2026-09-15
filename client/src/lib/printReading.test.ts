@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildIchingPrintHtml,
   buildTarotPrintHtml,
+  extractDocTitle,
   readingFileTitle,
   escapeHtml,
   hexagramHtml,
@@ -154,5 +155,13 @@ describe("readingFileTitle (document title = PDF file name)", () => {
     expect(html).toContain("<title>קריאת טארוט - מעבר דירה</title>");
     const noAi = buildTarotPrintHtml({ question: "לעבור או להישאר?", cards: CARDS });
     expect(noAi).toContain("<title>קריאת טארוט - לעבור או להישאר</title>");
+  });
+});
+
+describe("extractDocTitle", () => {
+  it("returns the unescaped <title> of a built document, null when absent", () => {
+    const html = buildTarotPrintHtml({ question: 'שאלה עם "מרכאות"', cards: CARDS });
+    expect(extractDocTitle(html)).toBe('קריאת טארוט - שאלה עם "מרכאות"');
+    expect(extractDocTitle("<html><body>no title</body></html>")).toBeNull();
   });
 });
