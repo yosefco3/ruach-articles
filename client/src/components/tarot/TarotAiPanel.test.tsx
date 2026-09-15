@@ -90,4 +90,14 @@ describe("TarotAiPanel (static render)", () => {
     expect(html).toContain("קבל פירוש AI לפריסה כולה");
     expect(html).not.toMatch(/<button[^>]*disabled/);
   });
+
+  it("choice spread: renders with six cards and the spread prop without blowing up", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({ name: `קלף ${i}`, summary: "", text: "" }));
+    const html = renderPanel({
+      isAuthenticated: true,
+      cards: six,
+      spread: { kind: "choice", options: ["לעבור", "להישאר"] },
+    });
+    expect(html).toContain("קבל פירוש AI לפריסה כולה");
+  });
 });

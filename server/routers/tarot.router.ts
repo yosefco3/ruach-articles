@@ -2,6 +2,8 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
+import { rateLimit } from "../_core/rateLimit";
+import { MAX_CHOICE_OPTIONS, MAX_OPTION_LENGTH, THREE_SPREAD, normalizeSpreadChoice, spreadSize } from "@shared/tarot";
 import type { RouterDeps } from "./context";
 
 export const createTarotRouter = (deps: RouterDeps) =>
@@ -23,6 +25,19 @@ export const createTarotRouter = (deps: RouterDeps) =>
       return { used, limit, remaining: Math.max(0, limit - used), unlimited };
     }),
 
+    // ── מחובר: ה-AI בוחר את הפריסה לשאלה, לפני השליפה. לא נספר במכסה; fail-open ל-three ──
+    chooseSpread: protectedProcedure
+      .input(z.object({ question: z.string().trim().min(1).max(500) }))
+      .mutation(async ({ ctx, input }) => {
+        // מתג ה-AI הראשי כבוי → בלי AI תמיד שלושה קלפים (וגם בלי קריאה לספק).
+        const intro = await deps.db.getTarotIntro();
+        if (!intro.aiEnabled) return THREE_SPREAD;
+        // מעבר לתקרה לא חוסם שליפה — פשוט מפסיק לבזבז קריאות AI.
+        const key = `tarot-spread:${ctx.user.dbId}`;
+        if (!rateLimit(key, deps.spreadRatePerHour, 3_600_000)) return THREE_SPREAD;
+        return await deps.chooseTarotSpread(input.question);
+      }),
+
     // ── מחובר: פירוש AI לפריסה, מוגבל במכסה חודשית נפרדת ──
     interpret: protectedProcedure
       .input(
@@ -37,10 +52,23 @@ export const createTarotRouter = (deps: RouterDeps) =>
                 text: z.string().max(8000),
               }),
             )
-            .length(3),
+            .min(3)
+            .max(10),
+          // הפריסה שנפרסה (ברירת מחדל three). מספר הקלפים חייב להתאים לתוכנית.
+          spread: z
+            .object({
+              kind: z.enum(["three", "choice"]),
+              options: z.array(z.string().trim().min(1).max(MAX_OPTION_LENGTH)).max(MAX_CHOICE_OPTIONS).default([]),
+            })
+            .optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
+        const spread = normalizeSpreadChoice(input.spread);
+        if (input.cards.length !== spreadSize(spread)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "SPREAD_SIZE_MISMATCH" });
+        }
+
         // מתג ראשי מפאנל האדמין — כשכבוי, אין כל קריאת AI (הגנה לעומק מעבר להסתרה ב-UI).
         const intro = await deps.db.getTarotIntro();
         if (!intro.aiEnabled) {
@@ -62,6 +90,7 @@ export const createTarotRouter = (deps: RouterDeps) =>
         const interpretation = await deps.generateTarotInterpretation({
           question: input.question,
           cards: input.cards,
+          spread,
         });
 
         let used = 0;

@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { buildTarotPrompt, type TarotAiContext } from "./tarotAi";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildSpreadChoicePrompt, buildTarotPrompt, type TarotAiContext } from "./tarotAi";
 
 const cards = [
   { name: "השוטה", summary: "התחלה חדשה", text: "פירוש השוטה המלא" },
@@ -74,5 +74,102 @@ describe("generateTarotInterpretation", () => {
     expect(prompt).toContain("השוטה");
     expect(opts).toEqual({ maxTokens: 3000 });
     vi.doUnmock("./_core/aiProvider");
+  });
+});
+
+describe("buildSpreadChoicePrompt (pure)", () => {
+  it("carries the question, both catalog kinds, the yes/no rule and the JSON contract", () => {
+    const p = buildSpreadChoicePrompt("לעבור לתל אביב או להישאר בירושלים?");
+    expect(p).toContain('"לעבור לתל אביב או להישאר בירושלים?"');
+    expect(p).toContain('"three"');
+    expect(p).toContain('"choice"');
+    expect(p).toContain("או לא?");
+    expect(p).toContain("JSON");
+    expect(p).toContain("בספק");
+  });
+});
+
+describe("chooseTarotSpread (fail-open)", () => {
+  async function withProvider(reply: () => Promise<string>) {
+    vi.resetModules();
+    const generateText = vi.fn(reply);
+    vi.doMock("./_core/aiProvider", () => ({ generateText }));
+    const mod = await import("./tarotAi");
+    return { chooseTarotSpread: mod.chooseTarotSpread, generateText };
+  }
+  afterEach(() => vi.doUnmock("./_core/aiProvider"));
+
+  it("returns the normalized choice from valid JSON (even inside a code fence)", async () => {
+    const { chooseTarotSpread, generateText } = await withProvider(async () =>
+      '```json\n{"kind":"choice","options":[" לעבור לתל אביב ","להישאר בירושלים"]}\n```',
+    );
+    await expect(chooseTarotSpread("ש")).resolves.toEqual({
+      kind: "choice",
+      options: ["לעבור לתל אביב", "להישאר בירושלים"],
+    });
+    expect(generateText.mock.calls[0][1]).toEqual({ maxTokens: 300 });
+  });
+
+  it("falls back to three on malformed JSON, provider errors, or an invalid choice", async () => {
+    const three = { kind: "three", options: [] };
+    let t = await withProvider(async () => "לא JSON בכלל");
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
+    t = await withProvider(async () => {
+      throw new Error("boom");
+    });
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
+    t = await withProvider(async () => '{"kind":"choice","options":["רק אחת"]}');
+    await expect(t.chooseTarotSpread("ש")).resolves.toEqual(three);
+  });
+});
+
+describe("buildTarotPrompt — choice spread", () => {
+  const six = [
+    { name: "השוטה", summary: "התחלה", text: "פירוש השוטה" },
+    { name: "המגדל", summary: "טלטלה", text: "פירוש המגדל" },
+    { name: "הכוכב", summary: "תקווה", text: "פירוש הכוכב" },
+    { name: "הקיסרית", summary: "שפע", text: "פירוש הקיסרית" },
+    { name: "הנזיר", summary: "התבודדות", text: "פירוש הנזיר" },
+    { name: "העולם", summary: "השלמה", text: "פירוש העולם" },
+  ];
+  const ctx: TarotAiContext = {
+    question: "לעבור לתל אביב או להישאר בירושלים?",
+    cards: six,
+    spread: { kind: "choice", options: ["לעבור לתל אביב", "להישאר בירושלים"] },
+  };
+
+  it("names both options, the shared positions, and all six cards in plan order", () => {
+    const p = buildTarotPrompt(ctx);
+    expect(p).toContain('דרך א׳: "לעבור לתל אביב"');
+    expect(p).toContain('דרך ב׳: "להישאר בירושלים"');
+    expect(p).toContain("פְּרִיסַת שְׁתֵּי הַדְּרָכִים");
+    expect(p).toContain("קלף 1 — מקומך עכשיו");
+    expect(p).toContain("קלף 6 — מה שאינך רואה");
+    for (const c of six) expect(p).toContain(c.text);
+    // סדר: הצומת → א׳ (2) → ב׳ (2) → מה שאינך רואה
+    const idx = six.map((c) => p.indexOf(c.text));
+    expect([...idx].sort((a, b) => a - b)).toEqual(idx);
+    // תפקידי הדרכים תואמים לקלפים 2-5
+    expect(p).toMatch(/קלף 2 — דרך א׳ \("לעבור לתל אביב"\) — מה הדרך מציעה/);
+    expect(p).toMatch(/קלף 5 — דרך ב׳ \("להישאר בירושלים"\) — לאן הדרך מובילה/);
+  });
+
+  it("uses the comparison method, not the center-card method", () => {
+    const p = buildTarotPrompt(ctx);
+    expect(p).toContain("השוואת דרכים באותם תפקידים");
+    expect(p).toContain("ההכרעה נשארת בידי השואל");
+    expect(p).not.toContain("הקלף המרכזי — נושא התשובה");
+    expect(p).not.toContain("תומך ומתנגד");
+    // גדרות משותפות + חוזה פלט
+    expect(p).toContain("שורת מהות");
+    expect(p).toContain("דרך פעולה");
+    expect(p).toContain("אל תבטיח/י ודאות");
+    expect(p).toContain("Markdown");
+  });
+
+  it("spread=three (or none) keeps the center-card prompt", () => {
+    const withThree = buildTarotPrompt({ question: "ש", cards, spread: { kind: "three", options: [] } });
+    expect(withThree).toBe(buildTarotPrompt({ question: "ש", cards }));
+    expect(withThree).toContain("קלף 2 (הקלף המרכזי — נושא התשובה)");
   });
 });

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { DECK_ASSETS_VERSION, cardById, draw, type TarotReading } from "@shared/tarot";
+import { DECK_ASSETS_VERSION, cardById, draw, spreadPlan, THREE_SPREAD, type TarotReading } from "@shared/tarot";
 import {
   buildAiContext,
+  choiceLayout,
+  positionLabels,
   cardAltText,
   cardFallbackGlyph,
   cardPageView,
@@ -158,5 +160,38 @@ describe("card page view (/tarot/card/<slug>)", () => {
   it("cardAltText prefers the override name and keeps the en name", () => {
     expect(cardAltText(fool)).toContain("השוטה");
     expect(cardAltText(fool, "התם")).toBe("קלף התם (The Fool) — חפיסת הטארוט של רוח חכמה");
+  });
+});
+
+describe("choiceLayout / positionLabels", () => {
+  it("groups a 2-option plan: now=0, א׳=[1,2], ב׳=[3,4], hidden=5", () => {
+    const plan = spreadPlan({ kind: "choice", options: ["לעבור", "להישאר"] });
+    expect(choiceLayout(plan)).toEqual({
+      now: 0,
+      columns: [
+        { letter: "א׳", option: "לעבור", indices: [1, 2] },
+        { letter: "ב׳", option: "להישאר", indices: [3, 4] },
+      ],
+      hidden: 5,
+    });
+  });
+
+  it("groups a 3-option plan into three columns and hidden=7", () => {
+    const layout = choiceLayout(spreadPlan({ kind: "choice", options: ["א", "ב", "ג"] }))!;
+    expect(layout.columns.map((c) => c.indices)).toEqual([[1, 2], [3, 4], [5, 6]]);
+    expect(layout.hidden).toBe(7);
+  });
+
+  it("returns null for the three-card plan", () => {
+    expect(choiceLayout(spreadPlan(THREE_SPREAD))).toBeNull();
+  });
+
+  it("positionLabels follows the plan and falls back to numbering beyond it", () => {
+    expect(positionLabels(spreadPlan(THREE_SPREAD), 3)).toEqual(["קְלָף רִאשׁוֹן", "קְלָף שֵׁנִי", "קְלָף שְׁלִישִׁי"]);
+    const choice = positionLabels(spreadPlan({ kind: "choice", options: ["א", "ב"] }), 6);
+    expect(choice[0]).toBe("הַצֹּמֶת");
+    expect(choice[1]).toBe("מָה מַצִּיעָה");
+    expect(choice[5]).toBe("מָה שֶׁאֵינְךָ רוֹאֶה");
+    expect(positionLabels(spreadPlan(THREE_SPREAD), 4)[3]).toBe("קְלָף 4");
   });
 });

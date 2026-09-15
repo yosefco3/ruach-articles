@@ -9,7 +9,9 @@ import {
   cardBySlug,
   cardImagePath,
   cardSlug,
+  optionLetter,
   type CardStruct,
+  type SpreadPlan,
   type TarotReading,
 } from "@shared/tarot";
 import { htmlToPlainText } from "@/pages/iching/model";
@@ -83,6 +85,44 @@ export function resolvePanel(views: CardView[], selected: number | null): CardVi
   return views[selected];
 }
 
+// ── פריסה לפי תוכנית: קיבוץ אינדקסי הקלפים לתצוגה ──
+
+export interface ChoiceColumn {
+  /** "א׳", "ב׳"… */
+  letter: string;
+  /** ניסוח האופציה כפי שה-AI זיקק אותה. */
+  option: string;
+  /** אינדקסי הקלפים (בסדר השליפה) השייכים לדרך זו: [מה מציעה, לאן מובילה]. */
+  indices: number[];
+}
+
+export interface ChoiceLayout {
+  now: number;
+  columns: ChoiceColumn[];
+  hidden: number;
+}
+
+/**
+ * מקבץ את עמדות פריסת הבחירה לתצוגה: הצומת → עמודה לכל דרך → מה שאינך רואה.
+ * null לתוכנית שאינה choice (הפריסה הרגילה מוצגת בשורה אחת).
+ */
+export function choiceLayout(plan: SpreadPlan): ChoiceLayout | null {
+  if (plan.kind !== "choice") return null;
+  const now = plan.positions.findIndex((p) => p.key === "now");
+  const hidden = plan.positions.findIndex((p) => p.key === "hidden");
+  const columns = plan.options.map((option, i) => ({
+    letter: optionLetter(i),
+    option,
+    indices: plan.positions.map((p, idx) => (p.option === i ? idx : -1)).filter((idx) => idx >= 0),
+  }));
+  return { now, columns, hidden };
+}
+
+/** תווית העמדה מעל כל קלף, לפי התוכנית (עם fallback מספרי מעבר לאורך התוכנית). */
+export function positionLabels(plan: SpreadPlan, count: number): string[] {
+  return Array.from({ length: count }, (_, i) => plan.positions[i]?.label ?? `קְלָף ${i + 1}`);
+}
+
 // ── הזרקת קונטקסט לפירוש ה-AI: מחלצים מהתוכן הסטטי שכבר בעמוד ──
 
 export interface TarotAiCardContext {
@@ -91,7 +131,7 @@ export interface TarotAiCardContext {
   text: string;
 }
 
-/** מרכיב את קונטקסט שלושת הקלפים להזרקה — בסדר השליפה, HTML → טקסט נקי. */
+/** מרכיב את קונטקסט הקלפים להזרקה — בסדר השליפה, HTML → טקסט נקי. */
 export function buildAiContext(views: CardView[]): TarotAiCardContext[] {
   return views.map((v) => ({
     name: v.name,

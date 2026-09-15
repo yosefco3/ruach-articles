@@ -40,6 +40,24 @@ describe("runDeal", () => {
     expect(events).toEqual(["deal0", "deal1", "deal2", "flip0", "flip1", "flip2", "done"]);
   });
 
+  it("count=6 (choice spread): deal×6 → flip×6 → done, and reducedMotion honours the count", () => {
+    const { events, cb } = spyCallbacks();
+    runDeal(cb, { shuffleMs: 100, dealMs: 10, flipMs: 10, count: 6 });
+    vi.advanceTimersByTime(100 + 10 * 6 + 250 + 10 * 6 + 10);
+    expect(events).toEqual([
+      "shuffle",
+      ...[0, 1, 2, 3, 4, 5].map((i) => `deal${i}`),
+      ...[0, 1, 2, 3, 4, 5].map((i) => `flip${i}`),
+      "done",
+    ]);
+
+    const sync = spyCallbacks();
+    runDeal(sync.cb, { reducedMotion: true, count: 6 });
+    expect(sync.events.filter((e) => e.startsWith("deal"))).toHaveLength(6);
+    expect(sync.events.filter((e) => e.startsWith("flip"))).toHaveLength(6);
+    expect(sync.events.at(-1)).toBe("done");
+  });
+
   it("cancel stops all pending callbacks", () => {
     const { events, cb } = spyCallbacks();
     const cancel = runDeal(cb, { shuffleMs: 1000, dealMs: 300, flipMs: 800 });
