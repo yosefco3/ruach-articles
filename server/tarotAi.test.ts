@@ -73,6 +73,14 @@ describe("generateTarotInterpretation", () => {
     const [prompt, opts] = generateText.mock.calls[0];
     expect(prompt).toContain("השוטה");
     expect(opts).toEqual({ maxTokens: 3000 });
+
+    // פריסת בחירה — תקציב תשובה גדול יותר
+    await generateTarotInterpretation({
+      ...ctx,
+      cards: [...cards, ...cards],
+      spread: { kind: "choice", options: ["א", "ב"] },
+    });
+    expect(generateText.mock.calls[1][1]).toEqual({ maxTokens: 5000 });
     vi.doUnmock("./_core/aiProvider");
   });
 });

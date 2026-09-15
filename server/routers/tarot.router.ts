@@ -94,11 +94,23 @@ export const createTarotRouter = (deps: RouterDeps) =>
         }
 
         // קריאת הספק. נכשלת → לא מגדילים מונה (count-on-success).
-        const interpretation = await deps.generateTarotInterpretation({
-          question: input.question,
-          cards: input.cards,
-          spread,
-        });
+        const t0 = Date.now();
+        let interpretation: string;
+        try {
+          interpretation = await deps.generateTarotInterpretation({
+            question: input.question,
+            cards: input.cards,
+            spread,
+          });
+        } catch (err) {
+          // בלי השאלה (פרטיות) — רק הפריסה, המשך והשגיאה, כדי שאפשר יהיה לאבחן בפרוד.
+          console.error(
+            `[tarot] interpret failed (${spread.kind}, ${input.cards.length} cards) after ${Date.now() - t0}ms:`,
+            err instanceof Error ? err.message : err,
+          );
+          throw err;
+        }
+        console.log(`[tarot] interpret ok (${spread.kind}, ${input.cards.length} cards) in ${Date.now() - t0}ms`);
 
         let used = 0;
         if (!isAdmin) {

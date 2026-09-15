@@ -154,7 +154,9 @@ function buildChoicePrompt(c: TarotAiContext, spread: SpreadChoice): string {
  * נכשלה; שגיאות חולפות עוברות ניסיון חוזר בשכבת הספק.
  */
 export async function generateTarotInterpretation(c: TarotAiContext): Promise<string> {
-  return generateText(buildTarotPrompt(c), { maxTokens: 3000 });
+  // פריסת בחירה (6–10 קלפים, סעיף לכל דרך) צריכה תקציב תשובה גדול יותר משלושה קלפים.
+  const maxTokens = c.spread?.kind === "choice" ? 5000 : 3000;
+  return generateText(buildTarotPrompt(c), { maxTokens });
 }
 
 // ── בחירת הפריסה (לפני השליפה): ה-AI מסווג את השאלה ובוחר מהקטלוג ──

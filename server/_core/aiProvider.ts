@@ -36,8 +36,9 @@ export async function withRetry<T>(
  * נדיב בכוונה (החלטת 2026-09-10): המודל זול והחשיבה רצויה — שלא תיקטע.
  * הוגדל 4000→12000 (2026-09-10) אחרי מקרה אמת שבו חשיבה ארוכה קטעה פירוש
  * טארוט אחרי שורת המהות; finish_reason="length" נבדק עכשיו במפורש.
+ * הוגדל 12000→20000 (2026-09-15) אחרי שפירוש פריסת בחירה (6 קלפים) נכשל בפרוד.
  */
-const REASONING_HEADROOM = 12000;
+const REASONING_HEADROOM = 20000;
 
 /** קריאה ל-DeepSeek דרך ה-endpoint התואם-OpenAI. */
 async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<string> {
