@@ -160,8 +160,9 @@ describe("readingFileTitle (document title = PDF file name)", () => {
 
 describe("extractDocTitle", () => {
   it("returns the unescaped <title> of a built document, null when absent", () => {
-    const html = buildTarotPrintHtml({ question: 'שאלה עם "מרכאות"', cards: CARDS });
-    expect(extractDocTitle(html)).toBe('קריאת טארוט - שאלה עם "מרכאות"');
+    // מרכאות אינן חוקיות בשם קובץ ומנוקות כבר בבניית הכותרת; ישויות HTML אחרות מפוענחות.
+    const html = buildTarotPrintHtml({ question: 'שאלה עם "מרכאות" & עוד', cards: CARDS });
+    expect(extractDocTitle(html)).toBe("קריאת טארוט - שאלה עם מרכאות & עוד");
     expect(extractDocTitle("<html><body>no title</body></html>")).toBeNull();
   });
 });
