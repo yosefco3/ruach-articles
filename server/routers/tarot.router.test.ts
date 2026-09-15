@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { __resetRateLimit } from "../_core/rateLimit";
+import { __resetJobs } from "../_core/jobs";
 import { adminCtx, makeCaller, publicCtx, userCtx } from "../test-helpers/trpc";
 
 const CARDS = [
@@ -63,7 +64,24 @@ describe("tarot.myUsage", () => {
   });
 });
 
+type Caller = ReturnType<typeof makeCaller>["caller"];
+type InterpretInput = Parameters<Caller["tarot"]["interpret"]>[0];
+
+/** מפעיל את עבודת הפירוש וממתין לסיומה — מחזיר את התוצאה או זורק את שגיאת העבודה. */
+async function interpretDone(caller: Caller, input: InterpretInput) {
+  const { jobId } = await caller.tarot.interpret(input);
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setImmediate(r));
+    const job = await caller.tarot.interpretResult({ jobId });
+    if (job.status === "done") return job.result;
+    if (job.status === "error") throw new Error(job.message);
+  }
+  throw new Error("job did not settle");
+}
+
 describe("tarot.interpret", () => {
+  beforeEach(() => __resetJobs());
+
   it("rejects guests with UNAUTHORIZED", async () => {
     const { caller } = makeCaller(publicCtx());
     await expect(caller.tarot.interpret({ question: "ש", cards: CARDS })).rejects.toMatchObject({
@@ -90,7 +108,7 @@ describe("tarot.interpret", () => {
       },
       { tarotAiMonthlyLimit: 5 },
     );
-    const res = await caller.tarot.interpret({ question: "מה נכון להבין?", cards: CARDS });
+    const res = await interpretDone(caller, { question: "מה נכון להבין?", cards: CARDS });
     expect(res.interpretation).toBe("פירוש טארוט לדוגמה");
     expect(res.usage).toEqual({ used: 2, limit: 5, remaining: 3 });
     expect(generateTarotInterpretation).toHaveBeenCalledWith({
@@ -119,7 +137,7 @@ describe("tarot.interpret", () => {
       { getTarotMonthlyUsage: async () => 99 },
       { tarotAiMonthlyLimit: 2 },
     );
-    const res = await caller.tarot.interpret({ question: "ש", cards: CARDS });
+    const res = await interpretDone(caller, { question: "ש", cards: CARDS });
     expect(res.interpretation).toBe("פירוש טארוט לדוגמה");
     expect(db.getTarotMonthlyUsage).not.toHaveBeenCalled();
     expect(db.incrementTarotMonthlyUsage).not.toHaveBeenCalled();
@@ -135,9 +153,7 @@ describe("tarot.interpret", () => {
         },
       },
     );
-    await expect(caller.tarot.interpret({ question: "ש", cards: CARDS })).rejects.toThrow(
-      /provider down/,
-    );
+    await expect(interpretDone(caller, { question: "ש", cards: CARDS })).rejects.toThrow(/provider down/);
     expect(db.incrementTarotMonthlyUsage).not.toHaveBeenCalled();
   });
 
@@ -146,7 +162,7 @@ describe("tarot.interpret", () => {
       getTarotMonthlyUsage: async () => 0,
       incrementTarotMonthlyUsage: async () => 1,
     });
-    const ok = await caller.tarot.interpret({ question: "", cards: CARDS });
+    const ok = await interpretDone(caller, { question: "", cards: CARDS });
     expect(ok.interpretation).toBeTruthy();
 
     await expect(
@@ -239,7 +255,51 @@ describe("tarot.chooseSpread", () => {
   });
 });
 
+describe("tarot.interpretResult", () => {
+  beforeEach(() => __resetJobs());
+  const enabled = () => ({
+    getTarotIntro: async () => ({ aiEnabled: true }),
+    getTarotMonthlyUsage: async () => 0,
+    incrementTarotMonthlyUsage: async () => 1,
+  });
+
+  it("interpret returns a jobId immediately; the result is pending, then done", async () => {
+    let release!: (v: string) => void;
+    const { caller } = makeCaller(userCtx(), enabled(), {
+      generateTarotInterpretation: () => new Promise<string>((r) => (release = r)),
+    });
+    const { jobId } = await caller.tarot.interpret({ question: "ש", cards: CARDS });
+    expect(jobId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(await caller.tarot.interpretResult({ jobId })).toEqual({ status: "pending" });
+    release("פירוש");
+    await new Promise((r) => setImmediate(r));
+    expect(await caller.tarot.interpretResult({ jobId })).toEqual({
+      status: "done",
+      result: { interpretation: "פירוש", usage: { used: 1, limit: 5, remaining: 4 } },
+    });
+  });
+
+  it("another user cannot read the job (NOT_FOUND); unknown/invalid ids are rejected", async () => {
+    const { caller } = makeCaller(userCtx(), enabled());
+    const { jobId } = await caller.tarot.interpret({ question: "ש", cards: CARDS });
+    const other = makeCaller({ ...userCtx(), user: { ...userCtx().user!, dbId: 999 } }, enabled()).caller;
+    await expect(other.tarot.interpretResult({ jobId })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.tarot.interpretResult({ jobId: "not-a-uuid" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(
+      caller.tarot.interpretResult({ jobId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("guests get UNAUTHORIZED", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(
+      caller.tarot.interpretResult({ jobId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+});
+
 describe("tarot.interpret — spread plans", () => {
+  beforeEach(() => __resetJobs());
   const SIX = [...CARDS, ...CARDS];
   const CHOICE = { kind: "choice" as const, options: ["לעבור דירה", "להישאר"] };
   const enabled = () => ({
@@ -250,7 +310,7 @@ describe("tarot.interpret — spread plans", () => {
 
   it("choice with 6 cards passes and the AI service receives the spread", async () => {
     const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
-    const res = await caller.tarot.interpret({ question: "ש", cards: SIX, spread: CHOICE });
+    const res = await interpretDone(caller, { question: "ש", cards: SIX, spread: CHOICE });
     expect(res.interpretation).toBe("פירוש טארוט לדוגמה");
     expect(generateTarotInterpretation).toHaveBeenCalledWith({ question: "ש", cards: SIX, spread: CHOICE });
   });
@@ -269,7 +329,7 @@ describe("tarot.interpret — spread plans", () => {
 
   it("a choice spread with a single option is normalized to three (so 3 cards pass, 4 do not)", async () => {
     const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
-    await caller.tarot.interpret({ question: "ש", cards: CARDS, spread: { kind: "choice", options: ["רק אחת"] } });
+    await interpretDone(caller, { question: "ש", cards: CARDS, spread: { kind: "choice", options: ["רק אחת"] } });
     expect(generateTarotInterpretation.mock.calls[0][0]).toMatchObject({ spread: { kind: "three" } });
   });
 

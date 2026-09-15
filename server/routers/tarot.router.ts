@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { adminProcedure } from "./middleware";
 import { rateLimit } from "../_core/rateLimit";
+import { getJob, startJob } from "../_core/jobs";
 import { MAX_CHOICE_OPTIONS, MAX_OPTION_LENGTH, THREE_SPREAD, normalizeSpreadChoice, spreadSize } from "@shared/tarot";
 import type { RouterDeps } from "./context";
 
@@ -93,22 +94,51 @@ export const createTarotRouter = (deps: RouterDeps) =>
           }
         }
 
-        // קריאת הספק. נכשלת → לא מגדילים מונה (count-on-success).
-        const interpretation = await deps.generateTarotInterpretation({
-          question: input.question,
-          cards: input.cards,
-          spread,
+        // הפירוש רץ כעבודת רקע (מודל חושב: 1–2 דקות; Cloudflare מנתק בקשה פתוחה אחרי
+        // ~100ש'). הלקוח מקבל jobId מיד ושואל interpretResult. הספק נכשל → לא מגדילים
+        // מונה (count-on-success, בתוך העבודה).
+        const t0 = Date.now();
+        const cardCount = input.cards.length;
+        const jobId = startJob(userId, async () => {
+          let interpretation: string;
+          try {
+            interpretation = await deps.generateTarotInterpretation({
+              question: input.question,
+              cards: input.cards,
+              spread,
+            });
+          } catch (err) {
+            // בלי השאלה (פרטיות) — רק הפריסה, המשך והשגיאה, כדי שאפשר יהיה לאבחן בפרוד.
+            console.error(
+              `[tarot] interpret failed (${spread.kind}, ${cardCount} cards) after ${Date.now() - t0}ms:`,
+              err instanceof Error ? err.message : err,
+            );
+            throw err;
+          }
+          console.log(`[tarot] interpret ok (${spread.kind}, ${cardCount} cards) in ${Date.now() - t0}ms`);
+
+          let used = 0;
+          if (!isAdmin) {
+            used = await deps.db.incrementTarotMonthlyUsage(userId);
+          }
+          return {
+            interpretation,
+            usage: { used, limit, remaining: Math.max(0, limit - used) },
+          };
         });
+        return { jobId };
+      }),
 
-        let used = 0;
-        if (!isAdmin) {
-          used = await deps.db.incrementTarotMonthlyUsage(userId);
-        }
-
-        return {
-          interpretation,
-          usage: { used, limit, remaining: Math.max(0, limit - used) },
-        };
+    // ── מחובר: מצב עבודת הפירוש. NOT_FOUND כשאינה קיימת / פגה / של משתמש אחר ──
+    interpretResult: protectedProcedure
+      .input(z.object({ jobId: z.string().uuid() }))
+      .query(({ ctx, input }) => {
+        const job = getJob<{ interpretation: string; usage: { used: number; limit: number; remaining: number } }>(
+          input.jobId,
+          ctx.user.dbId,
+        );
+        if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "JOB_NOT_FOUND" });
+        return job;
       }),
 
     // ── אדמין: עריכה ──

@@ -102,8 +102,8 @@ describe("generateIchingInterpretation — provider selection + retry", () => {
 
     await generateIchingInterpretation(ctx);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    // iching מבקש 3000 טוקני תשובה + REASONING_HEADROOM (12000) לחשיבת המודל.
-    expect(body.max_tokens).toBe(15000);
+    // iching מבקש 3000 טוקני תשובה + REASONING_HEADROOM (20000) לחשיבת המודל.
+    expect(body.max_tokens).toBe(23000);
   });
 
   it("retries a truncated response (finish_reason=length) instead of returning partial text", async () => {

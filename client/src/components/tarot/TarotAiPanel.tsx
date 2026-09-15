@@ -1,7 +1,9 @@
 /**
  * תיבת "פֵּרוּשׁ AI לפריסה" — מוצגת מעל חלון פירוש הקלף בדף הטארוט.
  * השאלה והקלפים נשלחים לשרת אך ורק בלחיצה מפורשת על הכפתור, ולעולם אינם נשמרים ב-DB.
- * שיקוף של IChingAiPanel מול tarot.interpret.
+ * הפירוש רץ בשרת כעבודת רקע: `interpret` מחזיר jobId מיד, וכאן שואלים
+ * `interpretResult` כל 3 שניות עד done/error — כך בקשת HTTP לא נשארת פתוחה 1–2 דקות
+ * (Cloudflare מנתק אחרי ~100ש'). שיקוף של IChingAiPanel מול tarot.interpret.
  */
 import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
@@ -11,6 +13,10 @@ import type { TarotAiCardContext } from "@/pages/tarot/model";
 import { THREE_SPREAD, type SpreadChoice } from "@shared/tarot";
 
 const LOADING_MESSAGE = "ה-AI מכין את הפירוש לפריסה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
+/** תדירות הבדיקה של עבודת הפירוש. */
+const POLL_MS = 3000;
+
+type InterpretResult = { interpretation: string; usage: { used: number; limit: number; remaining: number } };
 
 function prefersReducedMotion(): boolean {
   return (
@@ -125,18 +131,47 @@ export function TarotAiPanel({
   const utils = trpc.useUtils();
   // היתרה החודשית — נטענת רק למחוברים, ומרועננת אחרי כל פירוש מוצלח.
   const usageQuery = trpc.tarot.myUsage.useQuery(undefined, { enabled: isAuthenticated });
+  // העבודה הפעילה (jobId) והתוצאה/השגיאה שהתקבלו ממנה.
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [result, setResult] = useState<InterpretResult | null>(null);
+  const [jobError, setJobError] = useState<string | null>(null);
   const mutation = trpc.tarot.interpret.useMutation({
     onError: (err) => {
       const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
       if (!quota) setFailures((n) => n + 1);
     },
-    onSuccess: (data) => {
-      setFailures(0);
-      onResult?.(data.interpretation);
-      void utils.tarot.myUsage.invalidate();
-    },
+    onSuccess: (data) => setJobId(data.jobId),
   });
-  const runInterpret = () => mutation.mutate({ question, cards, spread });
+  // polling: כל 3 שניות כל עוד יש עבודה פעילה ועוד אין תוצאה.
+  const jobQuery = trpc.tarot.interpretResult.useQuery(
+    { jobId: jobId ?? "" },
+    { enabled: !!jobId && !result && !jobError, refetchInterval: POLL_MS, retry: false, refetchOnWindowFocus: false },
+  );
+  useEffect(() => {
+    if (!jobId) return;
+    const job = jobQuery.data;
+    if (job?.status === "done") {
+      setResult(job.result);
+      setJobId(null);
+      setFailures(0);
+      onResult?.(job.result.interpretation);
+      void utils.tarot.myUsage.invalidate();
+    } else if (job?.status === "error" || jobQuery.error) {
+      // שגיאת ספק, או עבודה שאבדה (אתחול שרת) — נספרת ככישלון; ניסיון חוזר פותח עבודה חדשה.
+      setJobError(job?.status === "error" ? job.message : (jobQuery.error?.message ?? "JOB_NOT_FOUND"));
+      setJobId(null);
+      setFailures((n) => n + 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId, jobQuery.data, jobQuery.error]);
+
+  const runInterpret = () => {
+    setJobError(null);
+    setResult(null);
+    mutation.mutate({ question, cards, spread });
+  };
+  const pending = mutation.isPending || !!jobId;
+  const failed = !!mutation.error || !!jobError;
 
   const reduced = useRef(false);
   useEffect(() => {
@@ -186,20 +221,18 @@ export function TarotAiPanel({
     <div dir="rtl" style={cardStyle}>
       <PanelHeader />
 
-      {mutation.data ? (
+      {result ? (
         <>
           <div
             className="iching-interpretation"
             style={{ fontSize: 17.5, lineHeight: 1.95, color: "oklch(0.30 0.025 55)" }}
-            dangerouslySetInnerHTML={{ __html: marked.parse(mutation.data.interpretation) as string }}
+            dangerouslySetInnerHTML={{ __html: marked.parse(result.interpretation) as string }}
           />
-          {mutation.data.usage && (
-            <div style={{ marginTop: 16, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>
-              נותרו {mutation.data.usage.remaining} קריאות החודש
-            </div>
-          )}
+          <div style={{ marginTop: 16, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>
+            נותרו {result.usage.remaining} קריאות החודש
+          </div>
         </>
-      ) : mutation.isPending ? (
+      ) : pending ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
           <span
             aria-hidden
@@ -220,7 +253,7 @@ export function TarotAiPanel({
         <p style={errorTextStyle}>
           ניצלת את {monthlyLimit} הקריאות החינמיות שלך לחודש זה. תוכל להמשיך ליהנות מפירושי הקלפים שבאתר.
         </p>
-      ) : mutation.error && failures >= MAX_FAILURES ? (
+      ) : failed && failures >= MAX_FAILURES ? (
         // ── אחרי 3 כשלים רצופים: מתנצלים, מפנים לפירוש הסטטי, ומבהירים שהמכסה לא נפגעה ──
         <p style={errorTextStyle}>
           לא הצלחנו להפיק פירוש גם לאחר מספר ניסיונות — נראה ששירות ה-AI עמוס או חווה תקלה זמנית.
@@ -241,7 +274,7 @@ export function TarotAiPanel({
             נסה שוב בכל זאת
           </button>
         </p>
-      ) : mutation.error ? (
+      ) : failed ? (
         // ── שגיאה זמנית: הודעה + כפתור ניסיון חוזר (המכסה נספרת רק בהצלחה) ──
         <div>
           <p style={{ ...errorTextStyle, marginBottom: 16 }}>
