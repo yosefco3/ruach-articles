@@ -102,6 +102,8 @@ export interface TarotPrintCard {
   name: string;
   suitLabel: string;
   imageUrl: string;
+  /** תווית העמדה לפי תוכנית הפריסה (למשל "הַצֹּמֶת"); ברירת מחדל — מספור. */
+  positionLabel?: string;
 }
 
 const TAROT_POSITIONS = ["קְלָף רִאשׁוֹן", "קְלָף שֵׁנִי", "קְלָף שְׁלִישִׁי"];
@@ -114,7 +116,7 @@ export function buildTarotPrintHtml(opts: {
   const slots = opts.cards
     .map(
       (c, i) => `<div class="slot">
-<div class="pos">${TAROT_POSITIONS[i] ?? `קְלָף ${i + 1}`}</div>
+<div class="pos">${escapeHtml(c.positionLabel ?? TAROT_POSITIONS[i] ?? `קְלָף ${i + 1}`)}</div>
 <img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(c.name)}" />
 <div class="nm">${escapeHtml(c.name)}</div>
 <div class="sb">${escapeHtml(c.suitLabel)}</div>

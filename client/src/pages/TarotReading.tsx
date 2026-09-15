@@ -559,7 +559,7 @@ function ResultView({
     printHtmlDocument(
       buildTarotPrintHtml({
         question: qSaved,
-        cards: views.map((v) => ({ name: v.name, suitLabel: v.suitLabel, imageUrl: v.imageUrl })),
+        cards: views.map((v, i) => ({ name: v.name, suitLabel: v.suitLabel, imageUrl: v.imageUrl, positionLabel: labels[i] })),
         aiHtml: aiMd ? (marked.parse(aiMd) as string) : null,
       }),
     );

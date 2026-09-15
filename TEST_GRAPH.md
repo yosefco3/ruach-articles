@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-10 18:43_
+_נוצר אוטומטית ב: 2026-09-15 05:34_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 218 |
-| מכוסים / covered | 44 |
+| קבצי קוד / source files | 219 |
+| מכוסים / covered | 45 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 20% ↑1% |
-| טסטים עוברים / passing | 481 ✅ |
+| כיסוי / coverage | 20% →0% |
+| טסטים עוברים / passing | 522 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -87,6 +87,7 @@ _נוצר אוטומטית ב: 2026-09-10 18:43_
 | `server/tarotDeckZip.ts` | `server/tarotDeckZip.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
 | `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
+| `shared/tarot/spreads.ts` | `shared/tarot/spreads.test.ts` |
 
 ## קבצים ללא טסטים (לפי עדיפות) / Uncovered (by priority)
 

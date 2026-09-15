@@ -10,8 +10,10 @@
 בנוסף: **קריאת אִי צִ׳ינְג** (`/iching`) — דף ציבורי שבו מבקר כותב שאלה (שאינה נשמרת),
 מטיל 3 מטבעות 6 פעמים בצד הלקוח, ורואה הקסגרמה ראשית (+נגזרת אם יש קווים משתנים)
 עם פירוש; אדמין עורך את הטקסטים ב-`/admin/iching`.
-וכן **קריאה בקלפי טארוט** (`/tarot`) — שליפת 3 קלפים (ללא תפקידי עמדות) מחפיסה
-מקורית של האתר, פירוש סטטי לכל קלף בלחיצה + פירוש AI לפריסה כולה (מכסה נפרדת),
+וכן **קריאה בקלפי טארוט** (`/tarot`) — שליפת 3 קלפים (מרכזי + שני מסייעים) מחפיסה
+מקורית של האתר — או, כשה-AI זמין (מתג דלוק + מחובר), **פריסה שה-AI בוחר** לשאלה
+(פריסת בחירה בין 2–4 דרכים: 6/8/10 קלפים); פירוש סטטי לכל קלף בלחיצה + פירוש AI
+לפריסה כולה (מכסה נפרדת),
 והורדת החפיסה כ-ZIP חופשי; אדמין עורך ב-`/admin/tarot`. דף גלריה `/tarot/deck`
 מציג את כל 78 הקלפים (ארקנה גדולה + 4 סדרות); הנכסים ב-`client/public/tarot-cards/`
 (78 קלפים + `back.webp`, ‎~600px webp).
@@ -100,16 +102,22 @@ tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, c
   `upsertHexagram`/`upsertTrigram`/`updateIntro` (`adminProcedure` בלבד).
   ה-AI מוזרק דרך `RouterDeps` (`generateIchingInterpretation`, `evaluateIchingQuestion`,
   `ichingAiMonthlyLimit`, `refineRatePerHour`).
-- **`tarot`** — `getContent` (ציבורי: cards+intro+`aiMonthlyLimit`); `interpret`
-  (`protectedProcedure`: פירוש AI לפריסה של בדיוק 3 קלפים; שאלה ריקה = קריאה כללית;
+- **`tarot`** — `getContent` (ציבורי: cards+intro+`aiMonthlyLimit`); `chooseSpread`
+  (`protectedProcedure`: ה-AI מסווג את השאלה ובוחר פריסה מהקטלוג `shared/tarot/spreads.ts`
+  — `{kind:"three"|"choice", options}`; מתג כבוי / rate-limit למשתמש
+  (`TAROT_SPREAD_RATE_PER_HOUR`, 30) / שגיאה → `three`, לא נספר במכסה); `interpret`
+  (`protectedProcedure`: פירוש AI לפריסה — 3 קלפים ל-`three` או 6/8/10 ל-`choice`,
+  `SPREAD_SIZE_MISMATCH` אחרת; שאלה ריקה = קריאה כללית;
   אותן גדרות כמו האי-צ'ינג — מתג `intro.aiEnabled` (כבוי כברירת מחדל) → `AI_DISABLED`,
   מכסה חודשית נפרדת `TAROT_AI_MONTHLY_LIMIT` (ברירת מחדל 5) → `QUOTA_EXCEEDED`,
   count-on-success, אדמין פטור; הפרומפט (`server/tarotAi.ts`) קורא בשיטת
   **קלף מרכזי + שני מסייעים** — קלף 2 נושא את התשובה, הצדדיים כשני פנים משלימים או
-  כתומך ומתנגד (בחירת המודל, מנומקת) — ותחום בעקרונות דרך הרוח: נטיות, לא ניבוי);
+  כתומך ומתנגד (בחירת המודל, מנומקת) — ובפריסת בחירה בשיטת **השוואת דרכים באותם
+  תפקידים** (הצומת → לכל דרך "מה מציעה"/"לאן מובילה" → "מה שאינך רואה") — ותחום
+  בעקרונות דרך הרוח: נטיות, לא ניבוי, ההכרעה אצל השואל);
   `myUsage` (`protectedProcedure` query — יתרה חודשית כמו באי-צ'ינג, מול `tarotAiUsage`);
   `upsertCard`/`updateIntro` (`adminProcedure`). דרך `RouterDeps`:
-  `generateTarotInterpretation`, `tarotAiMonthlyLimit`.
+  `generateTarotInterpretation`, `tarotAiMonthlyLimit`, `chooseTarotSpread`, `spreadRatePerHour`.
 - **`GET /tarot-cards/ruach-tarot-deck.zip`** — הורדת החפיסה (לא-tRPC, נרשם ב-
   `_core/startup/seo-routes.ts`); 404 עד שהנכסים מועלים ל-`client/public/tarot-cards/`.
 
@@ -162,17 +170,21 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 המספר המעודכן ולא מספר מקובע. אורח רואה כפתור חסום עם הזמנה להתחברות. השאלה/התשובה לעולם אינן נשמרות.
 
 זרימת קריאת טארוט: מאמר מבוא → שאלה (state בלבד; אופציונלית — בלעדיה זו קריאה
-כללית) → `draw()` בצד הלקוח (ללא חזרות, RNG קריפטוגרפי) → אנימציית ערבוב→פריסה→
-היפוך (`pages/tarot/reveal.ts`, מכבדת reduced-motion, ניתנת לדילוג; רק *חושפת*
-תוצאה שחושבה) → 3 קלפים; לחיצה על קלף פותחת פאנל פירוש יחיד (מבנה מ-`shared/tarot` +
-טקסט מה-DB). **פירוש AI לפריסה** (כשהמתג דלוק): מוצג מעל הפירוש הסטטי, שולח את
-השאלה + שם/מהות/פירוש שלושת הקלפים ל-`tarot.interpret` רק בלחיצה מפורשת; הקריאה
-בשיטת הקלף המרכזי — קלף 2 הוא התשובה, הצדדיים מסייעים (משלימים או תומך/מתנגד). תחתית הדף: קטע "החפיסה שלנו — להורדה חופשית" (מוצג רק
+כללית) → **בחירת פריסה**: בלי AI זמין (מתג כבוי / אורח / בלי שאלה) תמיד `three`;
+עם AI — `tarot.chooseSpread` (fail-open: שגיאה או >8ש' → `three`) → `draw(n)` בצד
+הלקוח (ללא חזרות, RNG קריפטוגרפי) → אנימציית ערבוב→פריסה→היפוך (`pages/tarot/reveal.ts`,
+מכבדת reduced-motion, ניתנת לדילוג; רק *חושפת* תוצאה שחושבה) → הקלפים לפי התוכנית
+(`spreadPlan`: שורה של 3, או הצומת → עמודה לכל דרך → מה שאינך רואה; `choiceLayout`);
+לחיצה על קלף פותחת פאנל פירוש יחיד (מבנה מ-`shared/tarot` + טקסט מה-DB). **פירוש AI
+לפריסה** (כשהמתג דלוק): מוצג מעל הפירוש הסטטי, שולח את השאלה + שם/מהות/פירוש הקלפים
++ הפריסה ל-`tarot.interpret` רק בלחיצה מפורשת; `three` בשיטת הקלף המרכזי, `choice`
+בשיטת השוואת הדרכים. `pendingReading` שומר גם את הפריסה סביב התחברות. תחתית הדף: קטע "החפיסה שלנו — להורדה חופשית" (מוצג רק
 כשקובץ הגב קיים — בדיקת HEAD).
 
 ## היסטוריית שינויים משמעותיים / Significant change history
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
+| 2026-09-15 | **Tarot: AI-chosen spread for choice questions** (`feature-prompts/tarot-choice-spread/`, 6 steps): new shared spread catalog `shared/tarot/spreads.ts` (`three` = existing center-card method; `choice` = "הצומת" + 2 cards per option [מה מציעה / לאן מובילה] + "מה שאינך רואה", 2–4 options → 6/8/10 cards; `normalizeSpreadChoice` fail-opens to three). **Who picks: the AI, only when it is available** (admin switch on + signed in + non-empty question) via new `tarot.chooseSpread` (protected; short JSON classification, "X או לא" = yes/no → three; per-user hourly cap `TAROT_SPREAD_RATE_PER_HOUR`=30, not counted in the quota); otherwise always 3 cards. `tarot.interpret` takes `spread`, validates card count against the plan, and `buildTarotPrompt` branches to a compare-the-roads prompt for `choice`. Client: `runDeal({count})`, `choiceLayout`/`positionLabels`, pending reading keeps the spread (old array payload still restores), result view renders the choice layout with role labels and column headers, print uses the plan labels; guide got a "שאלת בחירה?" section + FAQ entry, llms.txt wording. +40 tests (481→521). | `shared/tarot/spreads.ts`(+test), `server/tarotAi.ts`(+test), `server/routers/tarot.router.ts`(+test), `server/routers/{context,index}.ts`, `server/_core/env.ts`, `server/test-helpers/trpc.ts`, `client/src/pages/TarotReading.tsx`, `client/src/pages/tarot/{model,reveal}.ts`(+tests), `client/src/lib/{pendingReading,printReading}.ts`(+tests), `client/src/components/tarot/TarotAiPanel.tsx`(+test), `client/src/pages/TarotGuide.tsx`, `shared/tarotGuide.ts`, `server/llmstxt.ts` |
 | 2026-09-10 | **AI provider: truncation guard** — prod incident: a tarot reading came back as just the essence line with an unclosed `**` (deepseek-v4-pro reasoning ate ~all of `max_tokens`, content truncated mid-stream; `finish_reason:"length"` was never checked so partial text passed as success and burned quota). Fix: the DeepSeek path now throws `RetryableError` on `finish_reason==="length"` (reasoning length varies per run → retry usually succeeds; after 3 failures the caller gets an error, and count-on-success means no quota burn), and `REASONING_HEADROOM` raised 4000→12000 (thinking is wanted, cost is fine). +2 tests (461→463). | `server/_core/aiProvider.ts`, `server/ichingAi.provider.test.ts` |
 | 2026-09-10 | **Fix: returnTo actually works** — the session-stored `returnTo` was wiped before the callback read it: passport 0.6+ regenerates the session on login (session-fixation guard), discarding anything stored pre-auth. The target now rides the OAuth `state` parameter instead (sent to Google, echoed back in the callback query, `safeReturnTo`-validated on both ends) — no session involvement at all. Verified locally: `?returnTo=/tarot` → Google URL carries `state=%2Ftarot`; `//evil.com` is dropped. | `server/_core/auth/strategies/oauth.ts` |
 | 2026-09-10 | **Login returns to the current page site-wide**: `getLoginUrl()` now defaults `returnTo` to `window.location.pathname+search`, so every login entry point (header button, comments, dashboard, AI panels) returns the user to the page they left instead of `/` — server-side `safeReturnTo` validation unchanged. SSR-safe (no `window` → plain URL). +3 tests. | `client/src/const.ts`(+`const.test.ts`) |

@@ -46,6 +46,20 @@ describe("buildTarotPrintHtml", () => {
     expect(withAi).toContain("נוצר על ידי בינה מלאכותית");
   });
 
+  it("תוויות עמדה מהתוכנית מחליפות את המספור (פריסת בחירה)", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({ ...CARDS[0], name: `קלף ${i}` }));
+    const labels = ["הַצֹּמֶת", "מָה מַצִּיעָה", "לְאָן מוֹבִילָה", "מָה מַצִּיעָה", "לְאָן מוֹבִילָה", "מָה שֶׁאֵינְךָ רוֹאֶה"];
+    const html = buildTarotPrintHtml({
+      question: "",
+      cards: six.map((c, i) => ({ ...c, positionLabel: labels[i] })),
+    });
+    expect(html).toContain("הַצֹּמֶת");
+    expect(html).toContain("מָה שֶׁאֵינְךָ רוֹאֶה");
+    expect(html).not.toContain("קְלָף רִאשׁוֹן");
+    // בלי תווית — המספור הישן נשאר
+    expect(buildTarotPrintHtml({ question: "", cards: CARDS })).toContain("קְלָף רִאשׁוֹן");
+  });
+
   it("שאלה ריקה — אין כותרת שאלה; שאלה עוינת — מנוטרלת", () => {
     const empty = buildTarotPrintHtml({ question: "   ", cards: CARDS });
     expect(empty).not.toContain("הַשְּׁאֵלָה");
