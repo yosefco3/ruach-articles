@@ -135,6 +135,9 @@ export function TarotAiPanel({
   const [jobId, setJobId] = useState<string | null>(null);
   const [result, setResult] = useState<InterpretResult | null>(null);
   const [jobError, setJobError] = useState<string | null>(null);
+  // עבודה שאבדה (אתחול/פריסה של השרת באמצע הפירוש) → מתחילים מחדש פעם אחת, בשקט.
+  // בטוח: המכסה נספרת רק כשפירוש הושלם.
+  const autoRestarted = useRef(false);
   const mutation = trpc.tarot.interpret.useMutation({
     onError: (err) => {
       const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
@@ -156,8 +159,13 @@ export function TarotAiPanel({
       setFailures(0);
       onResult?.(job.result.interpretation);
       void utils.tarot.myUsage.invalidate();
+    } else if (jobQuery.error?.data?.code === "NOT_FOUND" && !autoRestarted.current) {
+      // העבודה אבדה בשרת (פריסה חדשה באמצע הפירוש) — פותחים עבודה חדשה בלי להטריד את המשתמש.
+      autoRestarted.current = true;
+      setJobId(null);
+      mutation.mutate({ question, cards, spread });
     } else if (job?.status === "error" || jobQuery.error) {
-      // שגיאת ספק, או עבודה שאבדה (אתחול שרת) — נספרת ככישלון; ניסיון חוזר פותח עבודה חדשה.
+      // שגיאת ספק, או עבודה שאבדה פעמיים — נספרת ככישלון; ניסיון חוזר פותח עבודה חדשה.
       setJobError(job?.status === "error" ? job.message : (jobQuery.error?.message ?? "JOB_NOT_FOUND"));
       setJobId(null);
       setFailures((n) => n + 1);
@@ -168,6 +176,7 @@ export function TarotAiPanel({
   const runInterpret = () => {
     setJobError(null);
     setResult(null);
+    autoRestarted.current = false;
     mutation.mutate({ question, cards, spread });
   };
   const pending = mutation.isPending || !!jobId;
