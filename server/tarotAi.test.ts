@@ -94,6 +94,7 @@ describe("buildSpreadChoicePrompt (pure)", () => {
     expect(p).toContain("או לא?");
     expect(p).toContain("JSON");
     expect(p).toContain("בספק");
+    expect(p).toContain('"title"'); // כותרת לשם קובץ בהדפסה
   });
 });
 
@@ -109,11 +110,12 @@ describe("chooseTarotSpread (fail-open)", () => {
 
   it("returns the normalized choice from valid JSON (even inside a code fence)", async () => {
     const { chooseTarotSpread, generateText } = await withProvider(async () =>
-      '```json\n{"kind":"choice","options":[" לעבור לתל אביב ","להישאר בירושלים"]}\n```',
+      '```json\n{"kind":"choice","options":[" לעבור לתל אביב ","להישאר בירושלים"],"title":"מעבר לתל אביב?"}\n```',
     );
     await expect(chooseTarotSpread("ש")).resolves.toEqual({
       kind: "choice",
       options: ["לעבור לתל אביב", "להישאר בירושלים"],
+      title: "מעבר לתל אביב",
     });
     expect(generateText.mock.calls[0][1]).toEqual({ maxTokens: 300 });
   });

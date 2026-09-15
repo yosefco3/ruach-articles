@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_OPTION_LENGTH,
+  MAX_TITLE_LENGTH,
+  sanitizeReadingTitle,
   THREE_SPREAD,
   normalizeSpreadChoice,
   optionLetter,
@@ -82,5 +84,29 @@ describe("optionLetter", () => {
   it("maps 0..3 to Hebrew letters and falls back to numbers", () => {
     expect([0, 1, 2, 3].map(optionLetter)).toEqual(["א׳", "ב׳", "ג׳", "ד׳"]);
     expect(optionLetter(4)).toBe("5");
+  });
+});
+
+describe("reading title (file name)", () => {
+  it("keeps a sanitized title on both kinds, and omits it when absent/junk", () => {
+    expect(normalizeSpreadChoice({ kind: "choice", options: ["א", "ב"], title: " קטלבל: הרד או ספורט " })).toEqual({
+      kind: "choice",
+      options: ["א", "ב"],
+      title: "קטלבל הרד או ספורט",
+    });
+    expect(normalizeSpreadChoice({ kind: "three", options: [], title: "מעבר דירה" })).toEqual({
+      kind: "three",
+      options: [],
+      title: "מעבר דירה",
+    });
+    expect(normalizeSpreadChoice({ kind: "three", options: [], title: "?" })).toEqual(THREE_SPREAD);
+    expect(normalizeSpreadChoice({ kind: "choice", options: ["א", "ב"], title: 42 })).toEqual({ kind: "choice", options: ["א", "ב"] });
+  });
+
+  it("sanitizeReadingTitle strips file-name-hostile characters and caps the length", () => {
+    expect(sanitizeReadingTitle('a/b\\c:d*e?f"g<h>i|j\nk')).toBe("a b c d e f g h i j k");
+    expect(sanitizeReadingTitle("x".repeat(MAX_TITLE_LENGTH + 30))).toHaveLength(MAX_TITLE_LENGTH);
+    expect(sanitizeReadingTitle("")).toBeUndefined();
+    expect(sanitizeReadingTitle(null)).toBeUndefined();
   });
 });
