@@ -15,6 +15,8 @@ export type SpreadKind = "three" | "choice";
 export interface SpreadChoice {
   kind: SpreadKind;
   options: string[]; // ריק עבור three
+  /** כותרת קצרה לקריאה שה-AI מזקק מהשאלה — משמשת כשם קובץ בהדפסה/שמירה כ-PDF. */
+  title?: string;
 }
 
 export interface SpreadPosition {
@@ -40,6 +42,20 @@ export const MIN_CHOICE_OPTIONS = 2;
 export const MAX_CHOICE_OPTIONS = 4;
 /** אורך מרבי לניסוח אופציה (ה-AI מתבקש לקצר; מעבר לזה — נחתך). */
 export const MAX_OPTION_LENGTH = 60;
+/** אורך מרבי לכותרת הקריאה (שם קובץ). */
+export const MAX_TITLE_LENGTH = 60;
+
+/** מנקה כותרת לשימוש כשם קובץ: בלי תווים אסורים / שורות, רווחים מכווצים, חיתוך. */
+export function sanitizeReadingTitle(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const t = raw
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_TITLE_LENGTH)
+    .trim();
+  return t.length >= 2 ? t : undefined;
+}
 
 const OPTION_LETTERS = ["א׳", "ב׳", "ג׳", "ד׳"];
 
@@ -54,17 +70,19 @@ export function optionLetter(i: number): string {
  */
 export function normalizeSpreadChoice(raw: unknown): SpreadChoice {
   if (!raw || typeof raw !== "object") return THREE_SPREAD;
-  const r = raw as { kind?: unknown; options?: unknown };
-  if (r.kind !== "choice") return THREE_SPREAD;
-  if (!Array.isArray(r.options)) return THREE_SPREAD;
+  const r = raw as { kind?: unknown; options?: unknown; title?: unknown };
+  const title = sanitizeReadingTitle(r.title);
+  const three: SpreadChoice = title ? { ...THREE_SPREAD, title } : THREE_SPREAD;
+  if (r.kind !== "choice") return three;
+  if (!Array.isArray(r.options)) return three;
   const options = r.options
     .filter((o): o is string => typeof o === "string")
     .map((o) => o.trim().slice(0, MAX_OPTION_LENGTH).trim())
     .filter((o) => o.length > 0);
   if (options.length < MIN_CHOICE_OPTIONS || options.length > MAX_CHOICE_OPTIONS) {
-    return THREE_SPREAD;
+    return three;
   }
-  return { kind: "choice", options };
+  return title ? { kind: "choice", options, title } : { kind: "choice", options };
 }
 
 const THREE_POSITIONS: SpreadPosition[] = [

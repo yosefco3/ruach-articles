@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildIchingPrintHtml,
   buildTarotPrintHtml,
+  readingFileTitle,
   escapeHtml,
   hexagramHtml,
   type PrintHexLine,
@@ -123,5 +124,35 @@ describe("buildIchingPrintHtml", () => {
     });
     expect(html).toContain("פֵּרוּשׁ AI");
     expect(html).toContain("הדרך פתוחה.");
+  });
+});
+
+describe("readingFileTitle (document title = PDF file name)", () => {
+  it("prefers the AI title, sanitized", () => {
+    expect(readingFileTitle("קריאת טארוט", "לעבור או להישאר?", " מעבר דירה: תל אביב? ")).toBe(
+      "קריאת טארוט - מעבר דירה תל אביב",
+    );
+  });
+
+  it("falls back to the question without question marks, cut at a word boundary past 60 chars", () => {
+    expect(readingFileTitle("קריאת טארוט", "האם לבחור בקטלבל הרד סטייל או ספורט סטייל?")).toBe(
+      "קריאת טארוט - האם לבחור בקטלבל הרד סטייל או ספורט סטייל",
+    );
+    const long = "מה נכון להבין לגבי המעבר הגדול שאני שוקל לעשות בשנה הקרובה בעבודה ובמגורים ובכלל בחיים";
+    const t = readingFileTitle("קריאת טארוט", long);
+    expect(t.endsWith("…")).toBe(true);
+    expect(t.length).toBeLessThanOrEqual("קריאת טארוט - ".length + 61);
+    expect(t).not.toContain("ובמגורים");
+  });
+
+  it("no question and no AI title → the date", () => {
+    expect(readingFileTitle("קריאת אי צ׳ינג", "   ")).toMatch(/^קריאת אי צ׳ינג - \d{1,2}\.\d{1,2}\.\d{4}$/);
+  });
+
+  it("the tarot document carries the title in <title>", () => {
+    const html = buildTarotPrintHtml({ question: "לעבור או להישאר?", cards: CARDS, title: "מעבר דירה" });
+    expect(html).toContain("<title>קריאת טארוט - מעבר דירה</title>");
+    const noAi = buildTarotPrintHtml({ question: "לעבור או להישאר?", cards: CARDS });
+    expect(noAi).toContain("<title>קריאת טארוט - לעבור או להישאר</title>");
   });
 });

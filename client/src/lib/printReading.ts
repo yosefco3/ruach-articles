@@ -58,6 +58,33 @@ const BASE_CSS = `
   @page { margin: 12mm; }
 `;
 
+/**
+ * שם המסמך = שם הקובץ ב"שמור כ-PDF". עדיפות: כותרת שה-AI זיקק מהשאלה; אחרת תחילת
+ * השאלה (עד 60 תווים, בגבול מילה, בלי סימני שאלה); בלי שאלה — התאריך.
+ */
+export function readingFileTitle(prefix: string, question: string, aiTitle?: string | null): string {
+  const clean = (t: string) =>
+    t
+      .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  let title = aiTitle ? clean(aiTitle) : "";
+  if (!title) {
+    const q = clean(question);
+    if (q.length > 60) {
+      const cut = q.slice(0, 60);
+      const atWord = cut.lastIndexOf(" ");
+      title = (atWord > 30 ? cut.slice(0, atWord) : cut).trim() + "…";
+    } else {
+      title = q;
+    }
+  }
+  if (!title) {
+    title = new Date().toLocaleDateString("he-IL", { day: "numeric", month: "numeric", year: "numeric" });
+  }
+  return `${prefix} - ${title}`;
+}
+
 function docShell(title: string, bodyHtml: string): string {
   return `<!doctype html>
 <html dir="rtl" lang="he">
@@ -112,6 +139,8 @@ export function buildTarotPrintHtml(opts: {
   question: string;
   cards: TarotPrintCard[];
   aiHtml?: string | null;
+  /** כותרת שה-AI זיקק מהשאלה (שם קובץ); ללא — נגזרת מהשאלה/תאריך. */
+  title?: string | null;
 }): string {
   const slots = opts.cards
     .map(
@@ -127,7 +156,7 @@ export function buildTarotPrintHtml(opts: {
 <div class="spread">${slots}</div>
 ${aiSectionHtml(opts.aiHtml)}
 ${footerHtml()}`;
-  return docShell("קריאת טארוט — רוח חכמה", body);
+  return docShell(readingFileTitle("קריאת טארוט", opts.question, opts.title), body);
 }
 
 // ── אי-צ'ינג ──
@@ -184,7 +213,7 @@ export function buildIchingPrintHtml(opts: {
 ${chg}
 ${aiSectionHtml(opts.aiHtml)}
 ${footerHtml()}`;
-  return docShell("קריאת אי צ׳ינג — רוח חכמה", body);
+  return docShell(readingFileTitle("קריאת אי צ׳ינג", opts.question), body);
 }
 
 // ── ההדפסה עצמה ──
