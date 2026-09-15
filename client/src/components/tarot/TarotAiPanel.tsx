@@ -146,9 +146,17 @@ export function TarotAiPanel({
     onSuccess: (data) => setJobId(data.jobId),
   });
   // polling: כל 3 שניות כל עוד יש עבודה פעילה ועוד אין תוצאה.
+  // תקלת רשת חולפת בשאילתת מעקב אחת (מובייל שעבר לרקע, 4G מהבהב) אינה כישלון של הפירוש:
+  // שואלים שוב; רק תשובת שרת (למשל NOT_FOUND) או status=error מסיימים. ממשיכים גם ברקע.
   const jobQuery = trpc.tarot.interpretResult.useQuery(
     { jobId: jobId ?? "" },
-    { enabled: !!jobId && !result && !jobError, refetchInterval: POLL_MS, retry: false, refetchOnWindowFocus: false },
+    {
+      enabled: !!jobId && !result && !jobError,
+      refetchInterval: POLL_MS,
+      refetchIntervalInBackground: true,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
   );
   useEffect(() => {
     if (!jobId) return;
@@ -164,6 +172,9 @@ export function TarotAiPanel({
       autoRestarted.current = true;
       setJobId(null);
       mutation.mutate({ question, cards, spread });
+    } else if (jobQuery.error && !jobQuery.error.data) {
+      // שגיאה בלי data = לא הגיעה תשובת שרת (רשת נקטעה) — ממשיכים לשאול, לא מציגים שגיאה.
+      return;
     } else if (job?.status === "error" || jobQuery.error) {
       // שגיאת ספק, או עבודה שאבדה פעמיים — נספרת ככישלון; ניסיון חוזר פותח עבודה חדשה.
       setJobError(job?.status === "error" ? job.message : (jobQuery.error?.message ?? "JOB_NOT_FOUND"));
