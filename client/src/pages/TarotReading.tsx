@@ -322,7 +322,7 @@ export default function TarotReading() {
                   boxShadow: choosing ? "none" : "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
                 }}
               >
-                {choosing ? "ה-AI בוחר את הפריסה המתאימה לשאלה…" : content.intro.buttonLabel}
+                {choosing ? "פורס קלפים…" : content.intro.buttonLabel}
               </button>
             </div>
           </div>
