@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@shared/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -137,8 +138,8 @@ export default function AdminArticleForm() {
       toast.error("ניתן להעלות קבצי תמונה בלבד");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("הקובץ גדול מדי — מקסימום 10MB");
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error(`הקובץ גדול מדי — מקסימום ${MAX_UPLOAD_LABEL}`);
       return;
     }
 
@@ -167,6 +168,10 @@ export default function AdminArticleForm() {
     setIsUploading(true);
     try {
       for (const file of Array.from(files)) {
+        if (file.size > MAX_UPLOAD_BYTES) {
+          toast.error(`${file.name}: הקובץ גדול מדי — מקסימום ${MAX_UPLOAD_LABEL}`);
+          continue;
+        }
         const formData = new FormData();
         formData.append("file", file);
         const response = await fetch("/api/upload", { method: "POST", body: formData });

@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-15 12:23_
+_נוצר אוטומטית ב: 2026-09-20 11:06_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 220 |
-| מכוסים / covered | 46 |
+| קבצי קוד / source files | 221 |
+| מכוסים / covered | 47 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 20% →0% |
-| טסטים עוברים / passing | 535 ✅ |
+| כיסוי / coverage | 21% ↑1% |
+| טסטים עוברים / passing | 542 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -43,8 +43,10 @@ _נוצר אוטומטית ב: 2026-09-15 12:23_
 | `(no source found for tarot.test.ts)` | `shared/tarot/tarot.test.ts` |
 | `(no source found for tarotDb.test.ts)` | `server/tarotDb.test.ts` |
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
+| `(no source found for upload.limits.test.ts)` | `server/upload.limits.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
 | `client/src/components/ArticleActionsBar.tsx` | `client/src/components/ArticleActionsBar.test.tsx` |
+| `client/src/components/ArticleAttachments.tsx` | `client/src/components/ArticleAttachments.test.tsx` |
 | `client/src/components/editor/collapsibleQuote.ts` | `client/src/components/editor/collapsibleQuote.test.ts` |
 | `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
 | `client/src/components/iching/IChingAiPanel.tsx` | `client/src/components/iching/IChingAiPanel.test.tsx` |
