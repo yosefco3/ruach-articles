@@ -10,6 +10,7 @@ import { Link } from "wouter";
 import CommentsSection from "@/components/CommentsSection";
 import NextArticleCard from "@/components/NextArticleCard";
 import ArticleActionsBar from "@/components/ArticleActionsBar";
+import ArticleAttachments from "@/components/ArticleAttachments";
 
 export default function ArticlePage() {
   const params = useParams<{ slug: string }>();
@@ -215,36 +216,7 @@ export default function ArticlePage() {
 
         {/* Attachments Section */}
         {article.attachments && article.attachments.length > 0 && (
-          <section className="mb-10">
-            <h2 className="font-display font-bold text-lg text-foreground mb-4">קבצים מצורפים</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {article.attachments.map((file: any) => (
-                <a
-                  key={file.id}
-                  href={file.fileUrl}
-                  download={file.fileName}
-                  className="flex items-center gap-3 p-3 bg-secondary/50 hover:bg-secondary rounded-lg transition-colors group"
-                >
-                  <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <svg aria-hidden="true" focusable="false" className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                      {file.fileName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(file.fileSize / 1024).toFixed(1)} KB
-                    </p>
-                  </div>
-                  <svg aria-hidden="true" focusable="false" className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </a>
-              ))}
-            </div>
-          </section>
+          <ArticleAttachments attachments={article.attachments} />
         )}
 
         <div className="divider-gold mb-10" />

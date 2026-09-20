@@ -2,8 +2,9 @@ import { Router, Request, Response } from "express";
 import { uploadBuffer } from "./storage";
 import { nanoid } from "nanoid";
 import { compressImage, shouldCompressImage } from "./imageCompression";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@shared/const";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = MAX_UPLOAD_BYTES;
 
 const ALLOWED_MIME_PREFIXES = [
   "image/",
@@ -16,7 +17,7 @@ const ALLOWED_MIME_PREFIXES = [
   "application/vnd.ms-",
 ];
 
-function isMimeAllowed(mime: string): boolean {
+export function isMimeAllowed(mime: string): boolean {
   return ALLOWED_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix));
 }
 
@@ -42,7 +43,7 @@ uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
     for await (const chunk of req as any) {
       totalSize += chunk.length;
       if (totalSize > MAX_FILE_SIZE) {
-        res.status(413).json({ error: "File too large (max 10MB)" });
+        res.status(413).json({ error: `File too large (max ${MAX_UPLOAD_LABEL})` });
         return;
       }
       chunks.push(Buffer.from(chunk));
