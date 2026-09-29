@@ -1,4 +1,5 @@
 import { generateText } from "./_core/aiProvider";
+import { extractLastJsonObject } from "./_core/json";
 import {
   MAX_CHOICE_OPTIONS,
   MIN_CHOICE_OPTIONS,
@@ -299,13 +300,18 @@ export function buildSpreadChoicePrompt(question: string): string {
  */
 export async function chooseTarotSpread(question: string): Promise<SpreadChoice> {
   try {
-    const text = await generateText(buildSpreadChoicePrompt(question), { maxTokens: 300 });
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) {
+    // jsonFromReasoning: המודל החושב מחזיר לעיתים קרובות את ה-JSON בערוץ החשיבה עם
+    // content ריק — בלי זה כמחצית משאלות הבחירה נפלו בשקט לשלושה קלפים.
+    const text = await generateText(buildSpreadChoicePrompt(question), {
+      maxTokens: 300,
+      jsonFromReasoning: true,
+    });
+    const json = extractLastJsonObject(text);
+    if (!json) {
       console.warn("[tarot] chooseSpread: no JSON in reply", text.slice(0, 200));
       return THREE_SPREAD;
     }
-    return normalizeSpreadChoice(JSON.parse(match[0]));
+    return normalizeSpreadChoice(JSON.parse(json));
   } catch (err) {
     // Fail-open, אבל משאירים עקבות בלוג — אחרת אי אפשר להבין למה נפרסו שלושה קלפים.
     console.warn("[tarot] chooseSpread failed:", err instanceof Error ? err.message : err);

@@ -123,7 +123,7 @@ describe("chooseTarotSpread (fail-open)", () => {
       options: ["לעבור לתל אביב", "להישאר בירושלים"],
       title: "מעבר לתל אביב",
     });
-    expect(generateText.mock.calls[0][1]).toEqual({ maxTokens: 300 });
+    expect(generateText.mock.calls[0][1]).toEqual({ maxTokens: 300, jsonFromReasoning: true });
   });
 
   it("falls back to three on malformed JSON, provider errors, or an invalid choice", async () => {

@@ -1,4 +1,5 @@
 import { generateText } from "./_core/aiProvider";
+import { extractLastJsonObject } from "./_core/json";
 
 export interface IchingAiContext {
   question: string;
@@ -113,11 +114,15 @@ function cleanSuggestions(raw: unknown): string[] {
 export async function evaluateIchingQuestion(question: string): Promise<QuestionRefineResult> {
   const safe: QuestionRefineResult = { problematic: false, suggestions: [] };
   try {
-    const text = await generateText(buildQuestionRefinePrompt(question), { maxTokens: 500 });
+    // jsonFromReasoning: המודל החושב מחזיר לעיתים את ה-JSON בערוץ החשיבה עם content ריק.
+    const text = await generateText(buildQuestionRefinePrompt(question), {
+      maxTokens: 500,
+      jsonFromReasoning: true,
+    });
     // מסירים גדר ```json``` או טקסט עוטף, ומחלצים את אובייקט ה-JSON.
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return safe;
-    const parsed = JSON.parse(match[0]) as { problematic?: unknown; suggestions?: unknown };
+    const json = extractLastJsonObject(text);
+    if (!json) return safe;
+    const parsed = JSON.parse(json) as { problematic?: unknown; suggestions?: unknown };
     if (parsed.problematic !== true) return safe;
     const suggestions = cleanSuggestions(parsed.suggestions);
     if (suggestions.length === 0) return safe;
