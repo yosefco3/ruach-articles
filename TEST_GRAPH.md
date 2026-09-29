@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-29 20:34_
+_נוצר אוטומטית ב: 2026-09-29 20:38_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 225 |
-| מכוסים / covered | 51 |
+| קבצי קוד / source files | 226 |
+| מכוסים / covered | 52 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 22% ↑1% |
-| טסטים עוברים / passing | 641 ✅ |
+| כיסוי / coverage | 23% ↑1% |
+| טסטים עוברים / passing | 660 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -53,6 +53,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:34_
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
 | `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
+| `client/src/components/tarot/TarotFollowUp.tsx` | `client/src/components/tarot/TarotFollowUp.test.tsx` |
 | `client/src/components/tarot/useTarotJob.ts` | `client/src/components/tarot/useTarotJob.test.tsx` |
 | `client/src/const.ts` | `client/src/const.test.ts` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |

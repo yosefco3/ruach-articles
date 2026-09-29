@@ -31,11 +31,13 @@ import {
   resolvePanel,
   toCardViews,
   type CardView,
+  type FollowUpTurn,
   type TarotContent,
 } from "@/pages/tarot/model";
 import { runDeal, SPREAD } from "@/pages/tarot/reveal";
 import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
 import { TarotAiPanel, type TarotAiResult } from "@/components/tarot/TarotAiPanel";
+import { TarotFollowUp } from "@/components/tarot/TarotFollowUp";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
@@ -556,6 +558,8 @@ function ResultView({
   // מתאפס עם שליפה חדשה (unmount).
   const [ai, setAi] = useState<TarotAiResult | null>(null);
   const aiMd = ai?.interpretation ?? null;
+  // שאלות ההמשך שנענו — נשמרות כאן רק כדי לצרפן להדפסה.
+  const [turns, setTurns] = useState<FollowUpTurn[]>([]);
 
   function onPrint() {
     printHtmlDocument(
@@ -682,6 +686,21 @@ function ResultView({
           monthlyLimit={content.aiMonthlyLimit}
           onResult={setAi}
           onBeforeLogin={() => savePendingTarot(qSaved, reading, spread)}
+        />
+      )}
+
+      {/* ── שאלת המשך — רק אחרי שהתקבל פירוש AI (האסימון מגיע איתו) ── */}
+      {content.intro.aiEnabled && isAuthenticated && ai && (
+        <TarotFollowUp
+          token={ai.readingToken}
+          initialLeft={ai.followUpsLeft}
+          question={qSaved}
+          views={views}
+          spread={spread}
+          interpretation={ai.interpretation}
+          reading={reading}
+          content={content}
+          onTurnsChange={setTurns}
         />
       )}
 
