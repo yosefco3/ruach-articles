@@ -11,7 +11,7 @@ export const DEFAULT_TAROT_INTRO = {
   articleHtml: "",
   questionPrompt: "מה השאלה שמעסיקה אותך?",
   questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
-  buttonLabel: "עִרְבְּבוּ וְשִׁלְפוּ קְלָפִים",
+  buttonLabel: "עַרְבְּבוּ וְשִׁלְפוּ קְלָפִים",
   aiEnabled: false,
 };
 

@@ -273,7 +273,7 @@ export const tarotIntro = mysqlTable("tarotIntro", {
     .default("השאלה אישית ואינה נשמרת בשום מקום.")
     .notNull(),
   buttonLabel: varchar("buttonLabel", { length: 128 })
-    .default("עִרְבְּבוּ וְשִׁלְפוּ קְלָפִים")
+    .default("עַרְבְּבוּ וְשִׁלְפוּ קְלָפִים")
     .notNull(),
   // פירוש ה-AI המותאם-אישית — מתג ראשי מפאנל האדמין. כבוי כברירת מחדל.
   aiEnabled: boolean("aiEnabled").default(false).notNull(),
