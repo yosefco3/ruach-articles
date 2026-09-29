@@ -568,6 +568,11 @@ function ResultView({
         cards: views.map((v, i) => ({ name: v.name, suitLabel: v.suitLabel, imageUrl: v.imageUrl, positionLabel: labels[i] })),
         aiHtml: aiMd ? (marked.parse(aiMd) as string) : null,
         title: spread.title,
+        followUps: turns.map((t) => ({
+          question: t.question,
+          card: { name: t.card.name, suitLabel: t.card.suitLabel, imageUrl: t.card.imageUrl },
+          answerHtml: marked.parse(t.answer) as string,
+        })),
       }),
     );
   }

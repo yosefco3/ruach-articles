@@ -283,6 +283,7 @@ describe("buildFollowUpPrompt (pure)", () => {
   it("states the clarifier rules: serves the reading, names contradictions, handles a new topic", () => {
     const p = buildFollowUpPrompt(base);
     expect(p).toContain("משרת את הקריאה הקיימת");
+    expect(p).toContain("כקול אחד");
     expect(p).toContain("סותר");
     expect(p).toContain("נושא חדש");
     expect(p).toContain("שליפה חדשה");
