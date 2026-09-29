@@ -1,41 +1,5 @@
 [
   {
-    "timestamp": "2026-06-21T20:24:45",
-    "coverage%": 10,
-    "passed": 193,
-    "failed": 0
-  },
-  {
-    "timestamp": "2026-06-21T21:22:22",
-    "coverage%": 10,
-    "passed": 193,
-    "failed": 0
-  },
-  {
-    "timestamp": "2026-06-22T08:08:02",
-    "coverage%": 10,
-    "passed": 0,
-    "failed": 1
-  },
-  {
-    "timestamp": "2026-06-22T09:40:45",
-    "coverage%": 10,
-    "passed": 0,
-    "failed": 1
-  },
-  {
-    "timestamp": "2026-06-22T09:56:34",
-    "coverage%": 10,
-    "passed": 0,
-    "failed": 1
-  },
-  {
-    "timestamp": "2026-06-22T10:33:37",
-    "coverage%": 10,
-    "passed": 216,
-    "failed": 0
-  },
-  {
     "timestamp": "2026-06-22T12:23:04",
     "coverage%": 10,
     "passed": 216,
@@ -297,6 +261,42 @@
     "timestamp": "2026-09-29T20:08:06",
     "coverage%": 21,
     "passed": 558,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:23:37",
+    "coverage%": 21,
+    "passed": 583,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:25:24",
+    "coverage%": 21,
+    "passed": 596,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:28:23",
+    "coverage%": 21,
+    "passed": 618,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:34:03",
+    "coverage%": 22,
+    "passed": 641,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:38:27",
+    "coverage%": 23,
+    "passed": 660,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-09-29T20:44:01",
+    "coverage%": 23,
+    "passed": 664,
     "failed": 0
   }
 ]

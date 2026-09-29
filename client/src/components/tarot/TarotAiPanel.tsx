@@ -1,22 +1,32 @@
 /**
  * תיבת "פֵּרוּשׁ AI לפריסה" — מוצגת מעל חלון פירוש הקלף בדף הטארוט.
  * השאלה והקלפים נשלחים לשרת אך ורק בלחיצה מפורשת על הכפתור, ולעולם אינם נשמרים ב-DB.
- * הפירוש רץ בשרת כעבודת רקע: `interpret` מחזיר jobId מיד, וכאן שואלים
+ * הפירוש רץ בשרת כעבודת רקע: `interpret` מחזיר jobId מיד, ו-useTarotJob שואל
  * `interpretResult` כל 3 שניות עד done/error — כך בקשת HTTP לא נשארת פתוחה 1–2 דקות
  * (Cloudflare מנתק אחרי ~100ש'). שיקוף של IChingAiPanel מול tarot.interpret.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import type { TarotAiCardContext } from "@/pages/tarot/model";
 import { THREE_SPREAD, type SpreadChoice } from "@shared/tarot";
+import { useTarotJob } from "./useTarotJob";
 
 const LOADING_MESSAGE = "ה-AI מכין את הפירוש לפריסה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
-/** תדירות הבדיקה של עבודת הפירוש. */
-const POLL_MS = 3000;
 
-type InterpretResult = { interpretation: string; usage: { used: number; limit: number; remaining: number } };
+type InterpretInput = { question: string; cards: TarotAiCardContext[]; spread: SpreadChoice };
+
+/** מה שהפאנל מדווח להורה כשפירוש התקבל. */
+export interface TarotAiResult {
+  /** הפירוש (markdown) — למשל לצורך הדפסת הפריסה. */
+  interpretation: string;
+  /** פותח את שאלות ההמשך של הקריאה הזו. */
+  readingToken: string;
+  followUpsLeft: number;
+}
+
+type InterpretResult = TarotAiResult & { usage: { used: number; limit: number; remaining: number } };
 
 function prefersReducedMotion(): boolean {
   return (
@@ -26,7 +36,7 @@ function prefersReducedMotion(): boolean {
   );
 }
 
-const cardStyle: React.CSSProperties = {
+export const cardStyle: React.CSSProperties = {
   marginTop: 16,
   background: "oklch(0.99 0.008 80)",
   border: "1px solid oklch(0.86 0.024 75)",
@@ -38,7 +48,7 @@ const cardStyle: React.CSSProperties = {
 /** מספר הכשלים הרצופים שאחריו מוצגת הודעת ההתנצלות במקום ניסיון חוזר. */
 const MAX_FAILURES = 3;
 
-const actionButtonStyle: React.CSSProperties = {
+export const actionButtonStyle: React.CSSProperties = {
   padding: "13px 30px",
   fontFamily: "'Frank Ruhl Libre',serif",
   fontWeight: 700,
@@ -51,14 +61,14 @@ const actionButtonStyle: React.CSSProperties = {
   boxShadow: "0 8px 22px oklch(0.42 0.09 55 / 0.32)",
 };
 
-const disabledButtonStyle: React.CSSProperties = {
+export const disabledButtonStyle: React.CSSProperties = {
   ...actionButtonStyle,
   background: "oklch(0.80 0.01 70)",
   cursor: "not-allowed",
   boxShadow: "none",
 };
 
-const errorTextStyle: React.CSSProperties = {
+export const errorTextStyle: React.CSSProperties = {
   margin: 0,
   fontSize: 16.5,
   lineHeight: 1.85,
@@ -121,77 +131,36 @@ export function TarotAiPanel({
   spread?: SpreadChoice;
   isAuthenticated: boolean;
   monthlyLimit: number;
-  /** מדווח להורה על פירוש שהתקבל (markdown) — למשל לצורך הדפסת הפריסה. */
-  onResult?: (interpretation: string) => void;
+  /** מדווח להורה על פירוש שהתקבל — להדפסה ולפתיחת שאלות ההמשך. */
+  onResult?: (result: TarotAiResult) => void;
   /** נקרא רגע לפני הניווט להתחברות גוגל — ההורה שומר את הפריסה לשחזור בחזרה. */
   onBeforeLogin?: () => void;
 }) {
-  // סופרים רק כשלים אמיתיים (לא חריגת מכסה) כדי להחליט מתי לעצור ולהתנצל.
-  const [failures, setFailures] = useState(0);
   const utils = trpc.useUtils();
   // היתרה החודשית — נטענת רק למחוברים, ומרועננת אחרי כל פירוש מוצלח.
   const usageQuery = trpc.tarot.myUsage.useQuery(undefined, { enabled: isAuthenticated });
-  // העבודה הפעילה (jobId) והתוצאה/השגיאה שהתקבלו ממנה.
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [result, setResult] = useState<InterpretResult | null>(null);
-  const [jobError, setJobError] = useState<string | null>(null);
-  // עבודה שאבדה (אתחול/פריסה של השרת באמצע הפירוש) → מתחילים מחדש פעם אחת, בשקט.
-  // בטוח: המכסה נספרת רק כשפירוש הושלם.
-  const autoRestarted = useRef(false);
-  const mutation = trpc.tarot.interpret.useMutation({
-    onError: (err) => {
-      const quota = err.data?.code === "FORBIDDEN" || err.message === "QUOTA_EXCEEDED";
-      if (!quota) setFailures((n) => n + 1);
-    },
-    onSuccess: (data) => setJobId(data.jobId),
-  });
-  // polling: כל 3 שניות כל עוד יש עבודה פעילה ועוד אין תוצאה.
-  // תקלת רשת חולפת בשאילתת מעקב אחת (מובייל שעבר לרקע, 4G מהבהב) אינה כישלון של הפירוש:
-  // שואלים שוב; רק תשובת שרת (למשל NOT_FOUND) או status=error מסיימים. ממשיכים גם ברקע.
-  const jobQuery = trpc.tarot.interpretResult.useQuery(
-    { jobId: jobId ?? "" },
+  const job = useTarotJob<InterpretInput, InterpretResult>(
     {
-      enabled: !!jobId && !result && !jobError,
-      refetchInterval: POLL_MS,
-      refetchIntervalInBackground: true,
-      retry: 2,
-      refetchOnWindowFocus: false,
+      key: "interpret",
+      start: (input) => utils.client.tarot.interpret.mutate(input),
+      poll: (jobId) => utils.client.tarot.interpretResult.query({ jobId }),
+    },
+    {
+      // חריגת מכסה אינה תקלה — לא נספרת לקראת הודעת ההתנצלות.
+      isBusinessError: (code, message) => code === "FORBIDDEN" || message === "QUOTA_EXCEEDED",
+      onDone: (r) => {
+        onResult?.({
+          interpretation: r.interpretation,
+          readingToken: r.readingToken,
+          followUpsLeft: r.followUpsLeft,
+        });
+        void utils.tarot.myUsage.invalidate();
+      },
     },
   );
-  useEffect(() => {
-    if (!jobId) return;
-    const job = jobQuery.data;
-    if (job?.status === "done") {
-      setResult(job.result);
-      setJobId(null);
-      setFailures(0);
-      onResult?.(job.result.interpretation);
-      void utils.tarot.myUsage.invalidate();
-    } else if (jobQuery.error?.data?.code === "NOT_FOUND" && !autoRestarted.current) {
-      // העבודה אבדה בשרת (פריסה חדשה באמצע הפירוש) — פותחים עבודה חדשה בלי להטריד את המשתמש.
-      autoRestarted.current = true;
-      setJobId(null);
-      mutation.mutate({ question, cards, spread });
-    } else if (jobQuery.error && !jobQuery.error.data) {
-      // שגיאה בלי data = לא הגיעה תשובת שרת (רשת נקטעה) — ממשיכים לשאול, לא מציגים שגיאה.
-      return;
-    } else if (job?.status === "error" || jobQuery.error) {
-      // שגיאת ספק, או עבודה שאבדה פעמיים — נספרת ככישלון; ניסיון חוזר פותח עבודה חדשה.
-      setJobError(job?.status === "error" ? job.message : (jobQuery.error?.message ?? "JOB_NOT_FOUND"));
-      setJobId(null);
-      setFailures((n) => n + 1);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId, jobQuery.data, jobQuery.error]);
-
-  const runInterpret = () => {
-    setJobError(null);
-    setResult(null);
-    autoRestarted.current = false;
-    mutation.mutate({ question, cards, spread });
-  };
-  const pending = mutation.isPending || !!jobId;
-  const failed = !!mutation.error || !!jobError;
+  const { result, pending, failures } = job;
+  const runInterpret = () => job.run({ question, cards, spread });
+  const failed = !!job.error;
 
   const reduced = useRef(false);
   useEffect(() => {
@@ -229,9 +198,7 @@ export function TarotAiPanel({
     );
   }
 
-  const isQuotaError =
-    mutation.error?.data?.code === "FORBIDDEN" ||
-    mutation.error?.message === "QUOTA_EXCEEDED";
+  const isQuotaError = !!job.error?.business;
 
   // מיצוי מכסה ידוע עוד לפני לחיצה (מה-query) — מציגים הודעה וכפתור מושבת.
   const usage = usageQuery.data;

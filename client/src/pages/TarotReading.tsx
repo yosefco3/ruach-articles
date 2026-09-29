@@ -31,11 +31,13 @@ import {
   resolvePanel,
   toCardViews,
   type CardView,
+  type FollowUpTurn,
   type TarotContent,
 } from "@/pages/tarot/model";
 import { runDeal, SPREAD } from "@/pages/tarot/reveal";
 import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
-import { TarotAiPanel } from "@/components/tarot/TarotAiPanel";
+import { TarotAiPanel, type TarotAiResult } from "@/components/tarot/TarotAiPanel";
+import { TarotFollowUp } from "@/components/tarot/TarotFollowUp";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
@@ -552,8 +554,12 @@ function ResultView({
   const labels = positionLabels(plan, views.length);
   const layout = choiceLayout(plan);
   const { isAuthenticated } = useAuth();
-  // פירוש ה-AI שהתקבל (markdown) — נשמר רק כדי לצרפו להדפסה; מתאפס עם שליפה חדשה (unmount).
-  const [aiMd, setAiMd] = useState<string | null>(null);
+  // פירוש ה-AI שהתקבל — המרקדאון להדפסה, והאסימון שפותח את שאלות ההמשך של הקריאה.
+  // מתאפס עם שליפה חדשה (unmount).
+  const [ai, setAi] = useState<TarotAiResult | null>(null);
+  const aiMd = ai?.interpretation ?? null;
+  // שאלות ההמשך שנענו — נשמרות כאן רק כדי לצרפן להדפסה.
+  const [turns, setTurns] = useState<FollowUpTurn[]>([]);
 
   function onPrint() {
     printHtmlDocument(
@@ -562,6 +568,11 @@ function ResultView({
         cards: views.map((v, i) => ({ name: v.name, suitLabel: v.suitLabel, imageUrl: v.imageUrl, positionLabel: labels[i] })),
         aiHtml: aiMd ? (marked.parse(aiMd) as string) : null,
         title: spread.title,
+        followUps: turns.map((t) => ({
+          question: t.question,
+          card: { name: t.card.name, suitLabel: t.card.suitLabel, imageUrl: t.card.imageUrl },
+          answerHtml: marked.parse(t.answer) as string,
+        })),
       }),
     );
   }
@@ -678,8 +689,23 @@ function ResultView({
           spread={spread}
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
-          onResult={setAiMd}
+          onResult={setAi}
           onBeforeLogin={() => savePendingTarot(qSaved, reading, spread)}
+        />
+      )}
+
+      {/* ── שאלת המשך — רק אחרי שהתקבל פירוש AI (האסימון מגיע איתו) ── */}
+      {content.intro.aiEnabled && isAuthenticated && ai && (
+        <TarotFollowUp
+          token={ai.readingToken}
+          initialLeft={ai.followUpsLeft}
+          question={qSaved}
+          views={views}
+          spread={spread}
+          interpretation={ai.interpretation}
+          reading={reading}
+          content={content}
+          onTurnsChange={setTurns}
         />
       )}
 

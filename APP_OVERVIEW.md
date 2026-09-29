@@ -13,7 +13,8 @@
 וכן **קריאה בקלפי טארוט** (`/tarot`) — שליפת 3 קלפים (מרכזי + שני מסייעים) מחפיסה
 מקורית של האתר — או, כשה-AI זמין (מתג דלוק + מחובר), **פריסה שה-AI בוחר** לשאלה
 (פריסת בחירה בין 2–4 דרכים: 6/8/10 קלפים); פירוש סטטי לכל קלף בלחיצה + פירוש AI
-לפריסה כולה (מכסה נפרדת),
+לפריסה כולה (מכסה נפרדת), ואחריו **עד שתי שאלות המשך** — לכל אחת קלף מבהיר אחד
+ממה שנשאר בחפיסה (לא נספרות במכסה, לא נשמרות),
 והורדת החפיסה כ-ZIP חופשי; אדמין עורך ב-`/admin/tarot`. דף גלריה `/tarot/deck`
 מציג את כל 78 הקלפים (ארקנה גדולה + 4 סדרות); הנכסים ב-`client/public/tarot-cards/`
 (78 קלפים + `back.webp`, ‎~600px webp).
@@ -54,10 +55,20 @@
   מבנה+טקסט, `reveal.ts` תזמון האנימציה) + טסטים colocated.
 - `shared/tarot/` — **מבנה ומנוע שליפה טהורים**: 78 הקלפים (שמות ברירת-מחדל, כולל
   4 המוסבים: המורה/המעבר/הצל/ההתעוררות), `draw()` — Fisher-Yates ללא חזרות עם RNG
-  קריפטוגרפי (`secureRng`) ו-`orientation` שמור להיפוכים עתידיים.
-- `client/src/pages/tarot/` — `model.ts` (מיזוג מבנה+DB, `buildAiContext`),
-  `reveal.ts` (סדרן ערבוב→פריסה→היפוך); רכיבים ב-`client/src/components/tarot/`
-  (`TarotCard` — flip תלת-ממדי + placeholders עד העלאת הנכסים, `TarotAiPanel`).
+  קריפטוגרפי (`secureRng`) ו-`orientation` שמור להיפוכים עתידיים; `drawMore()` — שליפה
+  ממה שנשאר בחפיסה (לקלף המבהיר); `followup.ts` — קבועי שאלת ההמשך (`MAX_FOLLOWUPS`=2,
+  `MAX_FOLLOWUP_LENGTH`=300) והשאלות המוצעות לפי סוג הפריסה.
+- `client/src/pages/tarot/` — `model.ts` (מיזוג מבנה+DB, `buildAiContext`,
+  `buildFollowUpInput`/`drawFollowUpCard`), `reveal.ts` (סדרן ערבוב→פריסה→היפוך),
+  `job.ts` — **מכונת מצבים טהורה** של עבודת רקע (פתיחה → polling → done/failed,
+  התחלה מחדש שקטה לעבודה שאבדה, התעלמות מתקלת רשת חולפת); רכיבים
+  ב-`client/src/components/tarot/` (`TarotCard` — flip תלת-ממדי + placeholders עד
+  העלאת הנכסים, `TarotAiPanel`, `TarotFollowUp` — תיבת שאלת ההמשך, ו-`useTarotJob` —
+  ה-hook שמחבר את `job.ts` לרשת, משותף לשניהם). בדיקות הרכיבים החיות רצות ב-happy-dom
+  (`// @vitest-environment happy-dom`, `createRoot`+`act`, בלי ספריית בדיקות נוספת).
+- `server/tarotReadingToken.ts` — **אסימון קריאה חתום** (HMAC-SHA256 עם `JWT_SECRET`,
+  תוקף שעתיים): מונפק כשפירוש הושלם ונספר, ופותח את שאלות ההמשך של אותה קריאה. מכיל
+  רק מזהה אקראי, משתמש ותפוגה; מונה השימוש (עד 2 לקריאה) בזיכרון.
 - `server/_core/aiProvider.ts` — שכבת ספק ה-AI המשותפת (DeepSeek/Gemini + retry),
   חולצה מ-ichingAi ומשרתת גם את `server/tarotAi.ts`.
 - `server/_core/zip.ts` + `server/tarotDeckZip.ts` — ZIP store אפס-תלויות; החפיסה
@@ -118,9 +129,19 @@ tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, c
   כתומך ומתנגד (בחירת המודל, מנומקת) — ובפריסת בחירה בשיטת **השוואת דרכים באותם
   תפקידים** (הצומת → לכל דרך "מה מציעה"/"לאן מובילה" → "מה שאינך רואה") — ותחום
   בעקרונות דרך הרוח: נטיות, לא ניבוי, ההכרעה אצל השואל);
+  תוצאת `interpret` כוללת גם `readingToken` ו-`followUpsLeft`;
+  `followUp` (`protectedProcedure`: **שאלת המשך** על קריאה שפורשה — קלף מבהיר אחד מול
+  כל ההקשר שהלקוח שולח מחדש [שאלה, קלפים, פירוש, תורות קודמים]; **אינה נספרת במכסה** —
+  נדרש `readingToken` תקף של אותו משתמש → אחרת `READING_EXPIRED`; עד `MAX_FOLLOWUPS`=2
+  לאסימון → `FOLLOWUP_LIMIT` (תפיסה לפני העבודה, שחרור בכישלון); הגבלת-קצב למשתמש
+  `TAROT_FOLLOWUP_RATE_PER_HOUR`=10 → `FOLLOWUP_RATE_LIMITED`, אדמין פטור ממנה בלבד;
+  רץ כעבודת רקע כמו `interpret`, עם `followUpResult({jobId})`; הפרומפט
+  `buildFollowUpPrompt` — הקלף המבהיר משרת את הקריאה הקיימת, סתירה נאמרת במפורש,
+  תשובה קצרה, ו**שאלות זמן נענות כבשלות וקצב בלי תאריכים או מספרים**);
   `myUsage` (`protectedProcedure` query — יתרה חודשית כמו באי-צ'ינג, מול `tarotAiUsage`);
   `upsertCard`/`updateIntro` (`adminProcedure`). דרך `RouterDeps`:
-  `generateTarotInterpretation`, `tarotAiMonthlyLimit`, `chooseTarotSpread`, `spreadRatePerHour`.
+  `generateTarotInterpretation`, `tarotAiMonthlyLimit`, `chooseTarotSpread`, `spreadRatePerHour`,
+  `generateTarotFollowUp`, `followUpRatePerHour`, `readingTokenSecret`.
 - **`GET /tarot-cards/ruach-tarot-deck.zip`** — הורדת החפיסה (לא-tRPC, נרשם ב-
   `_core/startup/seo-routes.ts`); 404 עד שהנכסים מועלים ל-`client/public/tarot-cards/`.
 
@@ -233,3 +254,4 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 | 2026-06-26 | **I Ching pre-cast question refinement** (`feature-prompts/iching-question-refine/`): **before the coin toss**, the user's question is checked by the AI; if it's *clearly* unsuited to the I Ching (yes/no, fortune-telling, about another person, bundled questions, validation-seeking…) the AI proposes **two** alternative process-oriented phrasings and the user picks one — suggestion א׳/ב׳ or "keep mine" — with a single click, then casting proceeds. **Free for everyone** (no quota, guests included), capped only by an in-memory per-IP rate limit (`ICHING_REFINE_RATE_PER_HOUR`=30); **fully fail-open** (LLM error / bad JSON / rate-limit / 6s client timeout → just cast). New public `iching.refineQuestion` mutation → `evaluateIchingQuestion` (shares the DeepSeek/Gemini provider + `withRetry`, `max_tokens` 500, strict-JSON parse). **Admin on/off toggle** via new `ichingIntro.refineEnabled` column (migration `0013`, default true) edited in `/admin/iching`; client gates the check on it. The question now leaves the browser on cast (for the unstored check) as well as on AI-interpret. +18 tests (238→255). | `server/ichingAi.ts`(+`ichingAi.refine.test.ts`), `server/_core/rateLimit.ts`, `server/_core/env.ts`, `server/routers/iching.router.ts`(+test), `server/routers/{context,index}.ts`, `server/test-helpers/trpc.ts`, `drizzle/schema.ts`+`0013_*.sql`, `server/db/iching.ts`, `client/src/components/iching/QuestionRefine.tsx`(+test), `client/src/pages/IChingReading.tsx`, `client/src/pages/AdminIChing.tsx`, `client/src/pages/iching/model.ts`(+test) |
 | 2026-06-27 | **Attachment files actually deleted** (`feature-prompts/attachment-file-deletion/`): deleting an attachment (or article) previously removed only the DB row — the file lingered forever on local disk / R2. New `storage.deleteObject(urlOrKey)` + `keyFromUrl()` (recovers the key from a bare key / `/uploads/…` / R2 URL, path-traversal-guarded) remove the real bytes; `deleteAttachment`/`deleteAttachmentsByArticle`/`deleteArticle` now call it **best-effort & non-blocking** (`server/db/storage-cleanup.ts` `safeDeleteObject` swallows + logs, so storage never breaks a DB delete). `deleteArticle` also deletes the `coverImage`; inline body images of deleted articles are swept by the new scanner. Added `storage.listKeys()` (local walk / R2 `ListObjectsV2`) and **`scripts/cleanup-orphan-images.ts`** (`pnpm cleanup:orphan-images`) — compares stored files against every `attachments/<key>` reference across all DB tables (cover/inline/avatar/logo all counted, so in-use files are never flagged); **dry-run by default**, `--delete`/`--yes` to remove. `scripts/**` added to vitest globs. +14 tests (255→273). | `server/storage.ts`, `server/db/storage-cleanup.ts`, `server/db/{attachments,articles}.ts`, `scripts/cleanup-orphan-images.ts`(+test), `server/storage-delete.test.ts`, `server/db/attachments.delete.test.ts`, `vitest.config.ts`, `package.json` |
 | 2026-09-20 | **Audio attachments: inline player + 60MB upload limit** (for guided-meditation MP3s). `/api/upload` cap moved from a hard-coded 10MB to `MAX_UPLOAD_BYTES` (60MB) in `shared/const.ts`, shared with the admin form, which now also size-checks attachments (previously only the cover image was checked client-side). Article attachments extracted into `ArticleAttachments`: audio files (by extension) render an `<audio controls preload="none">` player with a download link; other files keep the download card; sizes shown in MB above 1MB. +6 tests (537→543). | `shared/const.ts`, `server/upload.ts`, `server/upload.limits.test.ts`, `client/src/components/ArticleAttachments.tsx`(+test), `client/src/pages/{ArticlePage,AdminArticleForm}.tsx` |
+| 2026-09-29 | **Tarot: follow-up questions** (`feature-prompts/tarot-followup/`, steps 1–7 of 8): after an AI interpretation the user may ask **up to 2 follow-up questions per reading**; each draws **one clarifying card** from the remaining deck (`drawMore`, never repeats a card on the table) and the AI answers briefly against the whole reading. **Not counted in the monthly quota** — bound to a counted interpretation by a **signed reading token** (`server/tarotReadingToken.ts`: HMAC with `JWT_SECRET`, 2h TTL, carries only a random id + user + expiry; in-memory per-token counter, reserve-before/release-on-failure) plus a per-user hourly cap `TAROT_FOLLOWUP_RATE_PER_HOUR`=10. Nothing is stored: the client resends the full context each time. New `tarot.followUp` / `followUpResult`; `interpret` results now carry `readingToken` + `followUpsLeft`. Prompt rules: the clarifier serves the existing reading, contradictions are named, **timing questions are answered as ripeness and pace — no dates or numbers** (user holds that hedged estimates are acceptable; deferred, to revisit after real usage). Suggested-question chips per spread kind fill the field without sending. Client polling logic extracted from `TarotAiPanel` into a pure state machine (`pages/tarot/job.ts`) + `useTarotJob` hook, now shared; **first live component tests in the repo** (happy-dom) — they caught a bug where a job lost after one successful poll would have waited forever. Print includes the follow-ups; guide FAQ +2 entries; llms.txt wording. Also fixed the draw button nikud (imperative עַרְבְּבוּ; `drizzle/0018-tarot-button-label-prod.sql`). Step 8 (AI-tailored suggestions) deferred until the feature has run in production. +122 tests (542→664). | `shared/tarot/{draw,followup,index}.ts`(+tests), `server/tarotReadingToken.ts`(+test), `server/tarotAi.ts`(+test), `server/routers/tarot.router.ts`(+test), `server/routers/{context,index}.ts`, `server/_core/env.ts`, `server/test-helpers/trpc.ts`, `client/src/pages/tarot/{job,model}.ts`(+tests), `client/src/components/tarot/{useTarotJob.ts,TarotFollowUp.tsx,TarotAiPanel.tsx}`(+tests), `client/src/pages/TarotReading.tsx`, `client/src/lib/printReading.ts`(+test), `shared/tarotGuide.ts`, `server/llmstxt.ts` |

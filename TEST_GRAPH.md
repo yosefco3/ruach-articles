@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-29 20:08_
+_נוצר אוטומטית ב: 2026-09-29 20:44_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 222 |
-| מכוסים / covered | 48 |
+| קבצי קוד / source files | 226 |
+| מכוסים / covered | 52 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 21% →0% |
-| טסטים עוברים / passing | 558 ✅ |
+| כיסוי / coverage | 23% →0% |
+| טסטים עוברים / passing | 664 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -53,6 +53,8 @@ _נוצר אוטומטית ב: 2026-09-29 20:08_
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
 | `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
+| `client/src/components/tarot/TarotFollowUp.tsx` | `client/src/components/tarot/TarotFollowUp.test.tsx` |
+| `client/src/components/tarot/useTarotJob.ts` | `client/src/components/tarot/useTarotJob.test.tsx` |
 | `client/src/const.ts` | `client/src/const.test.ts` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
@@ -61,6 +63,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:08_
 | `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
+| `client/src/pages/tarot/job.ts` | `client/src/pages/tarot/job.test.ts` |
 | `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |
 | `client/src/pages/tarot/reveal.ts` | `client/src/pages/tarot/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
@@ -88,6 +91,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:08_
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
 | `server/tarotAi.ts` | `server/tarotAi.test.ts` |
 | `server/tarotDeckZip.ts` | `server/tarotDeckZip.test.ts` |
+| `server/tarotReadingToken.ts` | `server/tarotReadingToken.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
 | `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
 | `shared/tarot/followup.ts` | `shared/tarot/followup.test.ts` |

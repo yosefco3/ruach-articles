@@ -9,8 +9,11 @@ import {
   cardBySlug,
   cardImagePath,
   cardSlug,
+  drawMore,
   optionLetter,
   type CardStruct,
+  type Rng,
+  type SpreadChoice,
   type SpreadPlan,
   type TarotReading,
 } from "@shared/tarot";
@@ -64,19 +67,22 @@ export interface CardView {
   suitLabel: string;
 }
 
+/** ממזג קלף אחד (מבנה) עם הטקסט הערוך שלו מה-DB. */
+export function toCardView(struct: CardStruct, content: TarotContent): CardView {
+  const row = findCardText(content.cards, struct.id);
+  return {
+    id: struct.id,
+    name: effectiveCardName(struct, row),
+    en: struct.en,
+    summary: row?.summary ?? "",
+    interpretationHtml: row?.interpretation ?? "",
+    imageUrl: cardImagePath(struct.id),
+    suitLabel: suitLabel(struct),
+  };
+}
+
 export function toCardViews(reading: TarotReading, content: TarotContent): CardView[] {
-  return reading.cards.map((d) => {
-    const row = findCardText(content.cards, d.card.id);
-    return {
-      id: d.card.id,
-      name: effectiveCardName(d.card, row),
-      en: d.card.en,
-      summary: row?.summary ?? "",
-      interpretationHtml: row?.interpretation ?? "",
-      imageUrl: cardImagePath(d.card.id),
-      suitLabel: suitLabel(d.card),
-    };
-  });
+  return reading.cards.map((d) => toCardView(d.card, content));
 }
 
 /** ה-view שחלון הפירוט היחיד מציג; null כשלא נבחר קלף. */
@@ -138,6 +144,82 @@ export function buildAiContext(views: CardView[]): TarotAiCardContext[] {
     summary: v.summary,
     text: htmlToPlainText(v.interpretationHtml),
   }));
+}
+
+// ── שאלת המשך: קלף מבהיר אחד לכל שאלה, נקרא מול הקריאה הקיימת ──
+
+/** תור אחד של שאלת המשך שכבר נענה. */
+export interface FollowUpTurn {
+  question: string;
+  card: CardView;
+  /** התשובה (markdown). */
+  answer: string;
+}
+
+/** שאלה שנשלחה והקלף שנשלף לה — לפני שהתקבלה תשובה (או כשהבקשה נכשלה). */
+export interface FollowUpDraft {
+  question: string;
+  card: CardView;
+}
+
+/** מזהי כל הקלפים שכבר על השולחן — הפריסה + קלפי שאלות ההמשך שנענו. */
+export function usedCardIds(reading: TarotReading, turns: FollowUpTurn[]): string[] {
+  return [...reading.cards.map((c) => c.card.id), ...turns.map((t) => t.card.id)];
+}
+
+/** שולף את הקלף המבהיר — ממה שנשאר בחפיסה — וממזג אותו ל-CardView. */
+export function drawFollowUpCard(
+  reading: TarotReading,
+  turns: FollowUpTurn[],
+  content: TarotContent,
+  rng?: Rng,
+): CardView {
+  const [drawn] = drawMore(usedCardIds(reading, turns), 1, rng);
+  return toCardView(drawn.card, content);
+}
+
+/** הקלט של tarot.followUp — כל ההקשר נשלח מהדפדפן בכל בקשה; השרת אינו שומר דבר. */
+export interface FollowUpInput {
+  readingToken: string;
+  question: string;
+  cards: TarotAiCardContext[];
+  spread: SpreadChoice;
+  interpretation: string;
+  previous: { question: string; card: TarotAiCardContext; answer: string }[];
+  followUp: { question: string; card: TarotAiCardContext };
+}
+
+export function buildFollowUpInput(args: {
+  token: string;
+  question: string;
+  views: CardView[];
+  spread: SpreadChoice;
+  interpretation: string;
+  turns: FollowUpTurn[];
+  current: FollowUpDraft;
+}): FollowUpInput {
+  const one = (view: CardView) => buildAiContext([view])[0];
+  return {
+    readingToken: args.token,
+    question: args.question,
+    cards: buildAiContext(args.views),
+    spread: args.spread,
+    interpretation: args.interpretation,
+    previous: args.turns.map((t) => ({ question: t.question, card: one(t.card), answer: t.answer })),
+    followUp: { question: args.current.question.trim(), card: one(args.current.card) },
+  };
+}
+
+/** שאלות מוצעות שעוד לא נשאלו בקריאה הזו (השוואה בלי רווחים בקצוות). */
+export function unusedSuggestions(suggestions: string[], turns: FollowUpTurn[]): string[] {
+  const asked = new Set(turns.map((t) => t.question.trim()));
+  return suggestions.filter((s) => !asked.has(s.trim()));
+}
+
+/** הקישור לדף הקלף (/tarot/card/<slug>), או null למזהה לא מוכר. */
+export function cardPagePath(cardId: string): string | null {
+  const struct = cardById(cardId);
+  return struct ? `/tarot/card/${cardSlug(struct)}` : null;
 }
 
 /** placeholder כשתמונת הקלף עוד לא הועלתה: שם + סמל לפי הקבוצה. */

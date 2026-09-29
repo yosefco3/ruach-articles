@@ -1,7 +1,8 @@
 /**
  * הדפסת פריסה — טארוט ואי-צ'ינג. בוני ה-HTML טהורים (ניתנים לבדיקה ב-node);
  * `printHtmlDocument` מזריק את המסמך ל-iframe נסתר, ממתין לתמונות ומדפיס.
- * מה מודפס: השאלה + הקלפים/ההקסגרמות תמיד; פירוש ה-AI רק אם התקבל בפועל.
+ * מה מודפס: השאלה + הקלפים/ההקסגרמות תמיד; פירוש ה-AI רק אם התקבל בפועל;
+ * בטארוט — גם שאלות ההמשך שנענו (שאלה, קלף מבהיר, תשובה).
  */
 
 export function escapeHtml(s: string): string {
@@ -54,6 +55,17 @@ const BASE_CSS = `
   .ai h2 { font-family: 'Frank Ruhl Libre', serif; font-weight: 900; font-size: 20px; margin: 0 0 4px; }
   .ai .badge { font-size: 10.5px; color: #7a5b3a; margin-bottom: 14px; }
   .ai .body { font-size: 14.5px; line-height: 1.9; }
+  .fu { margin-top: 26px; border-top: 1px solid #d8c9ab; padding-top: 18px; page-break-inside: avoid; }
+  .fu h2 { font-family: 'Frank Ruhl Libre', serif; font-weight: 900; font-size: 18px; margin: 0 0 4px; }
+  .fu .fq { font-family: 'Frank Ruhl Libre', serif; font-style: italic; font-size: 17px; margin: 0 0 14px; }
+  .fu .row { display: flex; gap: 18px; align-items: flex-start; }
+  .fu .fcard { width: 96px; flex-shrink: 0; text-align: center; }
+  .fu .fcard img { width: 100%; border-radius: 6px; border: 1px solid #d8c9ab; }
+  .fu .fcard .pos { font-size: 9px; letter-spacing: 0.18em; color: #8a7a62; margin-bottom: 6px; }
+  .fu .fcard .nm { font-family: 'Frank Ruhl Libre', serif; font-weight: 900; font-size: 13.5px; margin-top: 6px; }
+  .fu .fcard .sb { font-size: 10.5px; color: #8a7a62; }
+  .fu .body { font-size: 14.5px; line-height: 1.9; flex: 1; }
+  .fu .body > :first-child { margin-top: 0; }
   .foot { margin-top: 34px; text-align: center; font-size: 11px; color: #a0917a; border-top: 1px solid #e5dac2; padding-top: 12px; }
   @page { margin: 12mm; }
 `;
@@ -133,7 +145,36 @@ export interface TarotPrintCard {
   positionLabel?: string;
 }
 
+/** שאלת המשך שנענתה: השאלה, הקלף המבהיר והתשובה (HTML מ-marked, כמו פירוש ה-AI). */
+export interface TarotPrintFollowUp {
+  question: string;
+  card: { name: string; suitLabel: string; imageUrl: string };
+  answerHtml: string;
+}
+
 const TAROT_POSITIONS = ["קְלָף רִאשׁוֹן", "קְלָף שֵׁנִי", "קְלָף שְׁלִישִׁי"];
+
+/** שאלות ההמשך, אחרי פירוש ה-AI. תור בלי תשובה אינו מודפס. */
+function followUpsHtml(followUps: TarotPrintFollowUp[] | null | undefined): string {
+  return (followUps ?? [])
+    .filter((f) => f.answerHtml.trim())
+    .map(
+      (f, i) => `<div class="fu">
+<h2>שְׁאֵלַת הֶמְשֵׁךְ ${i + 1}</h2>
+<div class="fq">${escapeHtml(f.question.trim())}</div>
+<div class="row">
+<div class="fcard">
+<div class="pos">הַקְּלָף הַמַּבְהִיר</div>
+<img src="${escapeHtml(f.card.imageUrl)}" alt="${escapeHtml(f.card.name)}" />
+<div class="nm">${escapeHtml(f.card.name)}</div>
+<div class="sb">${escapeHtml(f.card.suitLabel)}</div>
+</div>
+<div class="body">${f.answerHtml}</div>
+</div>
+</div>`,
+    )
+    .join("\n");
+}
 
 export function buildTarotPrintHtml(opts: {
   question: string;
@@ -141,6 +182,8 @@ export function buildTarotPrintHtml(opts: {
   aiHtml?: string | null;
   /** כותרת שה-AI זיקק מהשאלה (שם קובץ); ללא — נגזרת מהשאלה/תאריך. */
   title?: string | null;
+  /** שאלות המשך שנענו — מודפסות אחרי פירוש ה-AI. */
+  followUps?: TarotPrintFollowUp[] | null;
 }): string {
   const slots = opts.cards
     .map(
@@ -155,6 +198,7 @@ export function buildTarotPrintHtml(opts: {
   const body = `${headerHtml("קְרִיאַת טָארוֹט", opts.question)}
 <div class="spread">${slots}</div>
 ${aiSectionHtml(opts.aiHtml)}
+${followUpsHtml(opts.followUps)}
 ${footerHtml()}`;
   return docShell(readingFileTitle("קריאת טארוט", opts.question, opts.title), body);
 }

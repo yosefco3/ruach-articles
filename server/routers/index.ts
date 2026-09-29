@@ -48,7 +48,7 @@ export const createAppRouter = (deps: RouterDeps) => router({
 import * as db from "../db";
 import { sendArticleNewsletter } from "../newsletterEmail";
 import { generateIchingInterpretation, evaluateIchingQuestion } from "../ichingAi";
-import { generateTarotInterpretation, chooseTarotSpread } from "../tarotAi";
+import { generateTarotInterpretation, chooseTarotSpread, generateTarotFollowUp } from "../tarotAi";
 import { env } from "../_core/env";
 
 const defaultDeps: RouterDeps = {
@@ -62,6 +62,9 @@ const defaultDeps: RouterDeps = {
   tarotAiMonthlyLimit: env.TAROT_AI_MONTHLY_LIMIT,
   chooseTarotSpread,
   spreadRatePerHour: env.TAROT_SPREAD_RATE_PER_HOUR,
+  generateTarotFollowUp,
+  followUpRatePerHour: env.TAROT_FOLLOWUP_RATE_PER_HOUR,
+  readingTokenSecret: env.JWT_SECRET,
 };
 
 export const appRouter = createAppRouter(defaultDeps);

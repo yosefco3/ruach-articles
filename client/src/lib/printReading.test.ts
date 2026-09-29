@@ -75,6 +75,76 @@ const YANG: PrintHexLine = { isYang: true, isChanging: false };
 const YIN: PrintHexLine = { isYang: false, isChanging: false };
 const YANG_CHG: PrintHexLine = { isYang: true, isChanging: true };
 
+describe("buildTarotPrintHtml — שאלות המשך", () => {
+  const followUps = [
+    {
+      question: "מה הצעד הראשון?",
+      card: { name: "שמונה במטבעות", suitLabel: "מטבעות · אדמה", imageUrl: "/tarot-cards/pents-08.webp" },
+      answerHtml: "<p>תשובה ראשונה על הצעד.</p>",
+    },
+    {
+      question: "מה מעכב אותי?",
+      card: { name: "הנזיר", suitLabel: "אַרְקָנָה גְּדוֹלָה", imageUrl: "/tarot-cards/major-09.webp" },
+      answerHtml: "<p>תשובה שנייה על העיכוב.</p>",
+    },
+  ];
+
+  it("מודפסות בסדר, אחרי פירוש ה-AI ולפני הכותרת התחתונה", () => {
+    const html = buildTarotPrintHtml({
+      question: "ש",
+      cards: CARDS,
+      aiHtml: "<p>הפירוש הראשי.</p>",
+      followUps,
+    });
+    const ai = html.indexOf("הפירוש הראשי.");
+    const first = html.indexOf("שְׁאֵלַת הֶמְשֵׁךְ 1");
+    const second = html.indexOf("שְׁאֵלַת הֶמְשֵׁךְ 2");
+    const foot = html.indexOf("הודפס מאתר");
+    expect(ai).toBeGreaterThan(-1);
+    expect(ai).toBeLessThan(first);
+    expect(first).toBeLessThan(second);
+    expect(second).toBeLessThan(foot);
+    for (const f of followUps) {
+      expect(html).toContain(f.question);
+      expect(html).toContain(f.card.name);
+      expect(html).toContain(f.card.imageUrl);
+      expect(html).toContain(f.answerHtml);
+    }
+    expect(html).toContain("הַקְּלָף הַמַּבְהִיר");
+  });
+
+  it("שאלה עוינת מנוטרלת; התשובה (HTML מ-marked) נשארת כפי שהיא", () => {
+    const html = buildTarotPrintHtml({
+      question: "",
+      cards: CARDS,
+      followUps: [{ ...followUps[0], question: '<script>alert("x")</script>' }],
+    });
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain("<p>תשובה ראשונה על הצעד.</p>");
+  });
+
+  it("בלי שאלות המשך / מערך ריק / null — אותו מסמך בדיוק, בלי סעיף", () => {
+    const base = buildTarotPrintHtml({ question: "ש", cards: CARDS, aiHtml: "<p>פ</p>" });
+    expect(base).not.toContain('class="fu"');
+    expect(base).not.toContain("שְׁאֵלַת הֶמְשֵׁךְ");
+    expect(buildTarotPrintHtml({ question: "ש", cards: CARDS, aiHtml: "<p>פ</p>", followUps: [] })).toBe(base);
+    expect(buildTarotPrintHtml({ question: "ש", cards: CARDS, aiHtml: "<p>פ</p>", followUps: null })).toBe(base);
+  });
+
+  it("תור בלי תשובה אינו מודפס", () => {
+    const html = buildTarotPrintHtml({
+      question: "ש",
+      cards: CARDS,
+      followUps: [{ ...followUps[0], answerHtml: "  " }, followUps[1]],
+    });
+    expect(html).not.toContain("מה הצעד הראשון?");
+    expect(html).toContain("מה מעכב אותי?");
+    expect(html).toContain("שְׁאֵלַת הֶמְשֵׁךְ 1");
+    expect(html).not.toContain("שְׁאֵלַת הֶמְשֵׁךְ 2");
+  });
+});
+
 describe("hexagramHtml", () => {
   it("שישה קווים: yang פס אחד, yin שני פסים, משתנה עם עיגול", () => {
     const html = hexagramHtml([YANG, YIN, YANG_CHG, YIN, YANG, YIN]);

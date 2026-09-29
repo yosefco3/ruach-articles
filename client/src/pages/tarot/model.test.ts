@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { DECK_ASSETS_VERSION, cardById, draw, spreadPlan, THREE_SPREAD, type TarotReading } from "@shared/tarot";
 import {
   buildAiContext,
+  buildFollowUpInput,
+  cardPagePath,
+  drawFollowUpCard,
+  unusedSuggestions,
+  usedCardIds,
+  type FollowUpTurn,
   choiceLayout,
   positionLabels,
   cardAltText,
@@ -193,5 +199,99 @@ describe("choiceLayout / positionLabels", () => {
     expect(choice[1]).toBe("מָה מַצִּיעָה");
     expect(choice[5]).toBe("מָה שֶׁאֵינְךָ רוֹאֶה");
     expect(positionLabels(spreadPlan(THREE_SPREAD), 4)[3]).toBe("קְלָף 4");
+  });
+});
+
+describe("follow-up question helpers", () => {
+  const content = contentWith([
+    { cardId: "major-00", name: "", summary: "התחלה", interpretation: "<p>פירוש <strong>השוטה</strong></p>" },
+    { cardId: "pents-09", name: "תשעה", summary: "שפע", interpretation: "<p>פירוש התשעה</p>" },
+  ]);
+  const reading = readingOf(["major-00", "major-16", "major-17"]);
+  const views = toCardViews(reading, content);
+  const turn = (id: string, question: string): FollowUpTurn => ({
+    question,
+    card: toCardViews(readingOf([id]), content)[0],
+    answer: `תשובה ל-${question}`,
+  });
+
+  it("usedCardIds covers the spread and the clarifiers already drawn", () => {
+    expect(usedCardIds(reading, [])).toEqual(["major-00", "major-16", "major-17"]);
+    expect(usedCardIds(reading, [turn("pents-09", "ש")])).toEqual([
+      "major-00",
+      "major-16",
+      "major-17",
+      "pents-09",
+    ]);
+  });
+
+  it("drawFollowUpCard never repeats a card from the spread or from an earlier turn", () => {
+    const turns = [turn("pents-09", "ש")];
+    const taken = usedCardIds(reading, turns);
+    for (let i = 0; i < 300; i++) {
+      expect(taken).not.toContain(drawFollowUpCard(reading, turns, content).id);
+    }
+  });
+
+  it("drawFollowUpCard is deterministic for a fixed rng and merges the edited text", () => {
+    const a = drawFollowUpCard(reading, [], content, () => 0.5);
+    const b = drawFollowUpCard(reading, [], content, () => 0.5);
+    expect(a).toEqual(b);
+    expect(a.imageUrl).toContain(a.id);
+    expect(a.name.length).toBeGreaterThan(0);
+  });
+
+  it("buildFollowUpInput sends the whole context, with HTML turned into plain text", () => {
+    const input = buildFollowUpInput({
+      token: "tok",
+      question: "מה נכון להבין?",
+      views,
+      spread: THREE_SPREAD,
+      interpretation: "**פירוש**",
+      turns: [turn("pents-09", "שאלה ראשונה")],
+      current: { question: "  שאלה שנייה  ", card: views[0] },
+    });
+    expect(input.readingToken).toBe("tok");
+    expect(input.question).toBe("מה נכון להבין?");
+    expect(input.interpretation).toBe("**פירוש**");
+    expect(input.spread).toEqual(THREE_SPREAD);
+    expect(input.cards).toHaveLength(3);
+    expect(input.cards[0]).toEqual({ name: "השוטה", summary: "התחלה", text: "פירוש השוטה" });
+    expect(input.previous).toEqual([
+      {
+        question: "שאלה ראשונה",
+        card: { name: "תשעה", summary: "שפע", text: "פירוש התשעה" },
+        answer: "תשובה ל-שאלה ראשונה",
+      },
+    ]);
+    expect(input.followUp.question).toBe("שאלה שנייה");
+    expect(input.followUp.card.text).not.toContain("<");
+  });
+
+  it("buildFollowUpInput has no previous turns on the first follow-up", () => {
+    const input = buildFollowUpInput({
+      token: "tok",
+      question: "",
+      views,
+      spread: THREE_SPREAD,
+      interpretation: "פ",
+      turns: [],
+      current: { question: "ש", card: views[1] },
+    });
+    expect(input.previous).toEqual([]);
+    expect(input.question).toBe("");
+  });
+
+  it("unusedSuggestions drops questions that were already asked", () => {
+    const list = ["מה מעכב אותי כאן?", "מה הצעד הראשון שנכון לעשות?"];
+    expect(unusedSuggestions(list, [])).toEqual(list);
+    expect(unusedSuggestions(list, [turn("pents-09", " מה מעכב אותי כאן? ")])).toEqual([
+      "מה הצעד הראשון שנכון לעשות?",
+    ]);
+  });
+
+  it("cardPagePath links to the card page, or null for an unknown id", () => {
+    expect(cardPagePath("major-00")).toMatch(/^\/tarot\/card\/[a-z0-9-]+$/);
+    expect(cardPagePath("nope")).toBeNull();
   });
 });
