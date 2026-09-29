@@ -100,4 +100,14 @@ describe("TarotAiPanel (static render)", () => {
     });
     expect(html).toContain("קבל פירוש AI לפריסה כולה");
   });
+
+  it("reports the full result shape to the parent (type-level contract for follow-ups)", () => {
+    const seen: string[] = [];
+    // הרינדור סטטי ולכן onResult לא נקרא כאן — הבדיקה היא שהחתימה מקבלת את שלושת השדות.
+    renderPanel({
+      isAuthenticated: true,
+      onResult: (r) => seen.push(r.interpretation, r.readingToken, String(r.followUpsLeft)),
+    });
+    expect(seen).toEqual([]);
+  });
 });

@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-29 20:28_
+_נוצר אוטומטית ב: 2026-09-29 20:34_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 223 |
-| מכוסים / covered | 49 |
+| קבצי קוד / source files | 225 |
+| מכוסים / covered | 51 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 21% →0% |
-| טסטים עוברים / passing | 618 ✅ |
+| כיסוי / coverage | 22% ↑1% |
+| טסטים עוברים / passing | 641 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -53,6 +53,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:28_
 | `client/src/components/iching/QuestionRefine.tsx` | `client/src/components/iching/QuestionRefine.test.tsx` |
 | `client/src/components/tarot/TarotAiPanel.tsx` | `client/src/components/tarot/TarotAiPanel.test.tsx` |
 | `client/src/components/tarot/TarotCard.tsx` | `client/src/components/tarot/TarotCard.test.tsx` |
+| `client/src/components/tarot/useTarotJob.ts` | `client/src/components/tarot/useTarotJob.test.tsx` |
 | `client/src/const.ts` | `client/src/const.test.ts` |
 | `client/src/entry-server.tsx` | `client/src/entry-server.test.ts` |
 | `client/src/lib/articlePermissions.ts` | `client/src/lib/articlePermissions.test.ts` |
@@ -61,6 +62,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:28_
 | `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
+| `client/src/pages/tarot/job.ts` | `client/src/pages/tarot/job.test.ts` |
 | `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |
 | `client/src/pages/tarot/reveal.ts` | `client/src/pages/tarot/reveal.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |

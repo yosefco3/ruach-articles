@@ -35,7 +35,7 @@ import {
 } from "@/pages/tarot/model";
 import { runDeal, SPREAD } from "@/pages/tarot/reveal";
 import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
-import { TarotAiPanel } from "@/components/tarot/TarotAiPanel";
+import { TarotAiPanel, type TarotAiResult } from "@/components/tarot/TarotAiPanel";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 type Phase = "intro" | "drawing" | "result";
@@ -552,8 +552,10 @@ function ResultView({
   const labels = positionLabels(plan, views.length);
   const layout = choiceLayout(plan);
   const { isAuthenticated } = useAuth();
-  // פירוש ה-AI שהתקבל (markdown) — נשמר רק כדי לצרפו להדפסה; מתאפס עם שליפה חדשה (unmount).
-  const [aiMd, setAiMd] = useState<string | null>(null);
+  // פירוש ה-AI שהתקבל — המרקדאון להדפסה, והאסימון שפותח את שאלות ההמשך של הקריאה.
+  // מתאפס עם שליפה חדשה (unmount).
+  const [ai, setAi] = useState<TarotAiResult | null>(null);
+  const aiMd = ai?.interpretation ?? null;
 
   function onPrint() {
     printHtmlDocument(
@@ -678,7 +680,7 @@ function ResultView({
           spread={spread}
           isAuthenticated={isAuthenticated}
           monthlyLimit={content.aiMonthlyLimit}
-          onResult={setAiMd}
+          onResult={setAi}
           onBeforeLogin={() => savePendingTarot(qSaved, reading, spread)}
         />
       )}
