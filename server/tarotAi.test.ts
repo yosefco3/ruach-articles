@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  interpretationBudget,
   buildFollowUpPrompt,
   buildSpreadChoicePrompt,
   buildTarotPrompt,
@@ -87,6 +88,61 @@ describe("generateTarotInterpretation", () => {
       spread: { kind: "choice", options: ["א", "ב"] },
     });
     expect(generateText.mock.calls[1][1]).toEqual({ maxTokens: 5000 });
+    vi.doUnmock("./_core/aiProvider");
+  });
+});
+
+describe("interpretationBudget", () => {
+  it("grows with the spread: 3 cards → 3000, 2–4 roads → 5000, 5–6 roads → 7000", () => {
+    expect(interpretationBudget()).toBe(3000);
+    expect(interpretationBudget({ kind: "three", options: [] })).toBe(3000);
+    expect(interpretationBudget({ kind: "choice", options: ["א", "ב"] })).toBe(5000);
+    expect(interpretationBudget({ kind: "choice", options: ["א", "ב", "ג", "ד"] })).toBe(5000);
+    expect(interpretationBudget({ kind: "choice", options: ["א", "ב", "ג", "ד", "ה"] })).toBe(7000);
+    expect(interpretationBudget({ kind: "choice", options: ["א", "ב", "ג", "ד", "ה", "ו"] })).toBe(7000);
+  });
+});
+
+describe("buildSpreadChoicePrompt — many options", () => {
+  it("allows up to six roads and asks for ALL the options beyond that, so the page can explain", () => {
+    const p = buildSpreadChoicePrompt("על איזה חשבון ללכת 5 או 10 או 25 או 50 או 100");
+    expect(p).toContain("2 עד 6 אפשרויות");
+    expect(p).toContain("יותר מ-6 אפשרויות מפורשות");
+    expect(p).toContain("**כל** האפשרויות");
+    expect(p).not.toContain("יותר מ-4");
+    expect(p).toContain("מספרים או גדלים");
+  });
+});
+
+describe("chooseTarotSpread — many options", () => {
+  it("five options → a choice spread of five roads", async () => {
+    vi.resetModules();
+    const generateText = vi
+      .fn()
+      .mockResolvedValue('{"kind":"choice","options":["חשבון 5","חשבון 10","חשבון 25","חשבון 50","חשבון 100"],"title":"בחירת חשבון"}');
+    vi.doMock("./_core/aiProvider", () => ({ generateText }));
+    const { chooseTarotSpread } = await import("./tarotAi");
+    await expect(chooseTarotSpread("ש")).resolves.toEqual({
+      kind: "choice",
+      options: ["חשבון 5", "חשבון 10", "חשבון 25", "חשבון 50", "חשבון 100"],
+      title: "בחירת חשבון",
+    });
+    vi.doUnmock("./_core/aiProvider");
+  });
+
+  it("seven options → three cards, with the count for the notice", async () => {
+    vi.resetModules();
+    const generateText = vi
+      .fn()
+      .mockResolvedValue('{"kind":"choice","options":["1","2","3","4","5","6","7"],"title":"בחירה"}');
+    vi.doMock("./_core/aiProvider", () => ({ generateText }));
+    const { chooseTarotSpread } = await import("./tarotAi");
+    await expect(chooseTarotSpread("ש")).resolves.toEqual({
+      kind: "three",
+      options: [],
+      title: "בחירה",
+      overflow: 7,
+    });
     vi.doUnmock("./_core/aiProvider");
   });
 });

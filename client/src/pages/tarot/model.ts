@@ -4,6 +4,7 @@
  */
 import {
   CARDS,
+  MAX_CHOICE_OPTIONS,
   SUITS,
   cardById,
   cardBySlug,
@@ -122,6 +123,28 @@ export function choiceLayout(plan: SpreadPlan): ChoiceLayout | null {
     indices: plan.positions.map((p, idx) => (p.option === i ? idx : -1)).filter((idx) => idx >= 0),
   }));
   return { now, columns, hidden };
+}
+
+/**
+ * הודעה לשואל כשזוהו בשאלה יותר אפשרויות ממה שפריסת הבחירה משווה, ולכן נפרסו שלושה
+ * קלפים. null כשאין חריגה. בלי ההודעה הזו שלושת הקלפים נראים כמו תקלה.
+ */
+export function overflowNotice(spread: SpreadChoice): string | null {
+  const n = spread.overflow;
+  if (spread.kind !== "three" || !n || n <= MAX_CHOICE_OPTIONS) return null;
+  return (
+    `זיהינו בשאלה ${n} אפשרויות. פריסת הבחירה משווה עד ${MAX_CHOICE_OPTIONS} דרכים, ולכן נפרסו ` +
+    `שלושה קלפים לקריאה כללית של ההתלבטות. כדי להשוות בין הדרכים, צמצמו את השאלה לעד ` +
+    `${MAX_CHOICE_OPTIONS} אפשרויות ושלפו שוב.`
+  );
+}
+
+/**
+ * קצב הפריסה וההיפוך לפי מספר הקלפים: פריסות גדולות (12–14 קלפים) נחשפות מהר יותר,
+ * כדי שהחשיפה כולה לא תעבור ~13 שניות. undefined = ברירות המחדל של runDeal.
+ */
+export function dealPace(count: number): { dealMs?: number; flipMs?: number } {
+  return count > 10 ? { dealMs: 250, flipMs: 600 } : {};
 }
 
 /** תווית העמדה מעל כל קלף, לפי התוכנית (עם fallback מספרי מעבר לאורך התוכנית). */
