@@ -1,7 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { __resetRateLimit } from "../_core/rateLimit";
 import { __resetJobs } from "../_core/jobs";
+import { MAX_FOLLOWUPS } from "@shared/tarot";
+import {
+  READING_TOKEN_TTL_MS,
+  __resetFollowUps,
+  issueReadingToken,
+  verifyReadingToken,
+} from "../tarotReadingToken";
 import { adminCtx, makeCaller, publicCtx, userCtx } from "../test-helpers/trpc";
+
+/** הסוד שבו test-helpers חותם אסימונים (ברירת המחדל של makeDeps). */
+const TOKEN_SECRET = "test-reading-token-secret";
 
 const CARDS = [
   { name: "השוטה", summary: "התחלה", text: "פירוש א" },
@@ -275,7 +285,12 @@ describe("tarot.interpretResult", () => {
     await new Promise((r) => setImmediate(r));
     expect(await caller.tarot.interpretResult({ jobId })).toEqual({
       status: "done",
-      result: { interpretation: "פירוש", usage: { used: 1, limit: 5, remaining: 4 } },
+      result: {
+        interpretation: "פירוש",
+        usage: { used: 1, limit: 5, remaining: 4 },
+        readingToken: expect.any(String),
+        followUpsLeft: MAX_FOLLOWUPS,
+      },
     });
   });
 
@@ -339,5 +354,258 @@ describe("tarot.interpret — spread plans", () => {
     await expect(caller.tarot.interpret({ question: "ש", cards: eleven })).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
+  });
+});
+
+describe("tarot.interpret — reading token", () => {
+  beforeEach(() => {
+    __resetJobs();
+    __resetFollowUps();
+  });
+
+  it("a finished interpretation carries a valid reading token and the full follow-up allowance", async () => {
+    const { caller } = makeCaller(userCtx(), {
+      getTarotMonthlyUsage: async () => 0,
+      incrementTarotMonthlyUsage: async () => 1,
+    });
+    const res = await interpretDone(caller, { question: "ש", cards: CARDS });
+    expect(res.followUpsLeft).toBe(MAX_FOLLOWUPS);
+    expect(verifyReadingToken(res.readingToken, 1, TOKEN_SECRET).ok).toBe(true);
+    // האסימון שייך למשתמש שקיבל את הפירוש בלבד
+    expect(verifyReadingToken(res.readingToken, 2, TOKEN_SECRET).ok).toBe(false);
+  });
+
+  it("admins get a token too", async () => {
+    const { caller } = makeCaller(adminCtx());
+    const res = await interpretDone(caller, { question: "ש", cards: CARDS });
+    expect(verifyReadingToken(res.readingToken, 99, TOKEN_SECRET).ok).toBe(true);
+  });
+});
+
+type FollowUpInput = Parameters<Caller["tarot"]["followUp"]>[0];
+
+/** מפעיל את עבודת שאלת ההמשך וממתין לסיומה — מחזיר את התוצאה או זורק את שגיאת העבודה. */
+async function followUpDone(caller: Caller, input: FollowUpInput) {
+  const { jobId } = await caller.tarot.followUp(input);
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setImmediate(r));
+    const job = await caller.tarot.followUpResult({ jobId });
+    if (job.status === "done") return job.result;
+    if (job.status === "error") throw new Error(job.message);
+  }
+  throw new Error("job did not settle");
+}
+
+describe("tarot.followUp", () => {
+  beforeEach(() => {
+    __resetJobs();
+    __resetRateLimit();
+    __resetFollowUps();
+  });
+
+  const CLARIFIER = { name: "הנזיר", summary: "התבודדות", text: "פירוש הנזיר" };
+  const input = (over: Partial<FollowUpInput> = {}): FollowUpInput => ({
+    readingToken: issueReadingToken(1, TOKEN_SECRET),
+    question: "מה נכון להבין?",
+    cards: CARDS,
+    interpretation: "**הפירוש שניתן.**",
+    previous: [],
+    followUp: { question: "למה הכוונה במכשול?", card: CLARIFIER },
+    ...over,
+  });
+
+  it("rejects guests with UNAUTHORIZED", async () => {
+    const { caller } = makeCaller(publicCtx());
+    await expect(caller.tarot.followUp(input())).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(
+      caller.tarot.followUpResult({ jobId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+
+  it("answers with the full context, and does NOT touch the monthly quota", async () => {
+    const { caller, db, generateTarotFollowUp } = makeCaller(userCtx());
+    const res = await followUpDone(caller, input());
+    expect(res).toEqual({ answer: "תשובת המשך לדוגמה", followUpsLeft: MAX_FOLLOWUPS - 1 });
+    expect(generateTarotFollowUp).toHaveBeenCalledWith({
+      question: "מה נכון להבין?",
+      cards: CARDS,
+      spread: { kind: "three", options: [] },
+      interpretation: "**הפירוש שניתן.**",
+      previous: [],
+      followUp: { question: "למה הכוונה במכשול?", card: CLARIFIER },
+    });
+    expect(db.getTarotMonthlyUsage).not.toHaveBeenCalled();
+    expect(db.incrementTarotMonthlyUsage).not.toHaveBeenCalled();
+  });
+
+  it("works end to end with the token that interpret issued", async () => {
+    const { caller } = makeCaller(userCtx(), {
+      getTarotMonthlyUsage: async () => 0,
+      incrementTarotMonthlyUsage: async () => 1,
+    });
+    const reading = await interpretDone(caller, { question: "ש", cards: CARDS });
+    const res = await followUpDone(
+      caller,
+      input({ readingToken: reading.readingToken, interpretation: reading.interpretation }),
+    );
+    expect(res.answer).toBe("תשובת המשך לדוגמה");
+  });
+
+  it("returns a jobId immediately; the result is pending, then done", async () => {
+    let release!: (v: string) => void;
+    const { caller } = makeCaller(
+      userCtx(),
+      {},
+      { generateTarotFollowUp: () => new Promise<string>((r) => (release = r)) },
+    );
+    const { jobId } = await caller.tarot.followUp(input());
+    expect(await caller.tarot.followUpResult({ jobId })).toEqual({ status: "pending" });
+    release("תשובה");
+    await new Promise((r) => setImmediate(r));
+    expect(await caller.tarot.followUpResult({ jobId })).toEqual({
+      status: "done",
+      result: { answer: "תשובה", followUpsLeft: MAX_FOLLOWUPS - 1 },
+    });
+  });
+
+  it("another user cannot read the follow-up job", async () => {
+    const owner = makeCaller(userCtx());
+    const { jobId } = await owner.caller.tarot.followUp(input());
+    const other = makeCaller(userCtx({ dbId: 2 }));
+    await expect(other.caller.tarot.followUpResult({ jobId })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("passes the previous turn through to the AI service", async () => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx());
+    const previous = [{ question: "שאלה ראשונה", card: CLARIFIER, answer: "תשובה ראשונה" }];
+    await followUpDone(caller, input({ previous }));
+    expect(generateTarotFollowUp.mock.calls[0][0]).toMatchObject({ previous });
+  });
+
+  it.each([
+    ["another user's token", () => issueReadingToken(2, TOKEN_SECRET)],
+    ["a token signed with another secret", () => issueReadingToken(1, "some-other-secret-16ch")],
+    ["an expired token", () => issueReadingToken(1, TOKEN_SECRET, Date.now() - READING_TOKEN_TTL_MS - 1)],
+    ["garbage", () => "not-a-token"],
+  ])("rejects %s as READING_EXPIRED, without calling the AI", async (_label, makeToken) => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx());
+    await expect(caller.tarot.followUp(input({ readingToken: makeToken() }))).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "READING_EXPIRED",
+    });
+    expect(generateTarotFollowUp).not.toHaveBeenCalled();
+  });
+
+  it("throws AI_DISABLED when the master switch is off, without calling the AI", async () => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx(), {
+      getTarotIntro: async () => ({ aiEnabled: false }),
+    });
+    await expect(caller.tarot.followUp(input())).rejects.toMatchObject({ message: "AI_DISABLED" });
+    expect(generateTarotFollowUp).not.toHaveBeenCalled();
+  });
+
+  it("allows MAX_FOLLOWUPS per reading token, then FOLLOWUP_LIMIT", async () => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx());
+    const readingToken = issueReadingToken(1, TOKEN_SECRET);
+    for (let i = 0; i < MAX_FOLLOWUPS; i++) {
+      const res = await followUpDone(caller, input({ readingToken }));
+      expect(res.followUpsLeft).toBe(MAX_FOLLOWUPS - i - 1);
+    }
+    await expect(caller.tarot.followUp(input({ readingToken }))).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "FOLLOWUP_LIMIT",
+    });
+    expect(generateTarotFollowUp).toHaveBeenCalledTimes(MAX_FOLLOWUPS);
+  });
+
+  it("a new reading (new token) gets its own allowance", async () => {
+    const { caller } = makeCaller(userCtx());
+    const first = issueReadingToken(1, TOKEN_SECRET);
+    for (let i = 0; i < MAX_FOLLOWUPS; i++) await followUpDone(caller, input({ readingToken: first }));
+    const res = await followUpDone(caller, input({ readingToken: issueReadingToken(1, TOKEN_SECRET) }));
+    expect(res.followUpsLeft).toBe(MAX_FOLLOWUPS - 1);
+  });
+
+  it("parallel requests cannot exceed the per-reading cap", async () => {
+    const { caller } = makeCaller(userCtx());
+    const readingToken = issueReadingToken(1, TOKEN_SECRET);
+    const results = await Promise.allSettled(
+      Array.from({ length: MAX_FOLLOWUPS + 2 }, () => caller.tarot.followUp(input({ readingToken }))),
+    );
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(MAX_FOLLOWUPS);
+  });
+
+  it("a provider failure releases the slot (count-on-success)", async () => {
+    let fail = true;
+    const { caller } = makeCaller(
+      userCtx(),
+      {},
+      {
+        generateTarotFollowUp: async () => {
+          if (fail) throw new Error("provider down");
+          return "תשובה";
+        },
+      },
+    );
+    const readingToken = issueReadingToken(1, TOKEN_SECRET);
+    await expect(followUpDone(caller, input({ readingToken }))).rejects.toThrow(/provider down/);
+    fail = false;
+    for (let i = 0; i < MAX_FOLLOWUPS; i++) {
+      const res = await followUpDone(caller, input({ readingToken }));
+      expect(res.followUpsLeft).toBe(MAX_FOLLOWUPS - i - 1);
+    }
+  });
+
+  it("over the hourly cap → FOLLOWUP_RATE_LIMITED, and no slot is consumed", async () => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx(), {}, { followUpRatePerHour: 1 });
+    await followUpDone(caller, input());
+    const readingToken = issueReadingToken(1, TOKEN_SECRET);
+    await expect(caller.tarot.followUp(input({ readingToken }))).rejects.toMatchObject({
+      code: "TOO_MANY_REQUESTS",
+      message: "FOLLOWUP_RATE_LIMITED",
+    });
+    expect(generateTarotFollowUp).toHaveBeenCalledOnce();
+  });
+
+  it("admins are exempt from the hourly cap but not from the per-reading cap", async () => {
+    const { caller } = makeCaller(adminCtx(), {}, { followUpRatePerHour: 1 });
+    const readingToken = issueReadingToken(99, TOKEN_SECRET);
+    for (let i = 0; i < MAX_FOLLOWUPS; i++) await followUpDone(caller, input({ readingToken }));
+    await expect(caller.tarot.followUp(input({ readingToken }))).rejects.toMatchObject({
+      message: "FOLLOWUP_LIMIT",
+    });
+    await followUpDone(caller, input({ readingToken: issueReadingToken(99, TOKEN_SECRET) }));
+  });
+
+  it("the card count must match the spread", async () => {
+    const { caller } = makeCaller(userCtx());
+    await expect(
+      caller.tarot.followUp(input({ spread: { kind: "choice", options: ["א", "ב"] } })),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST", message: "SPREAD_SIZE_MISMATCH" });
+    await followUpDone(
+      caller,
+      input({ cards: [...CARDS, ...CARDS], spread: { kind: "choice", options: ["א", "ב"] } }),
+    );
+  });
+
+  it("allows an empty original question (general reading)", async () => {
+    const { caller } = makeCaller(userCtx());
+    const res = await followUpDone(caller, input({ question: "" }));
+    expect(res.answer).toBe("תשובת המשך לדוגמה");
+  });
+
+  it("validates the input: empty follow-up, missing interpretation, too many previous turns, overlong question", async () => {
+    const { caller, generateTarotFollowUp } = makeCaller(userCtx());
+    const turn = { question: "ש", card: CLARIFIER, answer: "ת" };
+    const bad: FollowUpInput[] = [
+      input({ followUp: { question: "   ", card: CLARIFIER } }),
+      input({ interpretation: "  " }),
+      input({ previous: Array.from({ length: MAX_FOLLOWUPS }, () => turn) }),
+      input({ followUp: { question: "ש".repeat(301), card: CLARIFIER } }),
+    ];
+    for (const b of bad) {
+      await expect(caller.tarot.followUp(b)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    expect(generateTarotFollowUp).not.toHaveBeenCalled();
   });
 });

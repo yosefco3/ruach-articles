@@ -5,7 +5,7 @@
 import type * as db from "../db";
 import type { ArticleEmailPayload } from "../newsletterEmail";
 import type { IchingAiContext, QuestionRefineResult } from "../ichingAi";
-import type { TarotAiContext } from "../tarotAi";
+import type { TarotAiContext, TarotFollowUpContext } from "../tarotAi";
 import type { SpreadChoice } from "@shared/tarot";
 
 export interface RouterDeps {
@@ -24,4 +24,10 @@ export interface RouterDeps {
   chooseTarotSpread: (question: string) => Promise<SpreadChoice>;
   /** תקרת קריאות בחירת-פריסה לכל משתמש בשעה. */
   spreadRatePerHour: number;
+  /** תשובה לשאלת המשך — קלף מבהיר מול הקריאה הקיימת. */
+  generateTarotFollowUp: (c: TarotFollowUpContext) => Promise<string>;
+  /** תקרת שאלות המשך לכל משתמש בשעה (מעבר לתקרה לכל קריאה). */
+  followUpRatePerHour: number;
+  /** הסוד לחתימת אסימון הקריאה (JWT_SECRET). */
+  readingTokenSecret: string;
 }

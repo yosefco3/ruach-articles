@@ -63,6 +63,10 @@ const envSchema = z.object({
   // בחירת פריסת טארוט ע"י ה-AI לפני השליפה (מחוברים בלבד) — לא נספרת במכסה; מוגנת
   // בהגבלת-קצב למשתמש (לשעה).
   TAROT_SPREAD_RATE_PER_HOUR: z.coerce.number().int().positive().default(30),
+
+  // שאלות המשך בטארוט — אינן נספרות במכסה (הן קשורות לפירוש שנספר, דרך אסימון חתום);
+  // מוגנות בנוסף בהגבלת-קצב למשתמש (לשעה).
+  TAROT_FOLLOWUP_RATE_PER_HOUR: z.coerce.number().int().positive().default(10),
 });
 
 function loadEnv() {

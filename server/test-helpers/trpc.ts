@@ -52,6 +52,9 @@ export interface ExtraDeps {
   tarotAiMonthlyLimit?: number;
   chooseTarotSpread?: (...args: unknown[]) => unknown;
   spreadRatePerHour?: number;
+  generateTarotFollowUp?: (...args: unknown[]) => unknown;
+  followUpRatePerHour?: number;
+  readingTokenSecret?: string;
 }
 
 export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: ExtraDeps = {}) {
@@ -88,6 +91,9 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   const chooseTarotSpread = vi.fn(
     extra.chooseTarotSpread ?? (async () => ({ kind: "three", options: [] })),
   );
+  const generateTarotFollowUp = vi.fn(
+    extra.generateTarotFollowUp ?? (async () => "תשובת המשך לדוגמה"),
+  );
   const deps = {
     db,
     sendArticleNewsletter,
@@ -99,6 +105,9 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
     tarotAiMonthlyLimit: extra.tarotAiMonthlyLimit ?? 5,
     chooseTarotSpread,
     spreadRatePerHour: extra.spreadRatePerHour ?? 30,
+    generateTarotFollowUp,
+    followUpRatePerHour: extra.followUpRatePerHour ?? 10,
+    readingTokenSecret: extra.readingTokenSecret ?? "test-reading-token-secret",
   } as unknown as RouterDeps;
   return {
     deps,
@@ -108,6 +117,7 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
     evaluateIchingQuestion,
     generateTarotInterpretation,
     chooseTarotSpread,
+    generateTarotFollowUp,
   };
 }
 
@@ -125,6 +135,7 @@ export function makeCaller(
     evaluateIchingQuestion,
     generateTarotInterpretation,
     chooseTarotSpread,
+    generateTarotFollowUp,
   } = makeDeps(dbOverrides, extra);
   const caller = createAppRouter(deps).createCaller(ctx);
   return {
@@ -135,5 +146,6 @@ export function makeCaller(
     evaluateIchingQuestion,
     generateTarotInterpretation,
     chooseTarotSpread,
+    generateTarotFollowUp,
   };
 }
