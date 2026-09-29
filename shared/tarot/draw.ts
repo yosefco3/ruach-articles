@@ -54,3 +54,30 @@ export function draw(count: number = SPREAD_SIZE, rng: Rng = secureRng): TarotRe
     })),
   };
 }
+
+/**
+ * שולף `count` קלפים ממה שנשאר בחפיסה אחרי הוצאת `excludeIds` — לקלף המבהיר של שאלת
+ * המשך, שאסור לו לחזור על קלף שכבר על השולחן. אותו Fisher–Yates, על החפיסה המצומצמת.
+ * מזהה לא מוכר ב-excludeIds פשוט אינו משפיע. position ממשיך מ-`startPosition`.
+ */
+export function drawMore(
+  excludeIds: readonly string[],
+  count: number = 1,
+  rng: Rng = secureRng,
+  startPosition: number = excludeIds.length,
+): DrawnCard[] {
+  const excluded = new Set(excludeIds);
+  const deck = CARDS.filter((c) => !excluded.has(c.id));
+  if (!Number.isInteger(count) || count < 1 || count > deck.length) {
+    throw new Error(`invalid draw count: ${count} (remaining: ${deck.length})`);
+  }
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck.slice(0, count).map((card, i) => ({
+    card,
+    position: startPosition + i,
+    orientation: "upright" as const,
+  }));
+}
