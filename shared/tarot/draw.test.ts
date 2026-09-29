@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CARDS } from "./cards";
-import { SPREAD_SIZE, draw, secureRng } from "./draw";
+import { SPREAD_SIZE, draw, drawMore, secureRng } from "./draw";
 
 /** RNG דטרמיניסטי מסדרת ערכים קבועה (מוחזר מחזורית). */
 function seqRng(values: number[]) {
@@ -69,5 +69,60 @@ describe("tarot draw engine", () => {
   it("can draw the whole deck as a permutation", () => {
     const reading = draw(78);
     expect(new Set(reading.cards.map((c) => c.card.id)).size).toBe(78);
+  });
+});
+
+describe("drawMore — drawing from the remaining deck", () => {
+  it("never returns an excluded card", () => {
+    for (let i = 0; i < 500; i++) {
+      const reading = draw(3);
+      const exclude = reading.cards.map((c) => c.card.id);
+      const [extra] = drawMore(exclude);
+      expect(exclude).not.toContain(extra.card.id);
+    }
+  });
+
+  it("returns exactly the last card when 77 are excluded", () => {
+    const last = CARDS[CARDS.length - 1];
+    const exclude = CARDS.slice(0, -1).map((c) => c.id);
+    const drawn = drawMore(exclude);
+    expect(drawn).toHaveLength(1);
+    expect(drawn[0].card.id).toBe(last.id);
+  });
+
+  it("is deterministic for a fixed rng and continues the position numbering", () => {
+    const exclude = CARDS.slice(0, 3).map((c) => c.id);
+    const values = [0.12, 0.87, 0.42, 0.63, 0.05, 0.99, 0.31];
+    const a = drawMore(exclude, 2, seqRng(values));
+    const b = drawMore(exclude, 2, seqRng(values));
+    expect(a.map((c) => c.card.id)).toEqual(b.map((c) => c.card.id));
+    expect(a.map((c) => c.position)).toEqual([3, 4]);
+    expect(a.every((c) => c.orientation === "upright")).toBe(true);
+  });
+
+  it("honours an explicit start position", () => {
+    const [extra] = drawMore(["nope"], 1, () => 0.5, 7);
+    expect(extra.position).toBe(7);
+  });
+
+  it("ignores unknown ids in the exclusion list", () => {
+    const drawn = drawMore(["not-a-card", "also-not"], CARDS.length);
+    expect(new Set(drawn.map((c) => c.card.id)).size).toBe(CARDS.length);
+  });
+
+  it("draws several unique cards at once", () => {
+    const exclude = CARDS.slice(0, 10).map((c) => c.id);
+    const drawn = drawMore(exclude, 5);
+    const ids = drawn.map((c) => c.card.id);
+    expect(new Set(ids).size).toBe(5);
+    ids.forEach((id) => expect(exclude).not.toContain(id));
+  });
+
+  it("throws on an invalid count or when not enough cards remain", () => {
+    const exclude = CARDS.slice(0, -1).map((c) => c.id);
+    expect(() => drawMore(exclude, 2)).toThrow();
+    expect(() => drawMore([], 0)).toThrow();
+    expect(() => drawMore([], 1.5)).toThrow();
+    expect(() => drawMore(CARDS.map((c) => c.id), 1)).toThrow();
   });
 });
