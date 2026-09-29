@@ -14,7 +14,8 @@ vi.mock("./_core/env", () => ({
 }));
 
 import { env } from "./_core/env";
-import { generateIchingInterpretation } from "./ichingAi";
+import { evaluateIchingQuestion, generateIchingInterpretation } from "./ichingAi";
+import { chooseTarotSpread } from "./tarotAi";
 
 const ctx = { question: "q", baseName: "b", baseText: "t" };
 
@@ -152,19 +153,45 @@ describe("generateIchingInterpretation — provider selection + retry", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("reports budget exhaustion when reasoning exists but content is empty", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
+  it("empty content with the answer left in the reasoning channel is retried, then reported", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        choices: [{ message: { content: "", reasoning_content: "חשיבה ארוכה…" }, finish_reason: "stop" }],
+      }),
+      text: async () => "",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = generateIchingInterpretation(ctx);
+    const assertion = expect(p).rejects.toThrow(/reasoning channel/);
+    await vi.runAllTimersAsync();
+    await assertion;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("a retry after an empty-content reply returns the real answer", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({
-          choices: [{ message: { content: "", reasoning_content: "חשיבה ארוכה…" } }],
+          choices: [{ message: { content: "", reasoning_content: "טיוטה פנימית" }, finish_reason: "stop" }],
         }),
         text: async () => "",
-      }),
-    );
-    await expect(generateIchingInterpretation(ctx)).rejects.toThrow(/reasoning/);
+      })
+      .mockResolvedValueOnce(dsOk("פירוש מלא"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = generateIchingInterpretation(ctx);
+    await vi.runAllTimersAsync();
+    // פירוש לעולם אינו נלקח מערוץ החשיבה — זו טיוטה פנימית.
+    await expect(p).resolves.toBe("פירוש מלא");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("throws (without calling the network) when DEEPSEEK_API_KEY is missing", async () => {
@@ -184,5 +211,74 @@ describe("generateIchingInterpretation — provider selection + retry", () => {
 
     await expect(generateIchingInterpretation(ctx)).rejects.toThrow(/GEMINI_API_KEY/);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // ── משימות JSON קצרות: התשובה נלקחת מערוץ החשיבה כש-content ריק ──
+
+  const dsReasoningOnly = (reasoning: string) => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      choices: [{ message: { content: "", reasoning_content: reasoning }, finish_reason: "stop" }],
+    }),
+    text: async () => "",
+  });
+
+  it("tarot spread choice: a JSON answer left in the reasoning channel is used (no retry, no fallback to three)", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        dsReasoningOnly('{"kind":"choice","options":["לפרסם עכשיו","לחכות"],"title":"תזמון פרסום הספר"}'),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(chooseTarotSpread("האם לפרסם את הספר עכשיו או לחכות?")).resolves.toEqual({
+      kind: "choice",
+      options: ["לפרסם עכשיו", "לחכות"],
+      title: "תזמון פרסום הספר",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("tarot spread choice: takes the final JSON when the reasoning holds drafts and prose", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        dsReasoningOnly(
+          'The user asks X or Y. Draft {"kind":"three","options":[]}? No — explicit options.\n' +
+            'JSON:\n{"kind":"choice","options":["הנדסה","רפואה","משפטים"],"title":"בחירת מסלול"}',
+        ),
+      ),
+    );
+    await expect(chooseTarotSpread("איזה מסלול לבחור?")).resolves.toMatchObject({
+      kind: "choice",
+      options: ["הנדסה", "רפואה", "משפטים"],
+    });
+  });
+
+  it("tarot spread choice: reasoning without any JSON is retried, then fails open to three", async () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn().mockResolvedValue(dsReasoningOnly("רק מחשבות, בלי תשובה"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const p = chooseTarotSpread("לעבור או להישאר?");
+    await vi.runAllTimersAsync();
+    await expect(p).resolves.toEqual({ kind: "three", options: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it("iching question check: a JSON answer left in the reasoning channel is used", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        dsReasoningOnly('{"problematic": true, "suggestions": ["מה נכון לי להבין במצב הזה?"]}'),
+      ),
+    );
+    await expect(evaluateIchingQuestion("האם אזכה בלוטו?")).resolves.toEqual({
+      problematic: true,
+      suggestions: ["מה נכון לי להבין במצב הזה?"],
+    });
   });
 });

@@ -6,6 +6,7 @@
  */
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "./env";
+import { extractLastJsonObject } from "./json";
 
 /** שגיאה חולפת (429 / 5xx / רשת) — שווה ניסיון חוזר. */
 export class RetryableError extends Error {}
@@ -40,8 +41,21 @@ export async function withRetry<T>(
  */
 const REASONING_HEADROOM = 20000;
 
+export interface GenerateOptions {
+  /** תקציב התשובה (בלי החשיבה — המרווח מתווסף כאן). */
+  maxTokens: number;
+  /**
+   * למשימות קצרות שהפלט שלהן הוא אובייקט JSON (סיווג, בדיקת שאלה): המודל החושב מחזיר
+   * לעיתים קרובות את התשובה בערוץ החשיבה ומשאיר את content ריק (finish_reason=stop).
+   * כשהדגל דלוק, במקרה כזה מחולץ אובייקט ה-JSON האחרון מתוך החשיבה ומוחזר כתשובה.
+   * לא לפירושים: שם החשיבה היא טיוטה פנימית שאסור להציג למשתמש.
+   */
+  jsonFromReasoning?: boolean;
+}
+
 /** קריאה ל-DeepSeek דרך ה-endpoint התואם-OpenAI. */
-async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<string> {
+async function generateWithDeepSeek(prompt: string, opts: GenerateOptions): Promise<string> {
+  const { maxTokens } = opts;
   const res = await fetch(`${env.DEEPSEEK_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -79,9 +93,19 @@ async function generateWithDeepSeek(prompt: string, maxTokens: number): Promise<
     );
   }
   if (!text) {
-    // חשיבה בלי תשובה = התקציב נגמר באמצע החשיבה — הודעה מאבחנת נפרדת.
-    if ((message?.reasoning_content ?? "").trim()) {
-      throw new Error("DeepSeek exhausted max_tokens during reasoning (no content)");
+    const reasoning = (message?.reasoning_content ?? "").trim();
+    if (reasoning) {
+      // finish_reason=stop עם content ריק: המודל סיים, אבל התשובה נשארה בערוץ החשיבה.
+      // (זה לא מיצוי תקציב — מיצוי מגיע כ-finish_reason=length ומטופל למעלה.)
+      // נמדד 2026-09-29: כמחצית מקריאות הסיווג הקצרות חוזרות כך.
+      if (opts.jsonFromReasoning) {
+        const json = extractLastJsonObject(reasoning);
+        if (json) return json;
+      }
+      // הרצה נוספת לרוב מחזירה content — שווה ניסיון חוזר.
+      throw new RetryableError(
+        `DeepSeek returned empty content; the answer stayed in the reasoning channel (${reasoning.length} chars)`,
+      );
     }
     throw new Error("DeepSeek returned empty response");
   }
@@ -102,7 +126,7 @@ async function generateWithGemini(prompt: string): Promise<string> {
  * קריאה גולמית לספק ה-AI שנבחר ב-env, עם ניסיון חוזר על שגיאות חולפות.
  * זורק אם אין מפתח / אם הקריאה נכשלה. `maxTokens` מבדיל בין פירוש ארוך לבדיקה זולה.
  */
-export async function generateText(prompt: string, opts: { maxTokens: number }): Promise<string> {
+export async function generateText(prompt: string, opts: GenerateOptions): Promise<string> {
   if (env.ICHING_AI_PROVIDER === "gemini") {
     if (!env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
     // שגיאות העומס של Gemini (429/503) מגיעות כ-throw מה-SDK → מנסים שוב על כולן.
@@ -111,7 +135,7 @@ export async function generateText(prompt: string, opts: { maxTokens: number }):
 
   if (!env.DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY is not configured");
   return withRetry(
-    () => generateWithDeepSeek(prompt, opts.maxTokens),
+    () => generateWithDeepSeek(prompt, opts),
     // ניסיון חוזר רק על שגיאות חולפות: 429/5xx (RetryableError) או תקלת רשת (TypeError).
     (e) => e instanceof RetryableError || e instanceof TypeError,
   );

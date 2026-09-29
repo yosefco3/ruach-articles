@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-29 20:44_
+_נוצר אוטומטית ב: 2026-09-29 22:49_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 226 |
-| מכוסים / covered | 52 |
+| קבצי קוד / source files | 227 |
+| מכוסים / covered | 53 |
 | ללא טסט / uncovered | 174 |
 | כיסוי / coverage | 23% →0% |
-| טסטים עוברים / passing | 664 ✅ |
+| טסטים עוברים / passing | 678 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -69,6 +69,7 @@ _נוצר אוטומטית ב: 2026-09-29 20:44_
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
 | `server/_core/auth/returnTo.ts` | `server/_core/auth/returnTo.test.ts` |
 | `server/_core/jobs.ts` | `server/_core/jobs.test.ts` |
+| `server/_core/json.ts` | `server/_core/json.test.ts` |
 | `server/_core/vite.ts` | `server/_core/vite.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
