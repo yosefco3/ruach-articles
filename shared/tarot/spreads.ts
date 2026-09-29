@@ -4,9 +4,11 @@
  * עם תפקיד לכל אחת, בסדר השליפה. הקליינט פורס לפי התוכנית, השרת בונה ממנה את הפרומפט.
  *
  * - `three`  — השיטה הקיימת: קלף מרכזי (השני) נושא את התשובה, שני מסייעים לצדדיו.
- * - `choice` — שאלת בחירה בין 2–4 אופציות: קלף "הצומת" (מקומך עכשיו) → לכל אופציה שני
+ * - `choice` — שאלת בחירה בין 2–6 אופציות: קלף "הצומת" (מקומך עכשיו) → לכל אופציה שני
  *   קלפים באותם תפקידים ("מה הדרך מציעה", "לאן היא מובילה") → קלף סוגר "מה שאינך רואה".
- *   2 אופציות = 6 קלפים, 3 = 8, 4 = 10.
+ *   2 אופציות = 6 קלפים, 3 = 8, 4 = 10, 5 = 12, 6 = 14.
+ *   (הורחב מ-4 ל-6 ב-2026-09-29, החלטת המשתמש: שני קלפים לכל אופציה גם ב-5 ו-6.)
+ *   יותר מ-6 → שלושה קלפים, עם `overflow` כדי שהדף יסביר למה.
  */
 
 export type SpreadKind = "three" | "choice";
@@ -17,6 +19,11 @@ export interface SpreadChoice {
   options: string[]; // ריק עבור three
   /** כותרת קצרה לקריאה שה-AI מזקק מהשאלה — משמשת כשם קובץ בהדפסה/שמירה כ-PDF. */
   title?: string;
+  /**
+   * רק ב-three: כמה אפשרויות זוהו בשאלה כשהן חרגו מ-MAX_CHOICE_OPTIONS. בלי זה הדף
+   * פורס שלושה קלפים בשתיקה, והשואל חושב שזו תקלה.
+   */
+  overflow?: number;
 }
 
 export interface SpreadPosition {
@@ -39,7 +46,9 @@ export interface SpreadPlan {
 
 export const THREE_SPREAD: SpreadChoice = { kind: "three", options: [] };
 export const MIN_CHOICE_OPTIONS = 2;
-export const MAX_CHOICE_OPTIONS = 4;
+export const MAX_CHOICE_OPTIONS = 6;
+/** כמה אפשרויות לכל היותר נספרות לצורך הודעת החריגה (מעבר לזה — המספר נחתך). */
+export const MAX_COUNTED_OPTIONS = 12;
 /** אורך מרבי לניסוח אופציה (ה-AI מתבקש לקצר; מעבר לזה — נחתך). */
 export const MAX_OPTION_LENGTH = 60;
 /** אורך מרבי לכותרת הקריאה (שם קובץ). */
@@ -57,31 +66,41 @@ export function sanitizeReadingTitle(raw: unknown): string | undefined {
   return t.length >= 2 ? t : undefined;
 }
 
-const OPTION_LETTERS = ["א׳", "ב׳", "ג׳", "ד׳"];
+const OPTION_LETTERS = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳"];
 
-/** אות עברית לאופציה: 0 → א׳ … 3 → ד׳ (מעבר לכך — מספר). */
+/** אות עברית לאופציה: 0 → א׳ … 5 → ו׳ (מעבר לכך — מספר). */
 export function optionLetter(i: number): string {
   return OPTION_LETTERS[i] ?? String(i + 1);
 }
 
 /**
  * מנרמל תשובת AI (או קלט לקוח) לבחירת פריסה תקינה. Fail-open: כל דבר שאינו
- * `choice` תקין עם 2–4 אופציות לא-ריקות → THREE_SPREAD.
+ * `choice` תקין עם 2–6 אופציות לא-ריקות → THREE_SPREAD. יותר מ-6 אפשרויות →
+ * THREE_SPREAD עם `overflow` (מספר האפשרויות שזוהו), כדי שהדף יוכל להסביר.
  */
 export function normalizeSpreadChoice(raw: unknown): SpreadChoice {
   if (!raw || typeof raw !== "object") return THREE_SPREAD;
-  const r = raw as { kind?: unknown; options?: unknown; title?: unknown };
+  const r = raw as { kind?: unknown; options?: unknown; title?: unknown; overflow?: unknown };
   const title = sanitizeReadingTitle(r.title);
   const three: SpreadChoice = title ? { ...THREE_SPREAD, title } : THREE_SPREAD;
-  if (r.kind !== "choice") return three;
+  const withOverflow = (count: number): SpreadChoice => ({
+    ...three,
+    overflow: Math.min(count, MAX_COUNTED_OPTIONS),
+  });
+  if (r.kind !== "choice") {
+    // שחזור של בחירה שכבר נורמלה (למשל אחרי התחברות) — שומרים על הודעת החריגה.
+    const kept = r.overflow;
+    return typeof kept === "number" && Number.isInteger(kept) && kept > MAX_CHOICE_OPTIONS
+      ? withOverflow(kept)
+      : three;
+  }
   if (!Array.isArray(r.options)) return three;
   const options = r.options
     .filter((o): o is string => typeof o === "string")
     .map((o) => o.trim().slice(0, MAX_OPTION_LENGTH).trim())
     .filter((o) => o.length > 0);
-  if (options.length < MIN_CHOICE_OPTIONS || options.length > MAX_CHOICE_OPTIONS) {
-    return three;
-  }
+  if (options.length > MAX_CHOICE_OPTIONS) return withOverflow(options.length);
+  if (options.length < MIN_CHOICE_OPTIONS) return three;
   return title ? { kind: "choice", options, title } : { kind: "choice", options };
 }
 

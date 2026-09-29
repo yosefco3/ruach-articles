@@ -348,12 +348,36 @@ describe("tarot.interpret — spread plans", () => {
     expect(generateTarotInterpretation.mock.calls[0][0]).toMatchObject({ spread: { kind: "three" } });
   });
 
-  it("rejects more than 10 cards at the schema level", async () => {
+  it("five and six options: 12 and 14 cards pass, and the AI service receives all the roads", async () => {
+    const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
+    const five = ["חשבון 5", "חשבון 10", "חשבון 25", "חשבון 50", "חשבון 100"];
+    const twelve = Array.from({ length: 12 }, () => CARDS[0]);
+    await interpretDone(caller, { question: "ש", cards: twelve, spread: { kind: "choice", options: five } });
+    expect(generateTarotInterpretation.mock.calls[0][0]).toMatchObject({
+      spread: { kind: "choice", options: five },
+    });
+    const fourteen = Array.from({ length: 14 }, () => CARDS[0]);
+    await interpretDone(caller, {
+      question: "ש",
+      cards: fourteen,
+      spread: { kind: "choice", options: [...five, "חשבון 200"] },
+    });
+    // 12 קלפים לשש דרכים — לא תואם
+    await expect(
+      caller.tarot.interpret({ question: "ש", cards: twelve, spread: { kind: "choice", options: [...five, "חשבון 200"] } }),
+    ).rejects.toMatchObject({ message: "SPREAD_SIZE_MISMATCH" });
+  });
+
+  it("rejects more than 14 cards, or more than six options, at the schema level", async () => {
     const { caller } = makeCaller(userCtx(), enabled());
-    const eleven = Array.from({ length: 11 }, () => CARDS[0]);
-    await expect(caller.tarot.interpret({ question: "ש", cards: eleven })).rejects.toMatchObject({
+    const fifteen = Array.from({ length: 15 }, () => CARDS[0]);
+    await expect(caller.tarot.interpret({ question: "ש", cards: fifteen })).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
+    const seven = ["1", "2", "3", "4", "5", "6", "7"];
+    await expect(
+      caller.tarot.interpret({ question: "ש", cards: CARDS, spread: { kind: "choice", options: seven } }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
 

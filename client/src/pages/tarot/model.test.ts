@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { DECK_ASSETS_VERSION, cardById, draw, spreadPlan, THREE_SPREAD, type TarotReading } from "@shared/tarot";
 import {
+  dealPace,
+  overflowNotice,
   buildAiContext,
   buildFollowUpInput,
   cardPagePath,
@@ -293,5 +295,30 @@ describe("follow-up question helpers", () => {
   it("cardPagePath links to the card page, or null for an unknown id", () => {
     expect(cardPagePath("major-00")).toMatch(/^\/tarot\/card\/[a-z0-9-]+$/);
     expect(cardPagePath("nope")).toBeNull();
+  });
+});
+
+describe("overflowNotice — more options than the choice spread compares", () => {
+  it("explains why three cards were dealt", () => {
+    const text = overflowNotice({ kind: "three", options: [], overflow: 7 })!;
+    expect(text).toContain("7 אפשרויות");
+    expect(text).toContain("עד 6 דרכים");
+    expect(text).toContain("שלושה קלפים");
+    expect(text).toContain("שלפו שוב");
+  });
+
+  it("is silent for ordinary readings", () => {
+    expect(overflowNotice(THREE_SPREAD)).toBeNull();
+    expect(overflowNotice({ kind: "choice", options: ["א", "ב"] })).toBeNull();
+    expect(overflowNotice({ kind: "three", options: [], overflow: 5 })).toBeNull();
+  });
+});
+
+describe("dealPace", () => {
+  it("keeps the default pace up to 10 cards and speeds up the larger spreads", () => {
+    expect(dealPace(3)).toEqual({});
+    expect(dealPace(10)).toEqual({});
+    expect(dealPace(12)).toEqual({ dealMs: 250, flipMs: 600 });
+    expect(dealPace(14)).toEqual({ dealMs: 250, flipMs: 600 });
   });
 });

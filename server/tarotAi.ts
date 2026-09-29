@@ -22,7 +22,7 @@ export interface TarotAiCard {
 export interface TarotAiContext {
   /** יכולה להיות ריקה — שליפה בלי שאלה מותרת (קריאה כללית). */
   question: string;
-  /** בסדר השליפה; האורך תואם לתוכנית הפריסה (3 ל-three, 6/8/10 ל-choice). */
+  /** בסדר השליפה; האורך תואם לתוכנית הפריסה (3 ל-three, 6–14 ל-choice). */
   cards: TarotAiCard[];
   /** הפריסה שנפרסה (ברירת מחדל: three). קובעת את שיטת הקריאה בפרומפט. */
   spread?: SpreadChoice;
@@ -150,13 +150,20 @@ function buildChoicePrompt(c: TarotAiContext, spread: SpreadChoice): string {
   ].join("\n");
 }
 
+/** תקציב התשובה לפירוש לפי גודל הפריסה. */
+export function interpretationBudget(spread?: SpreadChoice): number {
+  if (spread?.kind !== "choice") return 3000;
+  return spread.options.length > 4 ? 7000 : 5000;
+}
+
 /**
  * מייצר פירוש פריסה (Markdown) דרך הספק המשותף. זורק אם אין מפתח / אם הקריאה
  * נכשלה; שגיאות חולפות עוברות ניסיון חוזר בשכבת הספק.
  */
 export async function generateTarotInterpretation(c: TarotAiContext): Promise<string> {
-  // פריסת בחירה (6–10 קלפים, סעיף לכל דרך) צריכה תקציב תשובה גדול יותר משלושה קלפים.
-  const maxTokens = c.spread?.kind === "choice" ? 5000 : 3000;
+  // פריסת בחירה (6–14 קלפים, סעיף לכל דרך) צריכה תקציב תשובה גדול יותר משלושה קלפים;
+  // 5–6 דרכים (12–14 קלפים) — גדול עוד יותר.
+  const maxTokens = interpretationBudget(c.spread);
   return generateText(buildTarotPrompt(c), { maxTokens });
 }
 
@@ -281,7 +288,8 @@ export function buildSpreadChoicePrompt(question: string): string {
     `כללי הכרעה:`,
     `- "X או לא?" / "האם לעשות X?" היא שאלת כן/לא על דרך אחת — לא בחירה בין דרכים → "three".`,
     `- "מה עדיף" בלי אפשרויות שאפשר לנסח — → "three".`,
-    `- יותר מ-${MAX_CHOICE_OPTIONS} אפשרויות → "three".`,
+    `- יותר מ-${MAX_CHOICE_OPTIONS} אפשרויות מפורשות → עדיין "choice", עם **כל** האפשרויות שהשואל מנה (עד 12), כל אחת בנפרד. אל תצמצם/י, אל תאחד/י ואל תבחר/י חלק מהן — המערכת תטפל בזה.`,
+    `- אפשרויות שהן מספרים או גדלים ("5 או 10 או 25") הן אפשרויות לכל דבר: נסח/י כל אחת עם שם הדבר ("חשבון 5", "חשבון 10").`,
     `- בספק — "three".`,
     ``,
     `ב-"choice": נסח/י כל אפשרות בקצרה (עד 8 מילים, בעברית, כפי שהשואל התכוון, בסדר שבו הזכיר אותן), למשל ["לעבור לתל אביב", "להישאר בירושלים"].`,

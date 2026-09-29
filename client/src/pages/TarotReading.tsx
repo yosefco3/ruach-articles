@@ -27,6 +27,8 @@ import {
 import {
   buildAiContext,
   choiceLayout,
+  dealPace,
+  overflowNotice,
   positionLabels,
   resolvePanel,
   toCardViews,
@@ -142,7 +144,7 @@ export default function TarotReading() {
           setPhase("result");
         },
       },
-      { reducedMotion: prefersReducedMotion(), count: plan.positions.length },
+      { reducedMotion: prefersReducedMotion(), count: plan.positions.length, ...dealPace(plan.positions.length) },
     );
   }
 
@@ -553,6 +555,7 @@ function ResultView({
   const plan = spreadPlan(spread);
   const labels = positionLabels(plan, views.length);
   const layout = choiceLayout(plan);
+  const notice = overflowNotice(spread);
   const { isAuthenticated } = useAuth();
   // פירוש ה-AI שהתקבל — המרקדאון להדפסה, והאסימון שפותח את שאלות ההמשך של הקריאה.
   // מתאפס עם שליפה חדשה (unmount).
@@ -587,6 +590,26 @@ function ResultView({
           <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 21, color: "oklch(0.34 0.04 55)" }}>
             {qSaved}
           </div>
+        </div>
+      )}
+
+      {notice && (
+        <div
+          role="note"
+          style={{
+            maxWidth: 620,
+            margin: "0 auto 30px",
+            padding: "14px 18px",
+            borderRadius: 12,
+            border: "1px solid oklch(0.82 0.06 78)",
+            background: "oklch(0.97 0.02 82)",
+            fontSize: 15,
+            lineHeight: 1.8,
+            color: "oklch(0.36 0.05 58)",
+            textAlign: "center",
+          }}
+        >
+          {notice}
         </div>
       )}
 
@@ -639,7 +662,13 @@ function ResultView({
                       label={labels[i]}
                       selected={selected === i}
                       onSelect={() => setSelected(i)}
-                      width={layout.columns.length > 2 ? "clamp(78px,15vw,120px)" : "clamp(96px,20vw,140px)"}
+                      width={
+                        layout.columns.length > 4
+                          ? "clamp(70px,13vw,104px)"
+                          : layout.columns.length > 2
+                            ? "clamp(78px,15vw,120px)"
+                            : "clamp(96px,20vw,140px)"
+                      }
                     />
                   ))}
                 </div>

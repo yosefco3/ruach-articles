@@ -20,8 +20,8 @@ describe("spreadPlan", () => {
     expect(plan.positions.every((p) => p.option === undefined)).toBe(true);
   });
 
-  it("choice: now + 2 per option + hidden, so 2/3/4 options → 6/8/10 cards", () => {
-    for (const n of [2, 3, 4]) {
+  it("choice: now + 2 per option + hidden, so 2…6 options → 6/8/10/12/14 cards", () => {
+    for (const n of [2, 3, 4, 5, 6]) {
       const options = Array.from({ length: n }, (_, i) => `אפשרות ${i}`);
       const plan = spreadPlan({ kind: "choice", options });
       expect(plan.positions).toHaveLength(2 + 2 * n);
@@ -62,14 +62,58 @@ describe("normalizeSpreadChoice (fail-open)", () => {
     ["three", { kind: "three", options: ["א", "ב"] }],
     ["missing options", { kind: "choice" }],
     ["one option", { kind: "choice", options: ["א"] }],
-    ["five options", { kind: "choice", options: ["א", "ב", "ג", "ד", "ה"] }],
     ["empty strings only", { kind: "choice", options: ["", "   "] }],
     ["non-strings", { kind: "choice", options: [1, 2] }],
   ])("falls back to three for %s", (_label, raw) => {
     expect(normalizeSpreadChoice(raw)).toEqual(THREE_SPREAD);
   });
 
-  it("drops empty/non-string entries but keeps the rest when still 2–4", () => {
+  it("accepts five and six options (two cards each)", () => {
+    const five = ["5", "10", "25", "50", "100"];
+    expect(normalizeSpreadChoice({ kind: "choice", options: five })).toEqual({ kind: "choice", options: five });
+    const six = [...five, "200"];
+    expect(normalizeSpreadChoice({ kind: "choice", options: six }).options).toHaveLength(6);
+    expect(spreadPlan({ kind: "choice", options: six }).title).toBe("פְּרִיסַת הַמְּנִיפָה");
+  });
+
+  it("the fifth and sixth roads get their own Hebrew letters", () => {
+    const plan = spreadPlan({ kind: "choice", options: ["א", "ב", "ג", "ד", "ה", "ו"] });
+    expect(plan.positions.filter((p) => p.option === 4)[0].role).toContain("דרך ה׳");
+    expect(plan.positions.filter((p) => p.option === 5)[0].role).toContain("דרך ו׳");
+  });
+
+  it("more than six options → three cards, reporting how many options were found", () => {
+    const seven = ["1", "2", "3", "4", "5", "6", "7"];
+    expect(normalizeSpreadChoice({ kind: "choice", options: seven })).toEqual({
+      kind: "three",
+      options: [],
+      overflow: 7,
+    });
+    expect(normalizeSpreadChoice({ kind: "choice", options: seven, title: "בחירת חשבון" })).toEqual({
+      kind: "three",
+      options: [],
+      title: "בחירת חשבון",
+      overflow: 7,
+    });
+    const many = Array.from({ length: 40 }, (_, i) => String(i));
+    expect(normalizeSpreadChoice({ kind: "choice", options: many }).overflow).toBe(12);
+    expect(spreadSize(normalizeSpreadChoice({ kind: "choice", options: seven }))).toBe(3);
+  });
+
+  it("keeps the overflow notice when an already-normalized choice is normalized again", () => {
+    const once = normalizeSpreadChoice({ kind: "choice", options: ["1", "2", "3", "4", "5", "6", "7"] });
+    expect(normalizeSpreadChoice(once)).toEqual(once);
+    // ערך לא הגיוני אינו מתקבל
+    expect(normalizeSpreadChoice({ kind: "three", options: [], overflow: 3 })).toEqual(THREE_SPREAD);
+    expect(normalizeSpreadChoice({ kind: "three", options: [], overflow: "7" })).toEqual(THREE_SPREAD);
+  });
+
+  it("no overflow notice for an ordinary three-card reading", () => {
+    expect(normalizeSpreadChoice({ kind: "three", options: [] }).overflow).toBeUndefined();
+    expect(normalizeSpreadChoice({ kind: "choice", options: ["א"] }).overflow).toBeUndefined();
+  });
+
+  it("drops empty/non-string entries but keeps the rest when still 2–6", () => {
     expect(normalizeSpreadChoice({ kind: "choice", options: ["א", "", 3, "ב"] }).options).toEqual(["א", "ב"]);
   });
 
@@ -81,9 +125,9 @@ describe("normalizeSpreadChoice (fail-open)", () => {
 });
 
 describe("optionLetter", () => {
-  it("maps 0..3 to Hebrew letters and falls back to numbers", () => {
-    expect([0, 1, 2, 3].map(optionLetter)).toEqual(["א׳", "ב׳", "ג׳", "ד׳"]);
-    expect(optionLetter(4)).toBe("5");
+  it("maps 0..5 to Hebrew letters and falls back to numbers", () => {
+    expect([0, 1, 2, 3, 4, 5].map(optionLetter)).toEqual(["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳"]);
+    expect(optionLetter(6)).toBe("7");
   });
 });
 

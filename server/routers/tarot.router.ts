@@ -14,6 +14,9 @@ import {
   normalizeSpreadChoice,
   spreadSize,
 } from "@shared/tarot";
+
+/** הפריסה הגדולה ביותר: הצומת + שני קלפים לכל אחת מ-MAX_CHOICE_OPTIONS הדרכים + הקלף הסוגר. */
+const MAX_SPREAD_CARDS = 2 + 2 * MAX_CHOICE_OPTIONS;
 import {
   followUpsLeft,
   issueReadingToken,
@@ -91,7 +94,7 @@ export const createTarotRouter = (deps: RouterDeps) =>
         z.object({
           // יכולה להיות ריקה — שליפה בלי שאלה היא קריאה כללית.
           question: z.string().trim().max(500).default(""),
-          cards: z.array(cardSchema).min(3).max(10),
+          cards: z.array(cardSchema).min(3).max(MAX_SPREAD_CARDS),
           spread: spreadSchema.optional(),
         }),
       )
@@ -173,7 +176,7 @@ export const createTarotRouter = (deps: RouterDeps) =>
         z.object({
           readingToken: z.string().min(1).max(256),
           question: z.string().trim().max(500).default(""),
-          cards: z.array(cardSchema).min(3).max(10),
+          cards: z.array(cardSchema).min(3).max(MAX_SPREAD_CARDS),
           spread: spreadSchema.optional(),
           interpretation: z.string().trim().min(1).max(MAX_CONTEXT_TEXT_LENGTH),
           previous: z
