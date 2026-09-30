@@ -551,7 +551,22 @@ function ResultView({
   onReset: () => void;
 }) {
   const views = toCardViews(reading, content);
-  const panel = resolvePanel(views, selected);
+  // קלף מבהיר (משאלת המשך) שנבחר לחלון הפירוט — במקום קלף מהפריסה. בחירה של אחד מאפסת את השני.
+  const [extraCard, setExtraCard] = useState<CardView | null>(null);
+  const panel = extraCard ?? resolvePanel(views, selected);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  function pickSpreadCard(i: number) {
+    setExtraCard(null);
+    setSelected(i);
+  }
+  function pickClarifier(view: CardView) {
+    setSelected(null);
+    setExtraCard(view);
+    // חלון הפירוט יושב מתחת לתיבת שאלות ההמשך, שיכולה להיות ארוכה — גוללים אליו.
+    setTimeout(() => {
+      panelRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    }, 0);
+  }
   const plan = spreadPlan(spread);
   const labels = positionLabels(plan, views.length);
   const layout = choiceLayout(plan);
@@ -624,7 +639,7 @@ function ResultView({
               view={views[layout.now]}
               label={labels[layout.now]}
               selected={selected === layout.now}
-              onSelect={() => setSelected(layout.now)}
+              onSelect={() => pickSpreadCard(layout.now)}
               width="clamp(110px,24vw,160px)"
             />
           </div>
@@ -661,7 +676,7 @@ function ResultView({
                       view={views[i]}
                       label={labels[i]}
                       selected={selected === i}
-                      onSelect={() => setSelected(i)}
+                      onSelect={() => pickSpreadCard(i)}
                       width={
                         layout.columns.length > 4
                           ? "clamp(70px,13vw,104px)"
@@ -680,7 +695,7 @@ function ResultView({
               view={views[layout.hidden]}
               label={labels[layout.hidden]}
               selected={selected === layout.hidden}
-              onSelect={() => setSelected(layout.hidden)}
+              onSelect={() => pickSpreadCard(layout.hidden)}
               width="clamp(110px,24vw,160px)"
             />
           </div>
@@ -703,7 +718,7 @@ function ResultView({
               view={v}
               label={labels[i]}
               selected={selected === i}
-              onSelect={() => setSelected(i)}
+              onSelect={() => pickSpreadCard(i)}
               width="clamp(120px,26vw,190px)"
             />
           ))}
@@ -735,6 +750,8 @@ function ResultView({
           reading={reading}
           content={content}
           onTurnsChange={setTurns}
+          onSelectCard={pickClarifier}
+          selectedCardId={extraCard?.id ?? null}
         />
       )}
 
@@ -745,6 +762,7 @@ function ResultView({
       {/* ── חלון הפירוט היחיד ── */}
       {panel && (
         <div
+          ref={panelRef}
           style={{
             marginTop: 16,
             background: "oklch(0.99 0.008 80)",
