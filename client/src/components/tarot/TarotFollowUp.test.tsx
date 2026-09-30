@@ -308,4 +308,56 @@ describe("TarotFollowUp (live)", () => {
     expect($('[data-testid="clarifier-card"]')).not.toBeNull();
     expect(buttonByText("נסה שוב")).toBeDefined();
   });
+
+  it("clicking the clarifier card (or its link) hands the card to the parent for the detail panel", async () => {
+    const onSelectCard = vi.fn();
+    mount(happyServer(), { onSelectCard });
+    click(chips()[0]);
+    click(askButton()!);
+    await tick();
+    await tick(POLL_MS);
+
+    const card = $('[data-testid="clarifier-card"]')!;
+    const id = card.getAttribute("data-card-id");
+    expect(container.textContent).toContain("לפירוש הקלף בחלון שלמטה");
+
+    click(card.querySelector('[role="button"]')!);
+    expect(onSelectCard).toHaveBeenCalledOnce();
+    expect(onSelectCard.mock.calls[0][0].id).toBe(id);
+
+    click($('[data-testid="clarifier-open"]')!);
+    expect(onSelectCard).toHaveBeenCalledTimes(2);
+    // הלחיצה לא שולחת שום דבר לשרת
+    expect(followUpCalls()).toHaveLength(1);
+  });
+
+  it("marks the clarifier that is currently shown in the detail panel", async () => {
+    mount(happyServer(), { onSelectCard: vi.fn(), rng: () => 0.5 });
+    click(chips()[0]);
+    click(askButton()!);
+    await tick();
+    await tick(POLL_MS);
+    const id = $('[data-testid="clarifier-card"]')!.getAttribute("data-card-id")!;
+    expect(container.textContent).not.toContain("הפירוש מוצג בחלון שלמטה");
+
+    act(() => root.unmount());
+    container.remove();
+    mount(happyServer(), { onSelectCard: vi.fn(), rng: () => 0.5, selectedCardId: id });
+    click(chips()[0]);
+    click(askButton()!);
+    await tick();
+    await tick(POLL_MS);
+    expect($('[data-testid="clarifier-card"]')!.getAttribute("data-card-id")).toBe(id);
+    expect(container.textContent).toContain("הפירוש מוצג בחלון שלמטה");
+  });
+
+  it("without onSelectCard the card is not clickable and no link is shown", async () => {
+    mount(happyServer());
+    click(chips()[0]);
+    click(askButton()!);
+    await tick();
+    await tick(POLL_MS);
+    expect($('[data-testid="clarifier-card"] [role="button"]')).toBeNull();
+    expect($('[data-testid="clarifier-open"]')).toBeNull();
+  });
 });

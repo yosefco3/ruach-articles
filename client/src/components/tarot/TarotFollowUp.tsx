@@ -5,7 +5,6 @@
  * שום דבר לא נשמר: ההקשר חי כאן ונשלח מחדש בכל שאלה.
  */
 import { useEffect, useRef, useState } from "react";
-import { Link } from "wouter";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
 import {
@@ -18,7 +17,6 @@ import {
 } from "@shared/tarot";
 import {
   buildFollowUpInput,
-  cardPagePath,
   drawFollowUpCard,
   unusedSuggestions,
   type CardView,
@@ -27,7 +25,7 @@ import {
   type FollowUpTurn,
   type TarotContent,
 } from "@/pages/tarot/model";
-import { CardFace } from "./TarotCard";
+import { TarotCard } from "./TarotCard";
 import { actionButtonStyle, cardStyle, disabledButtonStyle, errorTextStyle } from "./TarotAiPanel";
 import { useTarotJob } from "./useTarotJob";
 
@@ -77,9 +75,21 @@ function Header() {
   );
 }
 
-/** הקלף המבהיר: תמונה קטנה, שם, שורת מהות וקישור לדף הקלף. */
-function ClarifierCard({ view, animate }: { view: CardView; animate: boolean }) {
-  const path = cardPagePath(view.id);
+/**
+ * הקלף המבהיר: תמונה קטנה, שם ושורת מהות. לחיצה פותחת את פירושו בחלון הפירוט של
+ * הדף — בדיוק כמו לחיצה על קלף בפריסה (בקשת המשתמש, 2026-09-30).
+ */
+function ClarifierCard({
+  view,
+  animate,
+  selected,
+  onSelect,
+}: {
+  view: CardView;
+  animate: boolean;
+  selected: boolean;
+  onSelect?: (view: CardView) => void;
+}) {
   return (
     <div
       data-testid="clarifier-card"
@@ -93,7 +103,7 @@ function ClarifierCard({ view, animate }: { view: CardView; animate: boolean }) 
       }}
     >
       <div style={{ width: "clamp(84px,22vw,120px)", flexShrink: 0 }}>
-        <CardFace view={view} />
+        <TarotCard view={view} faceUp selected={selected} onClick={onSelect ? () => onSelect(view) : undefined} />
       </div>
       <div>
         <div style={{ fontSize: 11, letterSpacing: "0.2em", color: "oklch(0.55 0.03 60)", marginBottom: 6 }}>
@@ -108,10 +118,25 @@ function ClarifierCard({ view, animate }: { view: CardView; animate: boolean }) 
             {view.summary}
           </div>
         )}
-        {path && (
-          <Link href={path} style={{ fontSize: 13, color: "oklch(0.46 0.09 58)", marginTop: 6, display: "inline-block" }}>
-            לפירוש המלא של הקלף
-          </Link>
+        {onSelect && (
+          <button
+            type="button"
+            data-testid="clarifier-open"
+            onClick={() => onSelect(view)}
+            style={{
+              marginTop: 8,
+              padding: 0,
+              background: "none",
+              border: "none",
+              font: "inherit",
+              fontSize: 13,
+              color: "oklch(0.46 0.09 58)",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            {selected ? "הפירוש מוצג בחלון שלמטה" : "לפירוש הקלף בחלון שלמטה"}
+          </button>
         )}
       </div>
     </div>
@@ -142,6 +167,8 @@ export function TarotFollowUp({
   content,
   suggestions,
   onTurnsChange,
+  onSelectCard,
+  selectedCardId,
   rng,
 }: {
   /** האסימון שהשרת הנפיק עם הפירוש — בלעדיו אין שאלות המשך. */
@@ -160,6 +187,10 @@ export function TarotFollowUp({
   suggestions?: string[];
   /** מדווח להורה על התורות שנענו — להדפסה. */
   onTurnsChange?: (turns: FollowUpTurn[]) => void;
+  /** לחיצה על קלף מבהיר — ההורה מציג את פירושו בחלון הפירוט של הדף. */
+  onSelectCard?: (view: CardView) => void;
+  /** הקלף שמוצג כרגע בחלון הפירוט (להדגשה). */
+  selectedCardId?: string | null;
   /** להזרקה בבדיקות. */
   rng?: Rng;
 }) {
@@ -241,7 +272,12 @@ export function TarotFollowUp({
           style={{ marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid oklch(0.90 0.02 75)" }}
         >
           <QuestionLine index={i + 1} text={turn.question} />
-          <ClarifierCard view={turn.card} animate={false} />
+          <ClarifierCard
+            view={turn.card}
+            animate={false}
+            selected={selectedCardId === turn.card.id}
+            onSelect={onSelectCard}
+          />
           <div
             className="iching-interpretation"
             style={{ fontSize: 17, lineHeight: 1.9, color: "oklch(0.30 0.025 55)" }}
@@ -254,7 +290,12 @@ export function TarotFollowUp({
         // ── ממתין: הקלף שנשלף גלוי, התשובה בדרך ──
         <div>
           <QuestionLine index={turns.length + 1} text={draft.question} />
-          <ClarifierCard view={draft.card} animate={!reduced.current} />
+          <ClarifierCard
+            view={draft.card}
+            animate={!reduced.current}
+            selected={selectedCardId === draft.card.id}
+            onSelect={onSelectCard}
+          />
           <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "4px 0" }}>
             <span
               aria-hidden
@@ -283,7 +324,12 @@ export function TarotFollowUp({
         // ── תקלה או עומס: השאלה והקלף נשמרים, ניסיון חוזר עם אותו קלף ──
         <div>
           <QuestionLine index={turns.length + 1} text={draft.question} />
-          <ClarifierCard view={draft.card} animate={false} />
+          <ClarifierCard
+            view={draft.card}
+            animate={false}
+            selected={selectedCardId === draft.card.id}
+            onSelect={onSelectCard}
+          />
           <p style={{ ...errorTextStyle, marginBottom: 16 }}>
             {rateLimited
               ? "שאלת הרבה שאלות בשעה האחרונה. נסה שוב מאוחר יותר — הקלף שנשלף נשמר."
