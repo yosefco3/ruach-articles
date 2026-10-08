@@ -19,6 +19,8 @@ interface SeoData {
   ogType: string;
   ogLocale: string;
   canonicalUrl: string;
+  /** Emit <meta name="robots" content="noindex"> and no canonical (404 pages). */
+  noindex?: boolean;
   jsonLd?: object | object[];
   ogImageAlt?: string;
   articleMeta?: {
@@ -59,6 +61,19 @@ const DEFAULT_SEO: SeoData = {
   jsonLd: siteLd(),
 };
 
+/** Head for a page that does not exist — served with HTTP 404 (see pageStatus). */
+export const NOT_FOUND_SEO: SeoData = {
+  title: "הדף לא נמצא – רוח חכמה",
+  description: "הדף שחיפשתם אינו קיים. אולי הכתובת שגויה, או שהדף הוסר.",
+  ogTitle: "הדף לא נמצא – רוח חכמה",
+  ogDescription: "הדף שחיפשתם אינו קיים.",
+  ogUrl: SITE_URL_PRODUCTION,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: SITE_URL_PRODUCTION,
+  noindex: true,
+};
+
 // ─── HTML Injection ─────────────────────────────────────────────────────────
 
 function buildSeoTags(data: SeoData): string {
@@ -71,9 +86,16 @@ function buildSeoTags(data: SeoData): string {
     `<meta property="og:type" content="${escapeHtml(data.ogType)}" />`,
     `<meta property="og:locale" content="${escapeHtml(data.ogLocale)}" />`,
     `<meta property="og:site_name" content="${escapeHtml(SITE_NAME)}" />`,
-    `<link rel="canonical" href="${escapeHtml(data.canonicalUrl)}" />`,
     `<link rel="alternate" type="application/rss+xml" title="${escapeHtml(SITE_NAME)}" href="${SITE_URL_PRODUCTION}/rss.xml" />`,
   ];
+
+  // A page that does not exist must not advertise a canonical URL (Google would
+  // treat the 404 as a duplicate of it) and must not be indexed.
+  if (data.noindex) {
+    tags.push(`<meta name="robots" content="noindex" />`);
+  } else {
+    tags.push(`<link rel="canonical" href="${escapeHtml(data.canonicalUrl)}" />`);
+  }
 
   if (data.ogImage) {
     tags.push(`<meta property="og:image" content="${escapeHtml(data.ogImage)}" />`);
@@ -353,6 +375,34 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
 
 // ─── Route Matchers ─────────────────────────────────────────────────────────
 
+/**
+ * Public routes that always exist (mirror of client/src/routes/public.tsx).
+ * Anything else that is not an article / category / tarot card / profile / admin
+ * path is a 404 — the server used to answer 200 for every URL ("soft 404"), so
+ * Google could not tell a removed page from a live one.
+ */
+const STATIC_PUBLIC_PATHS = new Set([
+  "/",
+  "/about",
+  "/contact",
+  "/derech",
+  "/accessibility",
+  "/guest-post",
+  "/iching",
+  "/tarot",
+  "/tarot/deck",
+  "/tarot/guide",
+]);
+
+function isProfilePath(pathname: string): boolean {
+  return /^\/profile\/[^/]+$/.test(pathname);
+}
+
+/** Normalise "/about/" → "/about" for matching only (the redirect lives elsewhere). */
+function stripTrailingSlash(pathname: string): string {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+}
+
 function matchArticleSlug(pathname: string): string | null {
   const match = pathname.match(/^\/article\/([^/]+)$/);
   return match ? match[1] : null;
@@ -470,18 +520,27 @@ export async function seoMiddleware(
     return next();
   }
 
-  const pathname = req.path;
+  const pathname = stripTrailingSlash(req.path);
 
-  // Skip admin routes, static assets, etc.
-  if (
-    pathname.startsWith("/admin") ||
-    pathname.includes(".") || // files with extensions (e.g. .js, .css)
-    pathname.startsWith("/uploads")
-  ) {
+  // Admin pages and uploads: client-rendered / served elsewhere, nothing to resolve.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/uploads")) {
+    return next();
+  }
+
+  // Files with extensions (.js, .css, .png…): a real file is served by the static
+  // layer before the SSR handler runs, so whatever reaches the renderer with a
+  // dot in its path does not exist.
+  if (pathname.includes(".")) {
+    (req as any).seoData = NOT_FOUND_SEO;
+    (req as any).pageStatus = 404;
     return next();
   }
 
   let seo: SeoData | null = null;
+  // Dynamic routes: null from the resolver means the page does not exist.
+  let dynamicMiss = false;
+  // Unknown top-level path: not static, not dynamic, not a profile.
+  let unknownPath = false;
 
   try {
     const articleSlug = matchArticleSlug(pathname);
@@ -494,20 +553,39 @@ export async function seoMiddleware(
       seo = STATIC_ROUTE_SEO[pathname];
     } else if (tarotCardSlug) {
       seo = await resolveTarotCardSeo(tarotCardSlug);
+      dynamicMiss = seo === null;
     } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
+      dynamicMiss = seo === null;
     } else if (categorySlug) {
       seo = await resolveCategorySeo(categorySlug);
+      dynamicMiss = seo === null;
+    } else if (!STATIC_PUBLIC_PATHS.has(pathname) && !isProfilePath(pathname)) {
+      unknownPath = true;
     }
-    // Home, about, contact — fall back to DEFAULT_SEO below.
+    // Home, about, contact, profile — fall back to DEFAULT_SEO below.
   } catch (err) {
+    // A DB hiccup must not turn a live page into a 404 — fall back to 200.
     console.warn("[SEO] Error resolving SEO data:", err);
+    dynamicMiss = false;
   }
 
-  // Attach resolved SEO data to the request for downstream use
-  (req as any).seoData = seo || DEFAULT_SEO;
+  const notFound = dynamicMiss || unknownPath;
+
+  // Attach resolved SEO data + HTTP status to the request for downstream use
+  (req as any).seoData = notFound ? NOT_FOUND_SEO : seo || DEFAULT_SEO;
+  (req as any).pageStatus = notFound ? 404 : 200;
 
   next();
+}
+
+/**
+ * HTTP status the SSR handlers should send for this request: 404 when
+ * seoMiddleware found no such page, 200 otherwise (also when the middleware did
+ * not run, e.g. admin pages).
+ */
+export function pageStatus(req: Request): number {
+  return (req as any).pageStatus === 404 ? 404 : 200;
 }
 
 /**
