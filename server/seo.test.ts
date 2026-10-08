@@ -463,6 +463,29 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
     expect((await run("/article/whatever")).status).toBe(200);
   });
 
+  it("a legacy slug that no longer resolves → 301 to the renamed article", async () => {
+    const { seoMiddleware } = await import("./seo");
+    const { getArticleBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue(undefined as any);
+    const req = { method: "GET", path: "/article/-" } as any;
+    const res = { redirect: vi.fn() } as any;
+    const next = vi.fn();
+    await seoMiddleware(req, res, next);
+    expect(res.redirect).toHaveBeenCalledWith(301, "/article/my-sources-of-authority");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("a legacy slug that still resolves is served as-is (rename not applied yet)", async () => {
+    const { getArticleBySlug, getCategoryBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue({
+      slug: "-", title: "t", published: true, category: "c", createdAt: new Date(), updatedAt: new Date(),
+    } as any);
+    vi.mocked(getCategoryBySlug).mockResolvedValue(undefined as any);
+    const { status, html } = await run("/article/-");
+    expect(status).toBe(200);
+    expect(html).toContain("/article/-");
+  });
+
   it("pageStatus defaults to 200 when the middleware did not run", async () => {
     const { pageStatus } = await import("./seo");
     expect(pageStatus({} as any)).toBe(200);

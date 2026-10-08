@@ -4,6 +4,7 @@ import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
 import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
+import { legacyArticleSlugTarget } from "@shared/legacySlugs";
 import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
@@ -557,6 +558,13 @@ export async function seoMiddleware(
     } else if (articleSlug) {
       seo = await resolveArticleSeo(articleSlug);
       dynamicMiss = seo === null;
+      // A renamed article: once the old slug no longer resolves, send readers
+      // (and Google) to the new URL instead of a 404.
+      const renamed = dynamicMiss ? legacyArticleSlugTarget(decodeURIComponent(articleSlug)) : null;
+      if (renamed) {
+        res.redirect(301, `/article/${encodeURIComponent(renamed)}`);
+        return;
+      }
     } else if (categorySlug) {
       seo = await resolveCategorySeo(categorySlug);
       dynamicMiss = seo === null;
