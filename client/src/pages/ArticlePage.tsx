@@ -165,6 +165,7 @@ export default function ArticlePage() {
           <a
             href={`/api/article-docx/${article.slug}`}
             download
+            rel="nofollow"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all text-sm font-medium"
           >
             <Download className="w-4 h-4" />
