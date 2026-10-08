@@ -388,3 +388,106 @@ describe("static route SEO — /tarot/guide (pillar)", () => {
     expect(html).toContain("האם הטארוט מגיד עתידות?");
   });
 });
+
+describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
+  const shell = `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`;
+
+  async function run(path: string) {
+    const { seoMiddleware, applySeoToHtml, pageStatus } = await import("./seo");
+    const req = { method: "GET", path } as any;
+    const next = vi.fn();
+    await seoMiddleware(req, {} as any, next);
+    return { status: pageStatus(req), html: applySeoToHtml(shell, req), next };
+  }
+
+  it("unknown article → 404 with a noindex head and no canonical", async () => {
+    const { getArticleBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue(undefined as any);
+    const { status, html } = await run("/article/no-such-slug");
+    expect(status).toBe(404);
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+    expect(html).not.toContain('rel="canonical"');
+    expect(html).toContain("הדף לא נמצא");
+  });
+
+  it("unpublished article → 404", async () => {
+    const { getArticleBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue({ slug: "draft", published: false } as any);
+    expect((await run("/article/draft")).status).toBe(404);
+  });
+
+  it("category with no published articles → 404", async () => {
+    const { getCategoryBySlug, getArticles } = await import("./db");
+    vi.mocked(getCategoryBySlug).mockResolvedValue(undefined as any);
+    vi.mocked(getArticles).mockResolvedValue([] as any);
+    expect((await run("/category/nothing-here")).status).toBe(404);
+  });
+
+  it("unknown tarot card → 404", async () => {
+    expect((await run("/tarot/card/no-such-card")).status).toBe(404);
+  });
+
+  it("unknown top-level path → 404", async () => {
+    expect((await run("/blog")).status).toBe(404);
+    expect((await run("/articles")).status).toBe(404);
+    expect((await run("/tarot/nope")).status).toBe(404);
+  });
+
+  it("a file path that reached the renderer does not exist → 404", async () => {
+    expect((await run("/assets/nope.js")).status).toBe(404);
+  });
+
+  it("static public pages, home, profiles → 200 with a canonical", async () => {
+    for (const p of ["/", "/about", "/contact", "/guest-post", "/tarot/guide", "/profile/12"]) {
+      const { status, html, next } = await run(p);
+      expect(status, p).toBe(200);
+      expect(html, p).toContain('rel="canonical"');
+      expect(next).toHaveBeenCalled();
+    }
+  });
+
+  it("a trailing slash does not turn a live page into a 404", async () => {
+    expect((await run("/about/")).status).toBe(200);
+    expect((await run("/tarot/")).status).toBe(200);
+  });
+
+  it("admin pages are left alone (status 200, no head resolved)", async () => {
+    const { status, next } = await run("/admin/new");
+    expect(status).toBe(200);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it("a DB failure while resolving an article does not become a 404", async () => {
+    const { getArticleBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockRejectedValue(new Error("db down"));
+    expect((await run("/article/whatever")).status).toBe(200);
+  });
+
+  it("a legacy slug that no longer resolves → 301 to the renamed article", async () => {
+    const { seoMiddleware } = await import("./seo");
+    const { getArticleBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue(undefined as any);
+    const req = { method: "GET", path: "/article/-" } as any;
+    const res = { redirect: vi.fn() } as any;
+    const next = vi.fn();
+    await seoMiddleware(req, res, next);
+    expect(res.redirect).toHaveBeenCalledWith(301, "/article/my-sources-of-authority");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("a legacy slug that still resolves is served as-is (rename not applied yet)", async () => {
+    const { getArticleBySlug, getCategoryBySlug } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue({
+      slug: "-", title: "t", published: true, category: "c", createdAt: new Date(), updatedAt: new Date(),
+    } as any);
+    vi.mocked(getCategoryBySlug).mockResolvedValue(undefined as any);
+    const { status, html } = await run("/article/-");
+    expect(status).toBe(200);
+    expect(html).toContain("/article/-");
+  });
+
+  it("pageStatus defaults to 200 when the middleware did not run", async () => {
+    const { pageStatus } = await import("./seo");
+    expect(pageStatus({} as any)).toBe(200);
+  });
+});

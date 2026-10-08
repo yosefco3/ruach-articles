@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import cors from "cors";
 import { SITE_URL_PRODUCTION } from "@shared/const";
+import { canonicalRedirect } from "../../canonical";
 
 export function createApp(): { app: Express; server: Server } {
   const app = express();
@@ -9,6 +10,10 @@ export function createApp(): { app: Express; server: Server } {
 
   // Trust proxy - CRITICAL for cookies to work behind reverse proxy (nginx, etc.)
   app.set("trust proxy", 1);
+
+  // One URL per page: www → apex, trailing slash → none (301). First, so the
+  // duplicate never reaches CORS, auth or the renderer.
+  app.use(canonicalRedirect);
 
   // CORS configuration - MUST be before OAuth and session middleware
   app.use(

@@ -12,6 +12,10 @@ export function serveRobotsTxt(req: Request, res: Response): void {
     "",
     "Disallow: /admin",
     "Disallow: /api/",
+    // Cloudflare rewrites e-mail addresses into /cdn-cgi/l/email-protection links;
+    // crawlers that follow them get a 404 (seen in Search Console). Cloudflare's own
+    // guidance is to disallow the whole /cdn-cgi/ namespace.
+    "Disallow: /cdn-cgi/",
     "",
     `Sitemap: ${SITE_URL_PRODUCTION}/sitemap.xml`,
   ];

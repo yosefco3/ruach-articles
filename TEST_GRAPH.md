@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-09-30 07:20_
+_נוצר אוטומטית ב: 2026-10-08 03:32_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 227 |
-| מכוסים / covered | 53 |
+| קבצי קוד / source files | 229 |
+| מכוסים / covered | 55 |
 | ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 23% →0% |
-| טסטים עוברים / passing | 693 ✅ |
+| כיסוי / coverage | 24% ↑1% |
+| טסטים עוברים / passing | 717 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -72,6 +72,7 @@ _נוצר אוטומטית ב: 2026-09-30 07:20_
 | `server/_core/json.ts` | `server/_core/json.test.ts` |
 | `server/_core/vite.ts` | `server/_core/vite.test.ts` |
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
+| `server/canonical.ts` | `server/canonical.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
 | `server/ichingAi.ts` | `server/ichingAi.test.ts` |
 | `server/jsonld.ts` | `server/jsonld.test.ts` |
@@ -94,6 +95,7 @@ _נוצר אוטומטית ב: 2026-09-30 07:20_
 | `server/tarotDeckZip.ts` | `server/tarotDeckZip.test.ts` |
 | `server/tarotReadingToken.ts` | `server/tarotReadingToken.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
+| `shared/legacySlugs.ts` | `shared/legacySlugs.test.ts` |
 | `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
 | `shared/tarot/followup.ts` | `shared/tarot/followup.test.ts` |
 | `shared/tarot/spreads.ts` | `shared/tarot/spreads.test.ts` |

@@ -6,7 +6,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
-import { applySeoToHtml } from "../seo";
+import { applySeoToHtml, pageStatus } from "../seo";
 import { makeSsrFetch, renderHtml } from "./ssr";
 import type { render as RenderFn } from "../../client/src/entry-server";
 
@@ -79,7 +79,7 @@ export async function setupVite(app: Express, server: Server) {
       // by applySeoToHtml (the SSR head source — helmet is client-only).
       let page = renderHtml(template, { appHtml, state });
       page = applySeoToHtml(page, req);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(pageStatus(req)).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       // SSR failed — fall back to the SPA shell with string-injected SEO so the
       // page still loads (client renders) instead of erroring.
@@ -88,7 +88,7 @@ export async function setupVite(app: Express, server: Server) {
       try {
         let page = await loadTemplate(url);
         page = applySeoToHtml(page, req);
-        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+        res.status(pageStatus(req)).set({ "Content-Type": "text/html" }).end(page);
       } catch (fallbackErr) {
         next(fallbackErr);
       }
@@ -152,14 +152,14 @@ export async function serveStatic(app: Express) {
       // by applySeoToHtml (the SSR head source — helmet is client-only).
       let page = renderHtml(template, { appHtml, state });
       page = applySeoToHtml(page, req);
-      res.status(200).set({ "Content-Type": "text/html" }).send(page);
+      res.status(pageStatus(req)).set({ "Content-Type": "text/html" }).send(page);
     } catch (e) {
       // SSR failed — serve the built SPA shell with string-injected SEO.
       console.error("[SSR] prod render failed, serving SPA fallback:", e);
       try {
         let html = await fs.promises.readFile(indexPath, "utf-8");
         html = applySeoToHtml(html, req);
-        res.status(200).set({ "Content-Type": "text/html" }).send(html);
+        res.status(pageStatus(req)).set({ "Content-Type": "text/html" }).send(html);
       } catch {
         res.sendFile(indexPath);
       }

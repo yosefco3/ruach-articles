@@ -17,4 +17,8 @@ describe("client/index.html accessibility shell", () => {
     expect(viewport).not.toContain("maximum-scale");
     expect(viewport).not.toContain("user-scalable=no");
   });
+
+  it("leaves no unreplaced %VITE_*% placeholders (a dead analytics tag used to emit a broken request on every page)", () => {
+    expect(html).not.toMatch(/%VITE_[A-Z_]+%/);
+  });
 });

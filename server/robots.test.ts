@@ -18,6 +18,7 @@ describe("Robots.txt", () => {
     expect(body).toContain("Allow: /");
     expect(body).toContain("Disallow: /admin");
     expect(body).toContain("Disallow: /api/");
+    expect(body).toContain("Disallow: /cdn-cgi/"); // Cloudflare email-protection links 404
     expect(body).toContain("Sitemap: https://ruachwisdom.org/sitemap.xml");
   });
 });
