@@ -404,6 +404,19 @@ function stripTrailingSlash(pathname: string): string {
   return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
+/**
+ * Express leaves req.path percent-encoded, so a Hebrew category slug arrives as
+ * "/category/%D7%9B%D7%9C%D7%9C%D7%99" and never matched a DB row. Decode for
+ * matching; a malformed sequence keeps the raw path.
+ */
+function decodePath(pathname: string): string {
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return pathname;
+  }
+}
+
 function matchArticleSlug(pathname: string): string | null {
   const match = pathname.match(/^\/article\/([^/]+)$/);
   return match ? match[1] : null;
@@ -482,11 +495,12 @@ function toIsoDateTime(date: Date | string | null | undefined): string | undefin
 async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
   const category = await getCategoryBySlug(slug);
 
-  // Also check if there are published articles in this category
+  // Also check if there are published articles in this category. A category
+  // row with no articles yet is still a page; a slug that is neither is a 404.
   const articles = await getArticles({ category: slug, published: true });
-  if (articles.length === 0) return null;
+  if (!category && articles.length === 0) return null;
 
-  const categoryUrl = `${SITE_URL_PRODUCTION}/category/${slug}`;
+  const categoryUrl = `${SITE_URL_PRODUCTION}/category/${encodeURIComponent(slug)}`;
   const categoryName = category?.name || slug;
   const title = `${categoryName} – מאמרים – רוח חכמה`;
   const description = category?.description || `מאמרים בקטגוריית ${categoryName}`;
@@ -521,17 +535,23 @@ export async function seoMiddleware(
     return next();
   }
 
-  const pathname = stripTrailingSlash(req.path);
+  const pathname = decodePath(stripTrailingSlash(req.path));
 
   // Admin pages and uploads: client-rendered / served elsewhere, nothing to resolve.
   if (pathname.startsWith("/admin") || pathname.startsWith("/uploads")) {
     return next();
   }
 
+  const articleSlug = matchArticleSlug(pathname);
+  const categorySlug = matchCategorySlug(pathname);
+  const tarotCardSlug = matchTarotCardSlug(pathname);
+  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug);
+
   // Files with extensions (.js, .css, .png…): a real file is served by the static
   // layer before the SSR handler runs, so whatever reaches the renderer with a
-  // dot in its path does not exist.
-  if (pathname.includes(".")) {
+  // dot in its path does not exist. (A slug may legitimately contain a dot, so
+  // dynamic routes are resolved against the DB instead.)
+  if (!isDynamic && pathname.includes(".")) {
     (req as any).seoData = NOT_FOUND_SEO;
     (req as any).pageStatus = 404;
     return next();
@@ -544,10 +564,6 @@ export async function seoMiddleware(
   let unknownPath = false;
 
   try {
-    const articleSlug = matchArticleSlug(pathname);
-    const categorySlug = matchCategorySlug(pathname);
-    const tarotCardSlug = matchTarotCardSlug(pathname);
-
     if (pathname === "/derech") {
       seo = await resolveDerechSeo();
     } else if (STATIC_ROUTE_SEO[pathname]) {
@@ -560,7 +576,7 @@ export async function seoMiddleware(
       dynamicMiss = seo === null;
       // A renamed article: once the old slug no longer resolves, send readers
       // (and Google) to the new URL instead of a 404.
-      const renamed = dynamicMiss ? legacyArticleSlugTarget(decodeURIComponent(articleSlug)) : null;
+      const renamed = dynamicMiss ? legacyArticleSlugTarget(articleSlug) : null;
       if (renamed) {
         res.redirect(301, `/article/${encodeURIComponent(renamed)}`);
         return;
