@@ -6,6 +6,7 @@ import type { TrpcContext } from "./_core/context";
 // Mock db so no real DB is touched
 vi.mock("./db", () => ({
   getSiteSettings: vi.fn().mockResolvedValue({ siteTitle: "רוּחַ", heroSubtitle: "", contactEmail: null }),
+  getTeacherById: vi.fn().mockResolvedValue(undefined),
   getArticles: vi.fn().mockResolvedValue([]),
   getArticleBySlug: vi.fn().mockResolvedValue(null),
   getArticleById: vi.fn().mockResolvedValue(null),
@@ -152,5 +153,21 @@ describe("contact.submit", () => {
     } catch (err: any) {
       expect(err.code).toBe("BAD_REQUEST");
     }
+  });
+
+  it("toTeacher: unknown or hidden teacher → success:false without sending", async () => {
+    const { getTeacherById } = await import("./db");
+    vi.mocked(getTeacherById).mockResolvedValueOnce(undefined as any);
+    const caller = appRouter.createCaller(createPublicContext());
+    const r = await caller.contact.toTeacher({ teacherId: 1, name: "דני", email: "d@example.com", message: "שלום, אשמח לשיחה איתך" });
+    expect(r.success).toBe(false);
+    vi.mocked(getTeacherById).mockResolvedValueOnce({ id: 1, visible: false, name: "x", contactEmail: "t@example.com" } as any);
+    expect((await caller.contact.toTeacher({ teacherId: 1, name: "דני", email: "d@example.com", message: "שלום, אשמח לשיחה איתך" })).success).toBe(false);
+  });
+
+  it("toTeacher: validates the message shape", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(caller.contact.toTeacher({ teacherId: 1, name: "ד", email: "d@example.com", message: "שלום שלום שלום" })).rejects.toThrow();
+    await expect(caller.contact.toTeacher({ teacherId: 1, name: "דני", email: "nope", message: "שלום שלום שלום" })).rejects.toThrow();
   });
 });

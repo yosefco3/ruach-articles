@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateSlug, randomSlug } from "@shared/slug";
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
-import { adminProcedure, writerProcedure, assertCanEditArticle } from "./middleware";
+import { adminProcedure, makeTeacherProcedure, assertCanEditArticle } from "./middleware";
 import type { RouterDeps } from "./context";
 
 /** שדות "פרק לדוגמה" (site-pivot-books) — null מנתק מהספר. */
@@ -17,7 +17,9 @@ function stripChapterFields(o: Record<string, unknown>) {
   delete o.bookId; delete o.bookRole; delete o.chapterNo; delete o.chapterLabel;
 }
 
-export const createArticlesRouter = (deps: RouterDeps) => router({
+export const createArticlesRouter = (deps: RouterDeps) => {
+  const teacherProcedure = makeTeacherProcedure(deps.db);
+  return router({
   list: publicProcedure
     .input(
       z
@@ -89,7 +91,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return await deps.db.getRandomArticle(input.excludeId);
     }),
 
-  create: writerProcedure
+  create: teacherProcedure
     .input(
       z.object({
         title: z.string().min(1),
@@ -99,12 +101,20 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         coverImage: z.string().optional(),
         category: z.string().min(1),
         tags: z.string().optional(),
+        teacherId: z.number().int().nullable().optional(),
+        published: z.boolean().optional(),
         ...chapterFields,
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const isAdmin = ctx.user!.role === "admin";
       // שיוך לספר (פרק לדוגמה) הוא החלטת אדמין — כותב אחר לא יכול לשייך מאמר לספר.
-      if (ctx.user!.role !== "admin") stripChapterFields(input);
+      if (!isAdmin) stripChapterFields(input);
+      // מורה מקושר: המאמר שלו נרשם על שמו ומתפרסם לפי בחירתו; אחרים — אדמין קובע.
+      const teacherId = isAdmin ? (input.teacherId ?? null) : (ctx.teacher?.id ?? null);
+      const published = isAdmin || ctx.teacher ? (input.published ?? false) : false;
+      delete (input as { teacherId?: unknown }).teacherId;
+      delete (input as { published?: unknown }).published;
       // Prefer the supplied slug; otherwise generate a random one. Not derived
       // from the title.
       let slug = generateSlug(input.slug ?? "") || randomSlug();
@@ -118,7 +128,8 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         ...input,
         slug,
         authorId: ctx.user!.dbId,
-        published: false,
+        teacherId,
+        published,
       });
     }),
 
@@ -135,6 +146,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         category: z.string().optional(),
         tags: z.string().optional(),
         published: z.boolean().optional(),
+        teacherId: z.number().int().nullable().optional(),
         siteUrl: z.string().optional(),
         ...chapterFields,
       })
@@ -142,10 +154,11 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
     .mutation(async ({ input, ctx }) => {
       const { id, siteUrl: _siteUrl, ...data } = input;
       await assertCanEditArticle(deps.db, ctx.user, id);
-      // Publishing stays an admin decision — an author editing their own article
-      // cannot flip the flag, so the review flow can't be self-approved.
       if (ctx.user.role !== "admin") {
-        delete (data as { published?: boolean }).published;
+        // מורה מקושר מפרסם את מאמריו בעצמו; כל כותב אחר — פרסום הוא החלטת אדמין.
+        const teacher = await deps.db.getTeacherByUserId(ctx.user.dbId);
+        if (!teacher) delete (data as { published?: boolean }).published;
+        delete (data as { teacherId?: unknown }).teacherId;
         stripChapterFields(data);
       }
       const updated = await deps.db.updateArticle(id, data);
@@ -221,3 +234,4 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return { success: true };
     }),
 });
+};

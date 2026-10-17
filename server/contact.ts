@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicProcedure, router } from "./_core/trpc";
-import { getSiteSettings } from "./db";
+import { getSiteSettings, getTeacherById } from "./db";
 import { DEFAULT_FROM_EMAIL } from "@shared/const";
 
 export const contactRouter = router({
@@ -66,6 +66,51 @@ export const contactRouter = router({
           success: false,
           message: "שגיאה בשליחת ההודעה. אנא נסו שוב מאוחר יותר.",
         };
+      }
+    }),
+
+  /**
+   * הודעה למורה בשיטה דרך האתר (site-pivot-books): נשלחת ל-teachers.contactEmail,
+   * שלעולם אינו נחשף ללקוח. מורה בלי מייל קשר → ההודעה הולכת למייל האתר.
+   */
+  toTeacher: publicProcedure
+    .input(
+      z.object({
+        teacherId: z.number().int(),
+        name: z.string().min(2, "שם חייב להיות לפחות 2 תווים").max(120),
+        email: z.string().email("כתובת דוא״ל לא תקינה"),
+        message: z.string().min(10, "ההודעה חייבת להיות לפחות 10 תווים").max(5000),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const teacher = await getTeacherById(input.teacherId);
+      if (!teacher || !teacher.visible) return { success: false, message: "המורה לא נמצא" };
+      const settings = await getSiteSettings();
+      const to = teacher.contactEmail || (settings as any).contactEmail;
+      const siteName = (settings as any).siteTitle || "דרך הרוח";
+      if (!to) return { success: false, message: "לא הוגדר מייל ליצירת קשר" };
+      try {
+        const { Resend } = await import("resend");
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || DEFAULT_FROM_EMAIL;
+        const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+        await resend.emails.send({
+          from: `${siteName} <${FROM_EMAIL}>`,
+          to,
+          replyTo: input.email,
+          subject: `✉️ פנייה מ-${input.name} דרך דף המורה שלך באתר ${siteName}`,
+          html: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:24px;max-width:600px;">
+  <p>שלום ${esc(teacher.name)},</p>
+  <p>התקבלה פנייה דרך דף המורה שלך באתר ${esc(siteName)}:</p>
+  <p><strong>מאת:</strong> ${esc(input.name)} &lt;${esc(input.email)}&gt;</p>
+  <p style="white-space:pre-wrap;border-right:3px solid #c9a84c;padding-right:12px;">${esc(input.message)}</p>
+  <p style="font-size:12px;color:#888;">אפשר להשיב ישירות למייל הזה.</p>
+</div>`,
+        });
+        return { success: true, message: "ההודעה נשלחה למורה. תודה!" };
+      } catch (error) {
+        console.error("[Contact] Failed to send teacher message:", error);
+        return { success: false, message: "שגיאה בשליחת ההודעה. אנא נסו שוב מאוחר יותר." };
       }
     }),
 });

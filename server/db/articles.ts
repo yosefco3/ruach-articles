@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
-import { articles, users, attachments, comments, likes, type InsertArticle } from "../../drizzle/schema";
+import { articles, users, attachments, comments, likes, teachers, type InsertArticle } from "../../drizzle/schema";
 import { getDb } from "./connection";
 import { safeDeleteObject } from "./storage-cleanup";
 
@@ -30,9 +30,13 @@ export async function getArticles(opts?: { category?: string; published?: boolea
       bookRole: articles.bookRole,
       chapterNo: articles.chapterNo,
       chapterLabel: articles.chapterLabel,
+      teacherId: articles.teacherId,
+      teacherName: teachers.name,
+      teacherSlug: teachers.slug,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
+    .leftJoin(teachers, eq(articles.teacherId, teachers.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(articles.sortOrder), desc(articles.createdAt));
   return rows;
@@ -109,7 +113,9 @@ export async function getArticleBySlug(slug: string) {
     tags: articles.tags, published: articles.published, createdAt: articles.createdAt,
     updatedAt: articles.updatedAt, authorId: articles.authorId, authorName: users.name,
     bookId: articles.bookId, bookRole: articles.bookRole, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
-  }).from(articles).leftJoin(users, eq(articles.authorId, users.id)).where(eq(articles.slug, slug)).limit(1);
+    teacherId: articles.teacherId, teacherName: teachers.name, teacherSlug: teachers.slug,
+  }).from(articles).leftJoin(users, eq(articles.authorId, users.id)).leftJoin(teachers, eq(articles.teacherId, teachers.id))
+    .where(eq(articles.slug, slug)).limit(1);
   return rows.length > 0 ? rows[0] : undefined;
 }
 

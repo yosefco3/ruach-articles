@@ -97,3 +97,9 @@ export {
 export {
   listBooks, getBookBySlug, getBookById, createBook, updateBook, deleteBook, reorderBooks,
 } from "./db/books";
+
+// Teachers (site-pivot-books)
+export {
+  listTeachers, getTeacherBySlug, getTeacherById, getTeacherByUserId, createTeacher, updateTeacher,
+  deleteTeacher, reorderTeachers, getTeacherArticles, getUserByEmail,
+} from "./db/teachers";

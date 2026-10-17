@@ -45,6 +45,8 @@ export const articles = mysqlTable("articles", {
   bookRole: mysqlEnum("bookRole", ["chapter", "material"]).default("chapter").notNull(),
   chapterNo: int("chapterNo"), // סדר הפרקים/החומרים בתוך הספר
   chapterLabel: varchar("chapterLabel", { length: 128 }).default("").notNull(), // "פרק 2", "תרגיל", "סרטון"…
+  // ── מאמר של מורה בשיטה: הציר השני (לצד ספר). null = של המייסד/האתר. ──
+  teacherId: int("teacherId"), // → teachers.id
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -336,3 +338,30 @@ export const books = mysqlTable("books", {
 });
 export type Book = typeof books.$inferSelect;
 export type InsertBook = typeof books.$inferInsert;
+
+// ── מורים בשיטה (site-pivot-books, 2026-10-17) ──
+// מורה = פרופיל ציבורי עם דף אישי ומאמרים. userId מקשר לחשבון גוגל (אופציונלי): מורה מקושר
+// כותב ומפרסם בעצמו. לא תפקיד ב-users.role — ההתחברות דורסת את התפקיד בכל כניסה.
+export const teachers = mysqlTable("teachers", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  name: varchar("name", { length: 256 }).notNull(),
+  photo: varchar("photo", { length: 1024 }),
+  tagline: varchar("tagline", { length: 512 }).default("").notNull(), // שורה אחת מתחת לשם
+  area: varchar("area", { length: 256 }).default("").notNull(), // אזור/עיר
+  formats: varchar("formats", { length: 256 }).default("").notNull(), // "פרטני, קבוצתי, אונליין"
+  bio: mediumtext("bio"), // HTML מה-RTE
+  quote: text("quote"),
+  website: varchar("website", { length: 1024 }).default("").notNull(),
+  publicEmail: varchar("publicEmail", { length: 320 }).default("").notNull(), // מוצג רק אם המורה ביקש
+  phone: varchar("phone", { length: 64 }).default("").notNull(), // מוצג רק אם המורה ביקש
+  contactEmail: varchar("contactEmail", { length: 320 }).default("").notNull(), // *מוסתר* — טופס הקשר באתר
+  userId: int("userId").unique(), // → users.id (חשבון מקושר)
+  isFounder: boolean("isFounder").default(false).notNull(),
+  visible: boolean("visible").default(false).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Teacher = typeof teachers.$inferSelect;
+export type InsertTeacher = typeof teachers.$inferInsert;

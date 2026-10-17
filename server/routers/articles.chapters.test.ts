@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { makeCaller, publicCtx, writerCtx, adminCtx } from "../test-helpers/trpc";
+import { makeCaller, publicCtx, userCtx, writerCtx, adminCtx } from "../test-helpers/trpc";
 
 // פרקי דוגמה (site-pivot-books): שיוך מאמר לספר הוא החלטת אדמין בלבד.
 describe("articles — chapter fields", () => {
@@ -41,5 +41,43 @@ describe("articles — chapter fields", () => {
     expect(db.createArticle.mock.calls[0][0]).not.toHaveProperty("bookRole");
     await caller.articles.update({ id: 2, title: "y", bookId: 3, chapterLabel: "פרק" });
     expect(db.updateArticle).toHaveBeenCalledWith(2, { title: "y" });
+  });
+});
+
+// מורה מקושר (teachers.userId) כותב ומפרסם בעצמו; מאמריו נרשמים על שמו.
+describe("articles — linked teacher", () => {
+  const teacherRow = { id: 3, userId: 7, slug: "moreh", name: "מורה", visible: true };
+
+  it("a linked teacher may create and publish; teacherId is forced to their own", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getTeacherByUserId: async (uid: number) => (uid === 7 ? teacherRow : undefined),
+      getArticleBySlug: async () => undefined,
+      createArticle: async (d: Record<string, unknown>) => ({ id: 9, ...d }),
+    });
+    await caller.articles.create({ title: "x", body: "<p>x</p>", category: "teacher", published: true, teacherId: 99 });
+    expect(db.createArticle.mock.calls[0][0]).toMatchObject({ teacherId: 3, published: true, authorId: 7 });
+  });
+
+  it("a linked teacher may flip published on their own article but not reassign teacherId", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 7 }), {
+      getTeacherByUserId: async () => teacherRow,
+      getArticleById: async () => ({ id: 9, authorId: 7 }),
+    });
+    await caller.articles.update({ id: 9, published: true, teacherId: 99 });
+    expect(db.updateArticle).toHaveBeenCalledWith(9, { published: true });
+  });
+
+  it("a plain user who is not a teacher cannot create at all", async () => {
+    const { caller } = makeCaller(userCtx({ dbId: 8 }), { getTeacherByUserId: async () => undefined });
+    await expect(caller.articles.create({ title: "x", body: "<p>x</p>", category: "c" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("admin may assign teacherId explicitly", async () => {
+    const { caller, db } = makeCaller(adminCtx(), {
+      getArticleBySlug: async () => undefined,
+      createArticle: async (d: Record<string, unknown>) => ({ id: 1, ...d }),
+    });
+    await caller.articles.create({ title: "x", body: "<p>x</p>", category: "teacher", teacherId: 3, published: true });
+    expect(db.createArticle.mock.calls[0][0]).toMatchObject({ teacherId: 3, published: true });
   });
 });
