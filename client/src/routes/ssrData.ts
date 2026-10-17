@@ -136,6 +136,23 @@ const routes: SsrRoute[] = [
     },
   },
   {
+    pattern: "/teachers",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.teachers.list, undefined, "query"), () => client.teachers.list.query()),
+  },
+  {
+    pattern: "/teacher/:slug",
+    prefetch: async (qc, client, p) => {
+      const key = getQueryKey(trpc.teachers.bySlug, { slug: p.slug }, "query");
+      await prefetch(qc, key, () => client.teachers.bySlug.query({ slug: p.slug }));
+      const t = qc.getQueryData<{ id: number } | undefined>(key);
+      if (!t) return;
+      await prefetch(qc, getQueryKey(trpc.teachers.articlesOf, { teacherId: t.id }, "query"), () =>
+        client.teachers.articlesOf.query({ teacherId: t.id }),
+      );
+    },
+  },
+  {
     pattern: "/article/:slug",
     prefetch: (qc, client, p) =>
       prefetch(

@@ -112,6 +112,31 @@ export function bookLd(b: BookLdInput): Record<string, unknown> {
   };
 }
 
+export interface PersonLdInput {
+  name: string;
+  url: string;
+  description?: string;
+  image?: string;
+  jobTitle?: string;
+  sameAs?: string[];
+}
+
+/** schema.org Person — דף מורה (site-pivot-books). */
+export function personLd(p: PersonLdInput): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: p.name,
+    url: p.url,
+    mainEntityOfPage: p.url,
+    ...(p.description ? { description: p.description } : {}),
+    ...(p.image ? { image: p.image } : {}),
+    ...(p.jobTitle ? { jobTitle: p.jobTitle } : {}),
+    ...(p.sameAs && p.sameAs.length ? { sameAs: p.sameAs } : {}),
+    affiliation: organizationLd(),
+  };
+}
+
 export interface FaqItem {
   question: string;
   answer: string;

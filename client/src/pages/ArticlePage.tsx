@@ -158,12 +158,17 @@ export default function ArticlePage() {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            {article.authorName && (
+            {article.teacherSlug && article.teacherName ? (
+              <Link href={`/teacher/${encodeURIComponent(article.teacherSlug)}`} className="flex items-center gap-1.5 text-primary hover:underline">
+                <User className="w-4 h-4" />
+                {article.teacherName}
+              </Link>
+            ) : article.authorName && !isChapter ? (
               <span className="flex items-center gap-1.5">
                 <User className="w-4 h-4" />
                 {article.authorName}
               </span>
-            )}
+            ) : null}
             <span className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
               {dateStr}

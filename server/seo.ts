@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent, getBookBySlug, getBookById } from "./db";
+import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent, getBookBySlug, getBookById, getTeacherBySlug } from "./db";
 import { parsePurchaseLinks, BOOK_STATUS_LABELS } from "@shared/books";
 import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
@@ -7,7 +7,7 @@ import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { legacyArticleSlugTarget } from "@shared/legacySlugs";
 import { isRetiredArticle, RETIRED_ARTICLE_TARGET } from "@shared/retiredArticles";
-import { siteLd, articleLd, bookLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
+import { siteLd, articleLd, bookLd, personLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -263,8 +263,20 @@ const BOOKS_SEO: SeoData = {
   canonicalUrl: `${SITE_URL_PRODUCTION}/books`,
 };
 
+const TEACHERS_SEO: SeoData = {
+  title: "מורים בשיטה – דרך הרוח",
+  description: "מורי שיטת דרך הרוח — הנבואה הטבעית: מי מלמד ומלווה, היכן, ומה כתבו.",
+  ogTitle: "מורים בשיטה – דרך הרוח",
+  ogDescription: "מורי שיטת דרך הרוח — הנבואה הטבעית: מי מלמד ומלווה, היכן, ומה כתבו.",
+  ogUrl: `${SITE_URL_PRODUCTION}/teachers`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/teachers`,
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/books": BOOKS_SEO,
+  "/teachers": TEACHERS_SEO,
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
   "/tarot/deck": TAROT_DECK_SEO,
@@ -399,6 +411,8 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
 const STATIC_PUBLIC_PATHS = new Set([
   "/",
   "/books",
+  "/teachers",
+  "/my-teacher-profile",
   "/about",
   "/contact",
   "/derech",
@@ -451,6 +465,12 @@ export function matchBookSlug(pathname: string): string | null {
 export function matchBookChapter(pathname: string): { book: string; slug: string } | null {
   const match = pathname.match(/^\/book\/([^/]+)\/([^/]+)$/);
   return match ? { book: match[1], slug: match[2] } : null;
+}
+
+/** /teacher/<slug> */
+export function matchTeacherSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/teacher\/([^/]+)$/);
+  return match ? match[1] : null;
 }
 
 /** HTML → טקסט קצר ל-meta description. */
@@ -556,6 +576,28 @@ export async function resolveBookSeo(slug: string): Promise<SeoData | null> {
         { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
         { name: "ספרים", url: `${SITE_URL_PRODUCTION}/books` },
         { name: book.title, url },
+      ]),
+    ],
+  };
+}
+
+/** דף מורה — null כשאין / מוסתר. Person JSON-LD; המייל המוסתר לעולם לא נכנס ל-head. */
+export async function resolveTeacherSeo(slug: string): Promise<SeoData | null> {
+  const t = await getTeacherBySlug(slug);
+  if (!t || !t.visible) return null;
+  const url = `${SITE_URL_PRODUCTION}/teacher/${encodeURIComponent(t.slug)}`;
+  const title = `${t.name} – מורים בשיטה – דרך הרוח`;
+  const description = t.tagline || htmlToDescription(t.bio) || `${t.name} — ${t.isFounder ? "מייסד" : "מורה"} בשיטת דרך הרוח${t.area ? `, ${t.area}` : ""}.`;
+  const image = toAbsoluteImageUrl(t.photo);
+  return {
+    title, description, ogTitle: t.name, ogDescription: description, ogImage: image,
+    ogImageAlt: image ? t.name : undefined, ogUrl: url, ogType: "profile", ogLocale: "he_IL", canonicalUrl: url,
+    jsonLd: [
+      personLd({ name: t.name, url, description, image, jobTitle: t.isFounder ? "מייסד שיטת דרך הרוח" : "מורה בשיטת דרך הרוח", sameAs: t.website ? [t.website] : [] }),
+      breadcrumbLd([
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
+        { name: "מורים בשיטה", url: `${SITE_URL_PRODUCTION}/teachers` },
+        { name: t.name, url },
       ]),
     ],
   };
@@ -677,7 +719,8 @@ export async function seoMiddleware(
   const tarotCardSlug = matchTarotCardSlug(pathname);
   const bookSlug = matchBookSlug(pathname);
   const bookChapter = matchBookChapter(pathname);
-  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug || bookSlug || bookChapter);
+  const teacherSlug = matchTeacherSlug(pathname);
+  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug || bookSlug || bookChapter || teacherSlug);
 
   // Files with extensions (.js, .css, .png…): a real file is served by the static
   // layer before the SSR handler runs, so whatever reaches the renderer with a
@@ -708,6 +751,9 @@ export async function seoMiddleware(
       dynamicMiss = seo === null;
     } else if (bookChapter) {
       seo = await resolveBookChapterSeo(bookChapter.book, bookChapter.slug);
+      dynamicMiss = seo === null;
+    } else if (teacherSlug) {
+      seo = await resolveTeacherSeo(teacherSlug);
       dynamicMiss = seo === null;
     } else if (articleSlug) {
       // A chapter / companion material lives under its book: one canonical URL.

@@ -21,6 +21,11 @@ function makeFakeClient() {
       bySlug: { query: vi.fn(async (i: { slug: string }) => ({ slug: i.slug, title: "T", bookRole: "chapter" })) },
       chaptersOfBook: { query: vi.fn(async (i: { bookId: number; role: string }) => [{ id: 10, role: i.role, bookId: i.bookId }]) },
     },
+    teachers: {
+      list: { query: vi.fn(async () => [{ id: 1, slug: "yonatan" }]) },
+      bySlug: { query: vi.fn(async (i: { slug: string }) => ({ id: 1, slug: i.slug })) },
+      articlesOf: { query: vi.fn(async (i: { teacherId: number }) => [{ id: 77, teacherId: i.teacherId }]) },
+    },
     books: {
       list: { query: vi.fn(async () => [{ id: 5, slug: "derech-haruach" }]) },
       bySlug: { query: vi.fn(async (i: { slug: string }) => (i.slug === "missing" ? undefined : { id: 5, slug: i.slug })) },
@@ -102,5 +107,13 @@ describe("runSsrPrefetch", () => {
     expect(client.articles.bySlug.query).toHaveBeenCalledWith({ slug: "mavo" });
     expect(client.articles.chaptersOfBook.query).toHaveBeenCalledTimes(1);
     expect(client.articles.chaptersOfBook.query).toHaveBeenCalledWith({ bookId: 5, role: "chapter" });
+  });
+
+  it("/teacher/:slug prefetches the teacher and then their articles", async () => {
+    const qc = new QueryClient();
+    const client = makeFakeClient();
+    await runSsrPrefetch(qc, asClient(client), "/teacher/yonatan");
+    expect(client.teachers.articlesOf.query).toHaveBeenCalledWith({ teacherId: 1 });
+    expect(qc.getQueryData(getQueryKey(trpc.teachers.articlesOf, { teacherId: 1 }, "query"))).toEqual([{ id: 77, teacherId: 1 }]);
   });
 });

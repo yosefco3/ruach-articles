@@ -8,6 +8,7 @@ vi.mock("./db", () => ({
   getDerechContent: vi.fn(),
   getBookBySlug: vi.fn(),
   getBookById: vi.fn(),
+  getTeacherBySlug: vi.fn(),
 }));
 vi.mock("./db/tarot", () => ({ getCardText: vi.fn() }));
 
@@ -623,5 +624,22 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
     expect(long.length).toBeLessThanOrEqual(101);
     expect(long.endsWith("…")).toBe(true);
     expect(htmlToDescription(null)).toBe("");
+  });
+
+  it("/teachers is static; teacher page 404 when hidden, Person JSON-LD when visible, never leaks contactEmail", async () => {
+    expect((await run("/teachers")).status).toBe(200);
+    const { getTeacherBySlug } = await import("./db");
+    const t = { id: 1, slug: "yonatan", name: "יונתן בן חנן", photo: "/uploads/y.webp", tagline: "מייסד", area: "ירושלים", formats: "",
+      bio: null, quote: null, website: "https://example.com", publicEmail: "", phone: "", contactEmail: "secret@example.com",
+      userId: null, isFounder: true, visible: false, sortOrder: 0, createdAt: new Date(), updatedAt: new Date() };
+    vi.mocked(getTeacherBySlug).mockResolvedValue(t as any);
+    expect((await run("/teacher/yonatan")).status).toBe(404);
+    vi.mocked(getTeacherBySlug).mockResolvedValue({ ...t, visible: true } as any);
+    const { status, html } = await run("/teacher/yonatan");
+    expect(status).toBe(200);
+    expect(html).toContain('"@type":"Person"');
+    expect(html).toContain('rel="canonical" href="https://ruachwisdom.org/teacher/yonatan"');
+    expect(html).toContain("https://example.com");
+    expect(html).not.toContain("secret@example.com");
   });
 });
