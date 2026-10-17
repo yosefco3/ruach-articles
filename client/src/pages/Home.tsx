@@ -124,7 +124,8 @@ export default function Home() {
             </section>
           )}
 
-          {/* ── Categories Grid ── */}
+          {/* ── Categories Grid ── (hidden while the site has no published articles — pivot transition) */}
+          {!catsLoading && (!categoriesWithCounts || categoriesWithCounts.length === 0) ? null : (
           <section className="py-16 bg-secondary/30">
             <div className="container">
               <div className="flex items-center gap-3 mb-10">
@@ -211,6 +212,7 @@ export default function Home() {
               )}
             </div>
           </section>
+          )}
         </>
       )}
 

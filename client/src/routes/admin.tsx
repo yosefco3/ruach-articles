@@ -11,6 +11,7 @@ import {
   LazyAdminIChing,
   LazyAdminTarot,
   LazyAdminDerech,
+  LazyAdminBooks,
 } from "./lazy";
 
 /**
@@ -30,4 +31,5 @@ export const adminRoutes = [
   <Route key="admin-iching" path="/admin/iching" component={LazyAdminIChing} />,
   <Route key="admin-tarot" path="/admin/tarot" component={LazyAdminTarot} />,
   <Route key="admin-derech" path="/admin/derech" component={LazyAdminDerech} />,
+  <Route key="admin-books" path="/admin/books" component={LazyAdminBooks} />,
 ];

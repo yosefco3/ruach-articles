@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass, WandSparkles } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass, WandSparkles, BookOpen } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -128,6 +128,12 @@ export default function AdminPage() {
        <div className="divider-gold mb-8" />
       {/* Quick links */}
       <div className="flex flex-wrap gap-3 mb-6">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/books" className="gap-2">
+            <BookOpen className="w-4 h-4" />
+            ניהול ספרים
+          </Link>
+        </Button>
         <Button variant="outline" size="sm" asChild>
           <Link href="/admin/categories" className="gap-2">
             <Settings className="w-4 h-4" />

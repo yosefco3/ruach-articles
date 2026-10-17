@@ -28,3 +28,4 @@ export const LazyAdminUsers = lazy(() => import("../pages/AdminUsers"));
 export const LazyAdminIChing = lazy(() => import("../pages/AdminIChing"));
 export const LazyAdminTarot = lazy(() => import("../pages/AdminTarot"));
 export const LazyAdminDerech = lazy(() => import("../pages/AdminDerech"));
+export const LazyAdminBooks = lazy(() => import("../pages/AdminBooks"));

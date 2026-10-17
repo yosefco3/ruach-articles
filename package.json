@@ -21,6 +21,7 @@
     "cleanup:orphan-images:prod": "node --import tsx scripts/cleanup-orphan-images.ts",
     "sync:articles": "node --import tsx scripts/sync-articles.ts",
     "archive:articles": "node --import tsx scripts/archive-articles.ts",
+    "run:sql": "node --env-file-if-exists=.env.local --import tsx scripts/run-sql.ts",
     "delete:archived": "node --env-file-if-exists=.env.local --import tsx scripts/delete-archived-articles.ts"
   },
   "dependencies": {
