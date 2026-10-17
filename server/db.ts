@@ -92,3 +92,8 @@ export {
 export {
   getTarotMonthlyUsage, incrementTarotMonthlyUsage,
 } from "./db/tarotUsage";
+
+// Books (site-pivot-books)
+export {
+  listBooks, getBookBySlug, getBookById, createBook, updateBook, deleteBook, reorderBooks,
+} from "./db/books";
