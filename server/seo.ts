@@ -5,6 +5,7 @@ import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
 import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { legacyArticleSlugTarget } from "@shared/legacySlugs";
+import { isRetiredArticle, RETIRED_ARTICLE_TARGET } from "@shared/retiredArticles";
 import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
@@ -579,6 +580,12 @@ export async function seoMiddleware(
       const renamed = dynamicMiss ? legacyArticleSlugTarget(articleSlug) : null;
       if (renamed) {
         res.redirect(301, `/article/${encodeURIComponent(renamed)}`);
+        return;
+      }
+      // An article that was archived off the server (site pivot, 2026-10-17): keep the
+      // old URL alive as a 301 to the method page instead of a dead 404.
+      if (dynamicMiss && isRetiredArticle(articleSlug)) {
+        res.redirect(301, RETIRED_ARTICLE_TARGET);
         return;
       }
     } else if (categorySlug) {

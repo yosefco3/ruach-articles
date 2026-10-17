@@ -300,3 +300,33 @@ export const tarotAiUsage = mysqlTable(
 );
 export type TarotAiUsage = typeof tarotAiUsage.$inferSelect;
 export type InsertTarotAiUsage = typeof tarotAiUsage.$inferInsert;
+
+// ── ספרים (site-pivot-books, 2026-10-17) ──
+// הספרים הם "הקטגוריות" של האתר החדש. פרקים לדוגמה = שורות ב-articles עם bookId.
+// המבנה בלבד; ההיגיון הטהור (סטטוסים, קישורי רכישה, תוכן עניינים) ב-shared/books.ts.
+export const books = mysqlTable("books", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  title: varchar("title", { length: 256 }).notNull(),
+  subtitle: varchar("subtitle", { length: 512 }).default("").notNull(),
+  // תקציר הספר — HTML מה-RTE (מתוך תקציר-הספר.md)
+  blurb: mediumtext("blurb"),
+  coverImage: varchar("coverImage", { length: 1024 }),
+  // writing = בכתיבה · coming_soon = בקרוב (בבדיקת הוצאות) · available = זמין לרכישה
+  status: mysqlEnum("status", ["writing", "coming_soon", "available"]).default("writing").notNull(),
+  // ספר נראה בציבור רק אחרי שהאדמין סימן אותו — מאפשר למלא תוכן בפרודקשן בשקט.
+  visible: boolean("visible").default(false).notNull(),
+  publisher: varchar("publisher", { length: 256 }).default("").notNull(),
+  // JSON: PurchaseLink[] (shared/books.ts) — הוצאה ↔ בוקפוד/"עברית" הם נתונים, לא קוד.
+  purchaseLinks: text("purchaseLinks"),
+  // JSON: string[] — תוכן העניינים להצגה (לא פרקים לדוגמה; אלה ב-articles).
+  tocJson: text("tocJson"),
+  year: int("year"),
+  pages: int("pages"),
+  isbn: varchar("isbn", { length: 32 }).default("").notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Book = typeof books.$inferSelect;
+export type InsertBook = typeof books.$inferInsert;

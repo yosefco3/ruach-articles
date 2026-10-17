@@ -17,6 +17,7 @@ import { createFeaturedRouter } from "./featured.router";
 import { createAuthRouter } from "./auth.router";
 import { createIchingRouter } from "./iching.router";
 import { createTarotRouter } from "./tarot.router";
+import { createBooksRouter } from "./books.router";
 import type { RouterDeps } from "./context";
 
 /**
@@ -42,6 +43,7 @@ export const createAppRouter = (deps: RouterDeps) => router({
   featured: createFeaturedRouter(deps),
   iching: createIchingRouter(deps),
   tarot: createTarotRouter(deps),
+  books: createBooksRouter(deps),
 });
 
 // Convenience: create with default deps for backward compatibility

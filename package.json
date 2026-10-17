@@ -19,7 +19,9 @@
     "seed:tarot": "node --env-file=.env.local --import tsx scripts/seed-tarot.ts",
     "cleanup:orphan-images": "node --env-file=.env.local --import tsx scripts/cleanup-orphan-images.ts",
     "cleanup:orphan-images:prod": "node --import tsx scripts/cleanup-orphan-images.ts",
-    "sync:articles": "node --import tsx scripts/sync-articles.ts"
+    "sync:articles": "node --import tsx scripts/sync-articles.ts",
+    "archive:articles": "node --import tsx scripts/archive-articles.ts",
+    "delete:archived": "node --env-file-if-exists=.env.local --import tsx scripts/delete-archived-articles.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
