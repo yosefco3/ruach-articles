@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
+import { ARTICLE_KINDS, ARTICLE_KIND_LABELS, bookFieldsForSubmit, kindOfRow, type ArticleKind } from "./books/articleKind";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,7 @@ import {
   Loader2, Save, ArrowRight, Upload, X, File, ImageIcon, Trash2, Pencil, Check,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useParams, useLocation, useSearch } from "wouter";
+import { Link, useParams, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { generateSlug, randomSlug } from "@shared/slug";
 
@@ -83,7 +84,14 @@ export default function AdminArticleForm() {
     category: "",
     tags: "",
     published: false,
+    // site-pivot-books: סוג המאמר ושיוך לספר (אדמין בלבד)
+    kind: "article" as ArticleKind,
+    bookId: null as number | null,
+    chapterNo: "",
+    chapterLabel: "",
   });
+  // ספרים לשיוך — רק לאדמין (הראוטר listAll הוא adminProcedure)
+  const { data: adminBooks } = trpc.books.listAll.useQuery(undefined, { enabled: isAdmin });
   // Files pending save (uploaded to S3 but not yet linked to an article in DB)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   // Files already saved in DB (edit mode)
@@ -115,6 +123,10 @@ export default function AdminArticleForm() {
       category: existingArticle.category,
       tags: existingArticle.tags ?? "",
       published: existingArticle.published,
+      kind: kindOfRow(existingArticle),
+      bookId: existingArticle.bookId ?? null,
+      chapterNo: existingArticle.chapterNo == null ? "" : String(existingArticle.chapterNo),
+      chapterLabel: existingArticle.chapterLabel ?? "",
     }));
     setSavedAttachments(
       (existingArticle.attachments as SavedAttachment[]).map((a) => ({
@@ -290,10 +302,16 @@ export default function AdminArticleForm() {
       toast.error("יש למלא כותרת ותוכן");
       return;
     }
-    if (!form.category) {
-      toast.error("יש לבחור קטגוריה");
+    const bookFields = bookFieldsForSubmit(
+      isAdmin ? form.kind : "article",
+      { category: form.category, bookId: form.bookId, chapterNo: form.chapterNo, chapterLabel: form.chapterLabel },
+      adminBooks ?? [],
+    );
+    if ("error" in bookFields) {
+      toast.error(bookFields.error);
       return;
     }
+    const { kind: _k, bookId: _b, chapterNo: _n, chapterLabel: _l, ...plain } = form;
     if (isEdit && articleId) {
       updateArticle.mutate({
         id: articleId,
@@ -302,13 +320,13 @@ export default function AdminArticleForm() {
         body: form.body,
         excerpt: form.excerpt || undefined,
         coverImage: form.coverImage || undefined,
-        category: form.category,
         tags: form.tags || undefined,
         published: form.published,
         siteUrl: window.location.origin,
+        ...bookFields,
       });
     } else {
-      createArticle.mutate(form);
+      createArticle.mutate({ ...plain, ...bookFields });
     }
   };
 
@@ -316,7 +334,7 @@ export default function AdminArticleForm() {
   // so the Select component finds its matching SelectItem on first render
   const categoriesLoading = !dynamicCategories;
   const articleDataLoading =
-    isEdit && !articleError && (!existingArticle || !form.category || categoriesLoading);
+    isEdit && !articleError && (!existingArticle || !form.category || categoriesLoading || (isAdmin && !adminBooks));
 
   if (loading || articleDataLoading) {
     return (
@@ -434,7 +452,52 @@ export default function AdminArticleForm() {
           />
         </div>
 
-        {/* Category */}
+        {/* Kind + book (admin only) — site-pivot-books */}
+        {isAdmin && (
+          <div className="grid md:grid-cols-2 gap-4 rounded-xl border border-border/60 bg-card/40 p-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">סוג</Label>
+              <Select value={form.kind} onValueChange={(v) => setForm((prev) => ({ ...prev, kind: v as ArticleKind }))}>
+                <SelectTrigger dir="rtl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ARTICLE_KINDS.map((k) => <SelectItem key={k} value={k}>{ARTICLE_KIND_LABELS[k]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {form.kind !== "article" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">ספר <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={form.bookId == null ? "" : String(form.bookId)}
+                    onValueChange={(v) => setForm((prev) => ({ ...prev, bookId: v ? Number(v) : null }))}
+                  >
+                    <SelectTrigger dir="rtl"><SelectValue placeholder="בחרו ספר" /></SelectTrigger>
+                    <SelectContent>
+                      {(adminBooks ?? []).map((b) => <SelectItem key={b.id} value={String(b.id)}>{b.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {adminBooks && adminBooks.length === 0 && (
+                    <p className="text-xs text-muted-foreground">אין ספרים עדיין — צרו ב-<Link href="/admin/books" className="underline">ניהול ספרים</Link>.</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">מספר (סדר בספר)</Label>
+                  <Input dir="ltr" inputMode="numeric" value={form.chapterNo}
+                    onChange={(e) => setForm((prev) => ({ ...prev, chapterNo: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">תווית</Label>
+                  <Input placeholder={form.kind === "material" ? "תרגיל / סרטון / דיאגרמה" : "פרק 2 / שער א — פרק 1"} value={form.chapterLabel}
+                    onChange={(e) => setForm((prev) => ({ ...prev, chapterLabel: e.target.value }))} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Category (plain articles only) */}
+        {(!isAdmin || form.kind === "article") && (
         <div className="space-y-2">
           <Label className="text-sm font-medium">
             קטגוריה <span className="text-destructive">*</span>
@@ -459,6 +522,7 @@ export default function AdminArticleForm() {
             </SelectContent>
           </Select>
         </div>
+        )}
 
         {/* Body */}
         <div className="space-y-2">

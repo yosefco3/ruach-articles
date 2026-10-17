@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
 import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass, WandSparkles, BookOpen } from "lucide-react";
+import { bookBadge, kindOfRow } from "./books/articleKind";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -35,14 +36,19 @@ export default function AdminPage() {
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ all: true });
   const { data: featuredArticle } = trpc.featured.get.useQuery();
 
+  const { data: adminBooks } = trpc.books.listAll.useQuery(undefined, { enabled: user?.role === "admin" });
+
   const [search, setSearch] = useState("");
+  // "all" | "kind:article" | "kind:chapter" | "kind:material" | <category slug>
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   const filteredArticles = useMemo(() => {
     if (!articles) return [];
     const q = search.trim().toLowerCase();
     return articles.filter((a) => {
-      if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
+      if (categoryFilter.startsWith("kind:")) {
+        if (kindOfRow(a) !== categoryFilter.slice(5)) return false;
+      } else if (categoryFilter !== "all" && a.category !== categoryFilter) return false;
       if (!q) return true;
       const haystack = [
         a.title,
@@ -204,7 +210,10 @@ export default function AdminPage() {
               <SelectValue placeholder="כל הקטגוריות" />
             </SelectTrigger>
             <SelectContent dir="rtl">
-              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              <SelectItem value="all">הכול</SelectItem>
+              <SelectItem value="kind:chapter">פרקים לדוגמה</SelectItem>
+              <SelectItem value="kind:material">חומרי עזר</SelectItem>
+              <SelectItem value="kind:article">מאמרים</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.slug} value={cat.slug}>
                   {cat.name}
@@ -289,12 +298,19 @@ export default function AdminPage() {
                       </Link>
                     </td>
                     <td className="py-3 px-4 hidden md:table-cell">
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border"
-                        style={getCategoryBadgeStyle(article.category)}
-                      >
-                        {getCategoryLabel(article.category)}
-                      </span>
+                      {bookBadge(article, adminBooks ?? []) ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border border-primary/30 bg-primary/10 text-primary">
+                          <BookOpen className="w-3 h-3" />
+                          {bookBadge(article, adminBooks ?? [])}
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium border"
+                          style={getCategoryBadgeStyle(article.category)}
+                        >
+                          {getCategoryLabel(article.category)}
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-muted-foreground hidden sm:table-cell">
                       {new Date(article.createdAt).toLocaleDateString("he-IL")}
