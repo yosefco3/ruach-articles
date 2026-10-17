@@ -41,8 +41,10 @@ export const articles = mysqlTable("articles", {
   sortOrder: int("sortOrder").default(0).notNull(),
   // ── פרק לדוגמה (site-pivot-books): שיוך לספר. null = מאמר רגיל (של מורה). ──
   bookId: int("bookId"), // → books.id
-  chapterNo: int("chapterNo"), // סדר הפרקים בתוך הספר
-  chapterLabel: varchar("chapterLabel", { length: 128 }).default("").notNull(), // "פרק 2", "שער א — פרק 1"…
+  // chapter = פרק לדוגמה · material = חומר עזר לספר (תרגיל, סרטון, דיאגרמה…)
+  bookRole: mysqlEnum("bookRole", ["chapter", "material"]).default("chapter").notNull(),
+  chapterNo: int("chapterNo"), // סדר הפרקים/החומרים בתוך הספר
+  chapterLabel: varchar("chapterLabel", { length: 128 }).default("").notNull(), // "פרק 2", "תרגיל", "סרטון"…
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

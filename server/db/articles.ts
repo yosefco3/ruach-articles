@@ -27,6 +27,7 @@ export async function getArticles(opts?: { category?: string; published?: boolea
       authorId: articles.authorId,
       authorName: users.name,
       bookId: articles.bookId,
+      bookRole: articles.bookRole,
       chapterNo: articles.chapterNo,
       chapterLabel: articles.chapterLabel,
     })
@@ -38,19 +39,23 @@ export async function getArticles(opts?: { category?: string; published?: boolea
 }
 
 /**
- * פרקי הדוגמה של ספר, בסדר הפרקים (chapterNo, ואז sortOrder/תאריך).
- * publishedOnly=false מחזיר גם טיוטות — לאדמין ולטבלת הניהול בלבד.
+ * פרקי הדוגמה / חומרי העזר של ספר, בסדר (chapterNo, ואז sortOrder/תאריך).
+ * role מסנן לפי תפקיד; publishedOnly=false מחזיר גם טיוטות — לאדמין בלבד.
  */
-export async function getBookChapters(bookId: number, opts?: { publishedOnly?: boolean }) {
+export async function getBookChapters(
+  bookId: number,
+  opts?: { publishedOnly?: boolean; role?: "chapter" | "material" },
+) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(articles.bookId, bookId)];
   if (opts?.publishedOnly !== false) conditions.push(eq(articles.published, true));
+  if (opts?.role) conditions.push(eq(articles.bookRole, opts.role));
   return db
     .select({
       id: articles.id, title: articles.title, slug: articles.slug, excerpt: articles.excerpt,
       coverImage: articles.coverImage, published: articles.published, createdAt: articles.createdAt,
-      bookId: articles.bookId, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
+      bookId: articles.bookId, bookRole: articles.bookRole, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
     })
     .from(articles)
     .where(and(...conditions))
@@ -103,7 +108,7 @@ export async function getArticleBySlug(slug: string) {
     body: articles.body, coverImage: articles.coverImage, category: articles.category,
     tags: articles.tags, published: articles.published, createdAt: articles.createdAt,
     updatedAt: articles.updatedAt, authorId: articles.authorId, authorName: users.name,
-    bookId: articles.bookId, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
+    bookId: articles.bookId, bookRole: articles.bookRole, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
   }).from(articles).leftJoin(users, eq(articles.authorId, users.id)).where(eq(articles.slug, slug)).limit(1);
   return rows.length > 0 ? rows[0] : undefined;
 }

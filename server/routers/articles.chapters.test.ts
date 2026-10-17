@@ -12,10 +12,10 @@ describe("articles — chapter fields", () => {
   it("chaptersOfBook: public gets published only; admin with all gets drafts too", async () => {
     const pub = makeCaller(publicCtx(), { getBookChapters: async () => [] });
     await pub.caller.articles.chaptersOfBook({ bookId: 3, all: true });
-    expect(pub.db.getBookChapters).toHaveBeenCalledWith(3, { publishedOnly: true });
+    expect(pub.db.getBookChapters).toHaveBeenCalledWith(3, { publishedOnly: true, role: undefined });
     const adm = makeCaller(adminCtx(), { getBookChapters: async () => [] });
-    await adm.caller.articles.chaptersOfBook({ bookId: 3, all: true });
-    expect(adm.db.getBookChapters).toHaveBeenCalledWith(3, { publishedOnly: false });
+    await adm.caller.articles.chaptersOfBook({ bookId: 3, all: true, role: "material" });
+    expect(adm.db.getBookChapters).toHaveBeenCalledWith(3, { publishedOnly: false, role: "material" });
   });
 
   it("admin create/update carry bookId/chapterNo/chapterLabel through", async () => {
@@ -24,8 +24,8 @@ describe("articles — chapter fields", () => {
       createArticle: async (d: Record<string, unknown>) => ({ id: 1, ...d }),
       getArticleById: async () => ({ id: 1, authorId: 99 }),
     });
-    await caller.articles.create({ title: "פרק 1", body: "<p>x</p>", category: "derech-haruach", bookId: 3, chapterNo: 1, chapterLabel: "פרק 1" });
-    expect(db.createArticle.mock.calls[0][0]).toMatchObject({ bookId: 3, chapterNo: 1, chapterLabel: "פרק 1" });
+    await caller.articles.create({ title: "פרק 1", body: "<p>x</p>", category: "derech-haruach", bookId: 3, bookRole: "material", chapterNo: 1, chapterLabel: "תרגיל" });
+    expect(db.createArticle.mock.calls[0][0]).toMatchObject({ bookId: 3, bookRole: "material", chapterNo: 1, chapterLabel: "תרגיל" });
     await caller.articles.update({ id: 1, bookId: null, chapterNo: null });
     expect(db.updateArticle).toHaveBeenCalledWith(1, { bookId: null, chapterNo: null });
   });
@@ -36,8 +36,9 @@ describe("articles — chapter fields", () => {
       createArticle: async (d: Record<string, unknown>) => ({ id: 2, ...d }),
       getArticleById: async () => ({ id: 2, authorId: 7 }),
     });
-    await caller.articles.create({ title: "x", body: "<p>x</p>", category: "c", bookId: 3, chapterNo: 1 });
+    await caller.articles.create({ title: "x", body: "<p>x</p>", category: "c", bookId: 3, bookRole: "material", chapterNo: 1 });
     expect(db.createArticle.mock.calls[0][0]).not.toHaveProperty("bookId");
+    expect(db.createArticle.mock.calls[0][0]).not.toHaveProperty("bookRole");
     await caller.articles.update({ id: 2, title: "y", bookId: 3, chapterLabel: "פרק" });
     expect(db.updateArticle).toHaveBeenCalledWith(2, { title: "y" });
   });

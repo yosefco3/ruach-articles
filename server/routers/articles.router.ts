@@ -6,13 +6,15 @@ import { adminProcedure, writerProcedure, assertCanEditArticle } from "./middlew
 import type { RouterDeps } from "./context";
 
 /** שדות "פרק לדוגמה" (site-pivot-books) — null מנתק מהספר. */
+const BOOK_ROLES = ["chapter", "material"] as const;
 const chapterFields = {
   bookId: z.number().int().nullable().optional(),
+  bookRole: z.enum(BOOK_ROLES).optional(),
   chapterNo: z.number().int().min(0).max(999).nullable().optional(),
   chapterLabel: z.string().max(128).optional(),
 };
 function stripChapterFields(o: Record<string, unknown>) {
-  delete o.bookId; delete o.chapterNo; delete o.chapterLabel;
+  delete o.bookId; delete o.bookRole; delete o.chapterNo; delete o.chapterLabel;
 }
 
 export const createArticlesRouter = (deps: RouterDeps) => router({
@@ -37,12 +39,12 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       return articles;
     }),
 
-  /** פרקי הדוגמה של ספר (ציבורי: מפורסמים בלבד; אדמין: גם טיוטות עם all). */
+  /** פרקי הדוגמה / חומרי העזר של ספר (ציבורי: מפורסמים בלבד; אדמין: גם טיוטות עם all). */
   chaptersOfBook: publicProcedure
-    .input(z.object({ bookId: z.number().int(), all: z.boolean().optional() }))
+    .input(z.object({ bookId: z.number().int(), role: z.enum(BOOK_ROLES).optional(), all: z.boolean().optional() }))
     .query(async ({ input, ctx }) => {
       const all = ctx.user?.role === "admin" && input.all;
-      return await deps.db.getBookChapters(input.bookId, { publishedOnly: !all });
+      return await deps.db.getBookChapters(input.bookId, { publishedOnly: !all, role: input.role });
     }),
 
   bySlug: publicProcedure
