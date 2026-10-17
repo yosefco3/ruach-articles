@@ -9,7 +9,6 @@ import {
   LazyTeacherPage,
   LazyMyTeacherProfile,
   LazyDerech,
-  LazyCategoryPage,
   LazyContact,
   LazyHome,
   LazyIChing,
@@ -26,7 +25,6 @@ import {
 export const publicRoutes = [
   <Route key="home" path="/" component={LazyHome} />,
   <Route key="article" path="/article/:slug" component={LazyArticlePage} />,
-  <Route key="category" path="/category/:slug" component={LazyCategoryPage} />,
   <Route key="books" path="/books" component={LazyBooksIndex} />,
   <Route key="book" path="/book/:slug" component={LazyBookPage} />,
   <Route key="book-chapter" path="/book/:book/:slug" component={LazyArticlePage} />,

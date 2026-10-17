@@ -1,5 +1,6 @@
 import { type Request, type Response } from "express";
-import { getArticles, getCategories } from "./db";
+import { getArticles, listBooks, listTeachers } from "./db";
+import { articlePath } from "@shared/articleUrl";
 import { CARDS, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 
@@ -47,7 +48,7 @@ function toIsoDate(date: Date | string | null): string | undefined {
 
 /**
  * Generates and serves a dynamic sitemap.xml from the database.
- * Includes: home page, about, contact, all categories, all published articles.
+ * Includes: static pages, tarot cards, visible books + teachers, published articles (chapters under their book).
  */
 export async function serveSitemap(req: Request, res: Response): Promise<void> {
   const baseUrl = SITE_URL_PRODUCTION;
@@ -111,26 +112,47 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     priority: 0.3, // accessibility statement
   });
 
-  // ── Category pages ──
+  entries.push({ loc: `${baseUrl}/books`, changefreq: "weekly", priority: 0.8 });
+  entries.push({ loc: `${baseUrl}/teachers`, changefreq: "weekly", priority: 0.7 });
+
+  // ── Books (visible only) ──
   try {
-    const cats = await getCategories();
-    for (const cat of cats) {
+    const books = await listBooks({ visibleOnly: true });
+    for (const b of books) {
       entries.push({
-        loc: `${baseUrl}/category/${encodeURIComponent(cat.slug)}`,
+        loc: `${baseUrl}/book/${encodeURIComponent(b.slug)}`,
+        lastmod: toIsoDate(b.updatedAt || b.createdAt),
         changefreq: "weekly",
+        priority: 0.9,
+      });
+    }
+  } catch (err) {
+    console.warn("[Sitemap] Error fetching books:", err);
+  }
+
+  // ── Teachers (visible only) ──
+  try {
+    const teachers = await listTeachers({ visibleOnly: true });
+    for (const t of teachers) {
+      entries.push({
+        loc: `${baseUrl}/teacher/${encodeURIComponent(t.slug)}`,
+        lastmod: toIsoDate(t.updatedAt || t.createdAt),
+        changefreq: "monthly",
         priority: 0.7,
       });
     }
   } catch (err) {
-    console.warn("[Sitemap] Error fetching categories:", err);
+    console.warn("[Sitemap] Error fetching teachers:", err);
   }
 
-  // ── Article pages ──
+  // ── Articles: sample chapters / materials under their (visible) book, teacher articles at /article ──
   try {
     const articles = await getArticles({ published: true });
     for (const article of articles) {
+      const path = articlePath(article);
+      if (!path) continue;
       entries.push({
-        loc: `${baseUrl}/article/${encodeURIComponent(article.slug)}`,
+        loc: `${baseUrl}${path}`,
         lastmod: toIsoDate(article.updatedAt || article.createdAt),
         changefreq: "weekly",
         priority: 0.8,

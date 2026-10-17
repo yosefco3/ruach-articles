@@ -3,7 +3,6 @@ import { lazy } from "react";
 // ── Public pages ──────────────────────────────────────────
 export const LazyHome = lazy(() => import("../pages/Home"));
 export const LazyArticlePage = lazy(() => import("../pages/ArticlePage"));
-export const LazyCategoryPage = lazy(() => import("../pages/CategoryPage"));
 export const LazyBooksIndex = lazy(() => import("../pages/BooksIndex"));
 export const LazyBookPage = lazy(() => import("../pages/BookPage"));
 export const LazyTeachersIndex = lazy(() => import("../pages/TeachersIndex"));

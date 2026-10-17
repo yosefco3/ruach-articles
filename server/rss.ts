@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import { getArticles } from "./db";
 import { SITE_URL_PRODUCTION, SITE_NAME, SITE_DESCRIPTION } from "@shared/const";
+import { articlePath } from "@shared/articleUrl";
 
 const FEED_TITLE = SITE_NAME;
 const FEED_DESCRIPTION = SITE_DESCRIPTION;
@@ -34,11 +35,14 @@ export async function serveRss(_req: Request, res: Response): Promise<void> {
   }
 
   // getArticles already orders by sortOrder then createdAt desc; take the latest.
-  const items = articles.slice(0, MAX_ITEMS);
+  const items = articles
+    .map((a) => ({ a, path: articlePath(a) }))
+    .filter((x): x is { a: (typeof articles)[number]; path: string } => x.path !== null)
+    .slice(0, MAX_ITEMS);
 
   const itemXml = items
-    .map((a) => {
-      const url = `${SITE_URL_PRODUCTION}/article/${encodeURIComponent(a.slug)}`;
+    .map(({ a, path }) => {
+      const url = `${SITE_URL_PRODUCTION}${path}`;
       const desc = a.excerpt || "";
       return [
         "    <item>",

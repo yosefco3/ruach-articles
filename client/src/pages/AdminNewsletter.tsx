@@ -156,6 +156,9 @@ export default function AdminNewsletter() {
                     סטטוס
                   </th>
                   <th className="text-right px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    עניין
+                  </th>
+                  <th className="text-right px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     תאריך הרשמה
                   </th>
                   <th className="px-6 py-3" />
@@ -186,6 +189,9 @@ export default function AdminNewsletter() {
                       >
                         {sub.active ? "פעיל" : "לא פעיל"}
                       </span>
+                    </td>
+                    <td className="px-6 py-3 text-sm text-muted-foreground">
+                      {sub.interest?.startsWith("book:") ? `ספר: ${sub.interest.slice(5)}` : "כללי"}
                     </td>
                     <td className="px-6 py-3 text-sm text-muted-foreground">
                       {new Date(sub.subscribedAt).toLocaleDateString("he-IL")}

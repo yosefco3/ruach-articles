@@ -419,32 +419,13 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
     expect((await run("/article/draft")).status).toBe(404);
   });
 
-  it("unknown category (no row, no articles) → 404", async () => {
-    const { getCategoryBySlug, getArticles } = await import("./db");
-    vi.mocked(getCategoryBySlug).mockResolvedValue(undefined as any);
-    vi.mocked(getArticles).mockResolvedValue([] as any);
-    expect((await run("/category/nothing-here")).status).toBe(404);
-  });
-
-  it("a Hebrew category slug arrives percent-encoded and is decoded before the DB lookup", async () => {
-    const { getCategoryBySlug, getArticles } = await import("./db");
-    vi.mocked(getCategoryBySlug).mockImplementation(async (slug: string) =>
-      slug === "כללי" ? ({ slug: "כללי", name: "כללי", description: "" } as any) : undefined,
-    );
-    vi.mocked(getArticles).mockImplementation(async (opts: any) =>
-      opts?.category === "כללי" ? ([{ coverImage: null }] as any) : ([] as any),
-    );
-    const { status, html } = await run("/category/%D7%9B%D7%9C%D7%9C%D7%99");
-    expect(status).toBe(200);
-    expect(html).toContain("כללי – מאמרים – דרך הרוח");
-    expect(html).toContain(`${SITE_URL_PRODUCTION}/category/%D7%9B%D7%9C%D7%9C%D7%99`);
-  });
-
-  it("a category row that has no published articles yet is still a page (200)", async () => {
-    const { getCategoryBySlug, getArticles } = await import("./db");
-    vi.mocked(getCategoryBySlug).mockResolvedValue({ slug: "new", name: "חדש", description: "" } as any);
-    vi.mocked(getArticles).mockResolvedValue([] as any);
-    expect((await run("/category/new")).status).toBe(200);
+  it("/category/<anything> → 301 to /books (categories became the archive taxonomy)", async () => {
+    const { seoMiddleware } = await import("./seo");
+    const res = { redirect: vi.fn() } as any;
+    const next = vi.fn();
+    await seoMiddleware({ method: "GET", path: "/category/%D7%9B%D7%9C%D7%9C%D7%99" } as any, res, next);
+    expect(res.redirect).toHaveBeenCalledWith(301, "/books");
+    expect(next).not.toHaveBeenCalled();
   });
 
   it("a malformed percent sequence does not crash the middleware", async () => {

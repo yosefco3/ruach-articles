@@ -155,22 +155,6 @@ const routes: SsrRoute[] = [
         () => client.articles.bySlug.query({ slug: p.slug })
       ),
   },
-  {
-    pattern: "/category/:slug",
-    prefetch: (qc, client, p) =>
-      Promise.all([
-        prefetch(
-          qc,
-          getQueryKey(trpc.articles.list, { category: p.slug }, "query"),
-          () => client.articles.list.query({ category: p.slug })
-        ),
-        prefetch(
-          qc,
-          getQueryKey(trpc.categories.bySlug, { slug: p.slug }, "query"),
-          () => client.categories.bySlug.query({ slug: p.slug })
-        ),
-      ]),
-  },
 ];
 
 /** Match a wouter-style pattern ("/article/:slug") against a URL path. */

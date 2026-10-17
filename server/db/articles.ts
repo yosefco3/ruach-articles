@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
-import { articles, users, attachments, comments, likes, teachers, type InsertArticle } from "../../drizzle/schema";
+import { articles, users, attachments, comments, likes, teachers, books, type InsertArticle } from "../../drizzle/schema";
 import { getDb } from "./connection";
 import { AUTHOR_NAME } from "@shared/const";
 import { safeDeleteObject } from "./storage-cleanup";
@@ -34,10 +34,13 @@ export async function getArticles(opts?: { category?: string; published?: boolea
       teacherId: articles.teacherId,
       teacherName: teachers.name,
       teacherSlug: teachers.slug,
+      bookSlug: books.slug,
+      bookVisible: books.visible,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
     .leftJoin(teachers, eq(articles.teacherId, teachers.id))
+    .leftJoin(books, eq(articles.bookId, books.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(articles.sortOrder), desc(articles.createdAt));
   return rows;

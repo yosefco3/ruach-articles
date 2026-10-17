@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 import { ArrowRight, BookOpen, Bell, ShoppingBag, ListOrdered, Paperclip, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -22,6 +25,14 @@ export default function BookPage() {
     { enabled: !!book?.id },
   );
   useDocumentTitle(book ? `${book.title} – דרך הרוח` : undefined);
+
+  // "עדכנו אותי כשהספר יוצא" — הרשמה לניוזלטר עם עניין בספר הזה
+  const [email, setEmail] = useState("");
+  const [done, setDone] = useState(false);
+  const notify = trpc.newsletter.subscribe.useMutation({
+    onSuccess: () => { setDone(true); toast.success("נרשמת — נעדכן אותך כשהספר יוצא"); },
+    onError: (e) => toast.error(e.message || "שגיאה בהרשמה"),
+  });
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -158,8 +169,18 @@ export default function BookPage() {
           <section id="notify" className="rounded-2xl border border-border bg-card p-8 text-center">
             <Bell className="w-6 h-6 text-primary mx-auto mb-3" />
             <h2 className="font-display font-bold text-xl text-foreground mb-2">{cta.label}</h2>
-            <p className="text-muted-foreground mb-4">הירשמו לעדכונים ותקבלו הודעה כשהספר יוצא לאור.</p>
-            <Button asChild><Link href="/#newsletter">הרשמה לעדכונים</Link></Button>
+            <p className="text-muted-foreground mb-4">השאירו מייל ונודיע לכם כשהספר יוצא לאור.</p>
+            {done ? (
+              <p className="text-primary font-medium">תודה! נעדכן אותך.</p>
+            ) : (
+              <form
+                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+                onSubmit={(e) => { e.preventDefault(); if (email.trim()) notify.mutate({ email: email.trim(), interest: `book:${book.slug}` }); }}
+              >
+                <Input type="email" required dir="ltr" aria-label="כתובת דוא״ל" placeholder="כתובת דוא״ל" value={email} onChange={(e) => setEmail(e.target.value)} className="flex-1" />
+                <Button type="submit" disabled={notify.isPending} className="gap-2">{notify.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}עדכנו אותי</Button>
+              </form>
+            )}
           </section>
         )}
       </div>

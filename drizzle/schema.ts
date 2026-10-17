@@ -167,6 +167,8 @@ export const newsletterSubscribers = mysqlTable("newsletterSubscribers", {
   email: varchar("email", { length: 320 }).notNull().unique(),
   name: varchar("name", { length: 256 }),
   active: boolean("active").default(true).notNull(),
+  // מה עניין את הנרשם (site-pivot-books): "" = כללי, "book:<slug>" = "עדכנו אותי כשהספר יוצא".
+  interest: varchar("interest", { length: 64 }).default("").notNull(),
   subscribedAt: timestamp("subscribedAt").defaultNow().notNull(),
 });
 

@@ -8,14 +8,15 @@ vi.mock("./db", () => ({
       updatedAt: new Date("2026-01-15"),
       createdAt: new Date("2026-01-10"),
     },
+    { slug: "mavo", bookId: 5, bookSlug: "derech-haruach", bookVisible: true, createdAt: new Date("2026-02-01") },
+    { slug: "hidden-ch", bookId: 6, bookSlug: "secret", bookVisible: false, createdAt: new Date("2026-02-01") },
   ]),
-  getCategories: vi.fn().mockResolvedValue([
-    { slug: "spirituality", name: "רוחניות" },
-  ]),
+  listBooks: vi.fn().mockResolvedValue([{ slug: "derech-haruach", createdAt: new Date("2026-01-01") }]),
+  listTeachers: vi.fn().mockResolvedValue([{ slug: "yonatan", createdAt: new Date("2026-01-01") }]),
 }));
 
 import { serveSitemap } from "./sitemap";
-import { getArticles, getCategories } from "./db";
+import { getArticles, listBooks } from "./db";
 
 describe("Sitemap Generator", () => {
   it("returns valid XML with articles and categories", async () => {
@@ -38,7 +39,12 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("<urlset");
     expect(xml).toContain("https://ruachwisdom.org");
     expect(xml).toContain("/article/test-article");
-    expect(xml).toContain("/category/spirituality");
+    expect(xml).toContain("/book/derech-haruach</loc>");
+    expect(xml).toContain("/book/derech-haruach/mavo");
+    expect(xml).not.toContain("hidden-ch");
+    expect(xml).toContain("/teacher/yonatan");
+    expect(xml).toContain("/books</loc>");
+    expect(xml).not.toContain("/category/");
     expect(xml).toContain("2026-01-15");
   });
 

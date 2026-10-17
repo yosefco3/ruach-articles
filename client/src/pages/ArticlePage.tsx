@@ -141,13 +141,12 @@ export default function ArticlePage() {
               {book?.title ?? "ספר"} · {article.chapterLabel || (article.bookRole === "material" ? "חומר עזר" : "פרק לדוגמה")}
             </span>
           ) : (
-          <Link
-            href={`/category/${article.category}`}
-            className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border transition-opacity hover:opacity-80"
+          <span
+            className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border"
             style={getCategoryBadgeStyle(article.category)}
           >
             {getCategoryLabel(article.category)}
-          </Link>
+          </span>
           )}
           <h1 className="font-display font-bold text-3xl md:text-4xl text-foreground leading-tight mb-4">
             {article.title}

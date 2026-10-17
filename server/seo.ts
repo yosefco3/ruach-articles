@@ -654,31 +654,6 @@ function toIsoDateTime(date: Date | string | null | undefined): string | undefin
   return Number.isNaN(t) ? undefined : d.toISOString();
 }
 
-async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
-  const category = await getCategoryBySlug(slug);
-
-  // Also check if there are published articles in this category. A category
-  // row with no articles yet is still a page; a slug that is neither is a 404.
-  const articles = await getArticles({ category: slug, published: true });
-  if (!category && articles.length === 0) return null;
-
-  const categoryUrl = `${SITE_URL_PRODUCTION}/category/${encodeURIComponent(slug)}`;
-  const categoryName = category?.name || slug;
-  const title = `${categoryName} – מאמרים – דרך הרוח`;
-  const description = category?.description || `מאמרים בקטגוריית ${categoryName}`;
-
-  return {
-    title,
-    description,
-    ogTitle: title,
-    ogDescription: description,
-    ogImage: toAbsoluteImageUrl(articles[0]?.coverImage),
-    ogUrl: categoryUrl,
-    ogType: "website",
-    ogLocale: "he_IL",
-    canonicalUrl: categoryUrl,
-  };
-}
 
 /** /article/<slug> של פרק/חומר עזר → הכתובת תחת הספר (null למאמר רגיל / לא קיים). */
 async function bookUrlForArticle(slug: string): Promise<string | null> {
@@ -777,8 +752,9 @@ export async function seoMiddleware(
         return;
       }
     } else if (categorySlug) {
-      seo = await resolveCategorySeo(categorySlug);
-      dynamicMiss = seo === null;
+      // הקטגוריות הפכו לטקסונומיית ארכיון (site-pivot-books): הספרים הם הקטגוריות.
+      res.redirect(301, "/books");
+      return;
     } else if (!STATIC_PUBLIC_PATHS.has(pathname) && !isProfilePath(pathname)) {
       unknownPath = true;
     }

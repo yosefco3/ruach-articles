@@ -7,10 +7,14 @@ export async function subscribeToNewsletter(data: InsertNewsletterSubscriber) {
   if (!db) throw new Error("Database not available");
   const existing = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, data.email)).limit(1);
   if (existing.length > 0) {
-    if (!existing[0].active) {
-      await db.update(newsletterSubscribers).set({ active: true, name: data.name }).where(eq(newsletterSubscribers.id, existing[0].id));
+    // הרשמה חוזרת: מפעילה מחדש, ומעדכנת עניין ספציפי (למשל "עדכנו אותי כשהספר יוצא") אם ניתן.
+    const patch: Partial<InsertNewsletterSubscriber> = {};
+    if (!existing[0].active) { patch.active = true; patch.name = data.name; }
+    if (data.interest && data.interest !== existing[0].interest) patch.interest = data.interest;
+    if (Object.keys(patch).length) {
+      await db.update(newsletterSubscribers).set(patch).where(eq(newsletterSubscribers.id, existing[0].id));
     }
-    return existing[0];
+    return { ...existing[0], ...patch };
   }
   await db.insert(newsletterSubscribers).values(data);
   const created = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, data.email)).limit(1);

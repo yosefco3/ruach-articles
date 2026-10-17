@@ -9,6 +9,8 @@ export const createNewsletterRouter = (deps: RouterDeps) => router({
       z.object({
         email: z.string().email(),
         name: z.string().optional(),
+        /** "book:<slug>" — "עדכנו אותי כשהספר יוצא" מדף ספר; ריק = הרשמה כללית. */
+        interest: z.string().max(64).regex(/^(|book:[^\s/]+)$/).optional(),
       })
     )
     .mutation(async ({ input }) => {

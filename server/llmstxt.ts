@@ -1,5 +1,7 @@
 import { type Request, type Response } from "express";
-import { getArticles } from "./db";
+import { getArticles, listBooks, listTeachers } from "./db";
+import { articlePath } from "@shared/articleUrl";
+import { BOOK_STATUS_LABELS } from "@shared/books";
 import { listCardTexts } from "./db/tarot";
 import { CARDS, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
@@ -31,25 +33,67 @@ export async function serveLlmsTxt(req: Request, res: Response): Promise<void> {
     "",
     "## עמודים מרכזיים",
     "",
-    linkLine("דרך הרוח — הנבואה הטבעית", `${base}/derech`, "השיטה שמאחורי כל המאמרים: חמישה עקרונות ומבחן קבלה"),
+    linkLine("דרך הרוח — הנבואה הטבעית", `${base}/derech`, "השיטה: חמישה עקרונות ומבחן קבלה"),
+    linkLine("הספרים", `${base}/books`, "ספרי השיטה — תקצירים, תוכן עניינים, פרקים לדוגמה וחומרי עזר"),
     linkLine("קריאת אי צ'ינג", `${base}/iching`, "הטלת מטבעות וקריאה חיה בעברית — ספר התמורות"),
     linkLine("קריאה בקלפי טארוט", `${base}/tarot`, "שליפת שלושה קלפים מחפיסה מקורית — מראה סמלית להבנת המצב; לשאלת בחירה בין דרכים ה-AI פורס פריסת בחירה; אחרי פירוש AI אפשר לשאול עד שתי שאלות המשך, לכל אחת קלף מבהיר"),
     linkLine("החפיסה המלאה", `${base}/tarot/deck`, "כל 78 הקלפים של החפיסה המקורית, בסגנון גואש — כולל הורדה חופשית"),
     linkLine("המדריך לקלפי הטארוט", `${base}/tarot/guide`, "מבנה החפיסה, שיטת שלושת הקלפים, פריסת הבחירה בין דרכים ופירוש כל 78 הקלפים בעברית"),
+    linkLine("מורים בשיטה", `${base}/teachers`, "מי מלמד ומלווה בדרך הרוח, היכן, ומה כתבו"),
     linkLine("על המחבר", `${base}/about`, "על יונתן בן חנן והאתר"),
-    linkLine("כל המאמרים", base),
-    "",
-    "## מאמרים",
     "",
   ];
 
+  // ── הספרים (גלויים) עם פרקי הדוגמה וחומרי העזר שלהם ──
+  let articles: Awaited<ReturnType<typeof getArticles>> = [];
   try {
-    const articles = await getArticles({ published: true });
-    for (const a of articles) {
-      lines.push(linkLine(a.title, `${base}/article/${encodeURIComponent(a.slug)}`, a.excerpt));
-    }
+    articles = await getArticles({ published: true });
   } catch (err) {
     console.warn("[llms.txt] Error fetching articles:", err);
+  }
+  try {
+    const books = await listBooks({ visibleOnly: true });
+    if (books.length) {
+      lines.push("## הספרים", "");
+      for (const b of books) {
+        const desc = [b.subtitle, BOOK_STATUS_LABELS[b.status]].filter(Boolean).join(" · ");
+        lines.push(linkLine(b.title, `${base}/book/${encodeURIComponent(b.slug)}`, desc || undefined));
+        for (const a of articles.filter((x) => x.bookId === b.id)) {
+          const path = articlePath(a);
+          if (!path) continue;
+          const what = a.chapterLabel || (a.bookRole === "material" ? "חומר עזר" : "פרק לדוגמה");
+          lines.push("  " + linkLine(`${what}: ${a.title}`, `${base}${path}`, a.excerpt));
+        }
+      }
+      lines.push("");
+    }
+  } catch (err) {
+    console.warn("[llms.txt] Error fetching books:", err);
+  }
+
+  // ── מורים בשיטה ──
+  try {
+    const teachers = await listTeachers({ visibleOnly: true });
+    if (teachers.length) {
+      lines.push("## מורים בשיטה", "");
+      for (const t of teachers) {
+        const desc = [t.isFounder ? "מייסד השיטה" : "", t.tagline, t.area].filter(Boolean).join(" · ");
+        lines.push(linkLine(t.name, `${base}/teacher/${encodeURIComponent(t.slug)}`, desc || undefined));
+      }
+      lines.push("");
+    }
+  } catch (err) {
+    console.warn("[llms.txt] Error fetching teachers:", err);
+  }
+
+  // ── כתבים של המורים ──
+  const writings = articles.filter((a) => a.bookId == null);
+  if (writings.length) {
+    lines.push("## כתבים", "");
+    for (const a of writings) {
+      const by = a.teacherName ? ` (${a.teacherName})` : "";
+      lines.push(linkLine(`${a.title}${by}`, `${base}${articlePath(a)}`, a.excerpt));
+    }
   }
 
   // ── 78 דפי הקלפים — כל קלף עם התקציר שלו מה-DB (GEO: תשובה-קודם) ──
@@ -77,7 +121,7 @@ export async function serveLlmsTxt(req: Request, res: Response): Promise<void> {
     "",
     "## Optional",
     "",
-    linkLine("RSS", `${base}/rss.xml`, "פיד המאמרים המלא"),
+    linkLine("RSS", `${base}/rss.xml`, "פיד הפרקים והכתבים"),
     linkLine("Sitemap", `${base}/sitemap.xml`),
     "",
   );
