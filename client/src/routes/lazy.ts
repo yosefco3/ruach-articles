@@ -4,6 +4,8 @@ import { lazy } from "react";
 export const LazyHome = lazy(() => import("../pages/Home"));
 export const LazyArticlePage = lazy(() => import("../pages/ArticlePage"));
 export const LazyCategoryPage = lazy(() => import("../pages/CategoryPage"));
+export const LazyBooksIndex = lazy(() => import("../pages/BooksIndex"));
+export const LazyBookPage = lazy(() => import("../pages/BookPage"));
 export const LazyAbout = lazy(() => import("../pages/About"));
 export const LazyDerech = lazy(() => import("../pages/Derech"));
 export const LazyContact = lazy(() => import("../pages/Contact"));

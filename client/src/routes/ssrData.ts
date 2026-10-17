@@ -95,6 +95,47 @@ const routes: SsrRoute[] = [
       ),
   },
   {
+    pattern: "/books",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.books.list, undefined, "query"), () => client.books.list.query()),
+  },
+  {
+    // דף ספר: הספר, ואז הפרקים וחומרי העזר שלו (תלויים ב-id).
+    pattern: "/book/:slug",
+    prefetch: async (qc, client, p) => {
+      const key = getQueryKey(trpc.books.bySlug, { slug: p.slug }, "query");
+      await prefetch(qc, key, () => client.books.bySlug.query({ slug: p.slug }));
+      const book = qc.getQueryData<{ id: number } | undefined>(key);
+      if (!book) return;
+      await Promise.all(
+        (["chapter", "material"] as const).map((role) =>
+          prefetch(qc, getQueryKey(trpc.articles.chaptersOfBook, { bookId: book.id, role }, "query"), () =>
+            client.articles.chaptersOfBook.query({ bookId: book.id, role }),
+          ),
+        ),
+      );
+    },
+  },
+  {
+    // פרק / חומר עזר: המאמר + הספר + האחים (ל"הפרק הבא").
+    pattern: "/book/:book/:slug",
+    prefetch: async (qc, client, p) => {
+      const bookKey = getQueryKey(trpc.books.bySlug, { slug: p.book }, "query");
+      const articleKey = getQueryKey(trpc.articles.bySlug, { slug: p.slug }, "query");
+      await Promise.all([
+        prefetch(qc, bookKey, () => client.books.bySlug.query({ slug: p.book })),
+        prefetch(qc, articleKey, () => client.articles.bySlug.query({ slug: p.slug })),
+      ]);
+      const book = qc.getQueryData<{ id: number } | undefined>(bookKey);
+      const article = qc.getQueryData<{ bookRole?: string } | null | undefined>(articleKey);
+      if (!book || !article) return;
+      const role = article.bookRole === "material" ? "material" : "chapter";
+      await prefetch(qc, getQueryKey(trpc.articles.chaptersOfBook, { bookId: book.id, role }, "query"), () =>
+        client.articles.chaptersOfBook.query({ bookId: book.id, role }),
+      );
+    },
+  },
+  {
     pattern: "/article/:slug",
     prefetch: (qc, client, p) =>
       prefetch(

@@ -18,7 +18,12 @@ function makeFakeClient() {
     iching: { getContent: { query: vi.fn(async () => ({ marker: "ICHING_DATA" })) } },
     articles: {
       list: { query: vi.fn(async () => [{ id: 1, title: "A" }]) },
-      bySlug: { query: vi.fn(async (i: { slug: string }) => ({ slug: i.slug, title: "T" })) },
+      bySlug: { query: vi.fn(async (i: { slug: string }) => ({ slug: i.slug, title: "T", bookRole: "chapter" })) },
+      chaptersOfBook: { query: vi.fn(async (i: { bookId: number; role: string }) => [{ id: 10, role: i.role, bookId: i.bookId }]) },
+    },
+    books: {
+      list: { query: vi.fn(async () => [{ id: 5, slug: "derech-haruach" }]) },
+      bySlug: { query: vi.fn(async (i: { slug: string }) => (i.slug === "missing" ? undefined : { id: 5, slug: i.slug })) },
     },
   };
 }
@@ -70,6 +75,32 @@ describe("runSsrPrefetch", () => {
       qc.getQueryData(
         getQueryKey(trpc.articles.bySlug, { slug: "my-slug" }, "query")
       )
-    ).toEqual({ slug: "my-slug", title: "T" });
+    ).toMatchObject({ slug: "my-slug", title: "T" });
+  });
+
+  it("/book/:slug prefetches the book and then its chapters and materials by id", async () => {
+    const qc = new QueryClient();
+    const client = makeFakeClient();
+    await runSsrPrefetch(qc, asClient(client), "/book/derech-haruach");
+    expect(qc.getQueryData(getQueryKey(trpc.books.bySlug, { slug: "derech-haruach" }, "query"))).toMatchObject({ id: 5 });
+    expect(client.articles.chaptersOfBook.query).toHaveBeenCalledWith({ bookId: 5, role: "chapter" });
+    expect(client.articles.chaptersOfBook.query).toHaveBeenCalledWith({ bookId: 5, role: "material" });
+    expect(qc.getQueryData(getQueryKey(trpc.articles.chaptersOfBook, { bookId: 5, role: "material" }, "query"))).toEqual([{ id: 10, role: "material", bookId: 5 }]);
+  });
+
+  it("/book/:slug with a missing book skips the dependent queries", async () => {
+    const qc = new QueryClient();
+    const client = makeFakeClient();
+    await runSsrPrefetch(qc, asClient(client), "/book/missing");
+    expect(client.articles.chaptersOfBook.query).not.toHaveBeenCalled();
+  });
+
+  it("/book/:book/:slug prefetches book, article and the sibling list of the article's role", async () => {
+    const qc = new QueryClient();
+    const client = makeFakeClient();
+    await runSsrPrefetch(qc, asClient(client), "/book/derech-haruach/mavo");
+    expect(client.articles.bySlug.query).toHaveBeenCalledWith({ slug: "mavo" });
+    expect(client.articles.chaptersOfBook.query).toHaveBeenCalledTimes(1);
+    expect(client.articles.chaptersOfBook.query).toHaveBeenCalledWith({ bookId: 5, role: "chapter" });
   });
 });

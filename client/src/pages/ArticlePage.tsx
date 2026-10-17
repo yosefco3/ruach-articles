@@ -13,14 +13,29 @@ import ArticleActionsBar from "@/components/ArticleActionsBar";
 import ArticleAttachments from "@/components/ArticleAttachments";
 
 export default function ArticlePage() {
-  const params = useParams<{ slug: string }>();
+  // /article/:slug — מאמר רגיל · /book/:book/:slug — פרק לדוגמה / חומר עזר (site-pivot-books)
+  const params = useParams<{ slug: string; book?: string }>();
+  const bookSlug = params.book;
   const [, navigate] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
   const { getCategoryLabel, getCategoryBadgeStyle } = useDynamicCategories();
   const { data: article, isLoading, error } = trpc.articles.bySlug.useQuery({ slug: params.slug });
-  useDocumentTitle(article ? `${article.title} – רוח חכמה` : undefined);
+  const { data: book } = trpc.books.bySlug.useQuery({ slug: bookSlug ?? "" }, { enabled: !!bookSlug, retry: false });
+  const isChapter = !!bookSlug;
+  const { data: siblings } = trpc.articles.chaptersOfBook.useQuery(
+    { bookId: book?.id ?? 0, role: article?.bookRole === "material" ? "material" : "chapter" },
+    { enabled: isChapter && !!book?.id && !!article },
+  );
+  const nextChapter = (() => {
+    if (!siblings || !article) return undefined;
+    const i = siblings.findIndex((c) => c.slug === article.slug);
+    return i >= 0 ? siblings[i + 1] : undefined;
+  })();
+  useDocumentTitle(
+    article ? (isChapter && book ? `${article.title} – ${book.title} – דרך הרוח` : `${article.title} – רוח חכמה`) : undefined,
+  );
 
   const { data: comments, isLoading: commentsLoading } = trpc.comments.list.useQuery(
     { articleId: article?.id ?? 0 },
@@ -43,13 +58,13 @@ export default function ArticlePage() {
       currentSlug: params.slug,
       category: article?.category ?? "",
     },
-    { enabled: !!article?.category }
+    { enabled: !!article?.category && !isChapter }
   );
 
-  // Query for random article (only if no next article exists)
+  // Query for random article (only if no next article exists; never inside a book)
   const { data: randomArticle } = trpc.articles.random.useQuery(
     { excludeId: article?.id },
-    { enabled: !!article?.id && !nextArticle }
+    { enabled: !!article?.id && !nextArticle && !isChapter }
   );
 
   const likeMutation = trpc.likes.toggle.useMutation({
@@ -108,9 +123,12 @@ export default function ArticlePage() {
 
       <div className="container py-10 max-w-3xl mx-auto">
         {/* Back link */}
-        <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 group">
+        <Link
+          href={isChapter ? `/book/${encodeURIComponent(bookSlug!)}` : "/"}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 group"
+        >
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          חזרה לכל המאמרים
+          {isChapter ? `חזרה לספר${book ? `: ${book.title}` : ""}` : "חזרה לכל המאמרים"}
         </Link>
 
         {/* Admin / author actions — renders nothing for regular readers */}
@@ -118,6 +136,11 @@ export default function ArticlePage() {
 
         {/* Article Header */}
         <header className="mb-8">
+          {isChapter ? (
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border border-primary/30 bg-primary/10 text-primary">
+              {book?.title ?? "ספר"} · {article.chapterLabel || (article.bookRole === "material" ? "חומר עזר" : "פרק לדוגמה")}
+            </span>
+          ) : (
           <Link
             href={`/category/${article.category}`}
             className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-4 border transition-opacity hover:opacity-80"
@@ -125,6 +148,7 @@ export default function ArticlePage() {
           >
             {getCategoryLabel(article.category)}
           </Link>
+          )}
           <h1 className="font-display font-bold text-3xl md:text-4xl text-foreground leading-tight mb-4">
             {article.title}
           </h1>
@@ -222,8 +246,38 @@ export default function ArticlePage() {
 
         <div className="divider-gold mb-10" />
 
+        {/* Inside a book: next chapter + the full book */}
+        {isChapter && (
+          <section className="mb-10 space-y-4">
+            {nextChapter && (
+              <Link
+                href={`/book/${encodeURIComponent(bookSlug!)}/${encodeURIComponent(nextChapter.slug)}`}
+                className="block rounded-xl border border-border bg-card p-5 hover:shadow-md transition-all"
+              >
+                <span className="text-xs text-muted-foreground">{article.bookRole === "material" ? "חומר העזר הבא" : "הפרק הבא"}</span>
+                <p className="font-display font-bold text-lg text-foreground mt-1">
+                  {nextChapter.chapterLabel ? `${nextChapter.chapterLabel} · ` : ""}{nextChapter.title}
+                </p>
+              </Link>
+            )}
+            {book && (
+              <Link
+                href={`/book/${encodeURIComponent(book.slug)}`}
+                className="flex items-center gap-4 rounded-xl border border-primary/30 bg-primary/5 p-5 hover:bg-primary/10 transition-colors"
+              >
+                {book.coverImage && <img src={book.coverImage} alt="" className="w-14 rounded shadow" />}
+                <div>
+                  <span className="text-xs text-primary font-semibold">הספר המלא</span>
+                  <p className="font-display font-bold text-lg text-foreground">{book.title}</p>
+                  {book.subtitle && <p className="text-sm text-muted-foreground">{book.subtitle}</p>}
+                </div>
+              </Link>
+            )}
+          </section>
+        )}
+
         {/* Next Article Navigation */}
-        {(nextArticle || randomArticle) && (
+        {!isChapter && (nextArticle || randomArticle) && (
           <section className="mb-10">
             <NextArticleCard 
               article={nextArticle || randomArticle!} 
