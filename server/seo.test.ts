@@ -31,7 +31,7 @@ describe("SEO Meta Injection", () => {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <!-- SEO_HEAD_START -->
-    <title>רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי</title>
+    <title>דרך הרוח – מאמרים ברוחניות, פילוסופיה וריפוי</title>
     <meta name="description" content="האתר של יוסף כהן" />
     <!-- SEO_HEAD_END -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,7 +43,7 @@ describe("SEO Meta Injection", () => {
 
   it("replaces SEO tags between markers", () => {
     const result = injectMetaTags(baseHtml, {
-      title: "Test Article – רוח חכמה",
+      title: "Test Article – דרך הרוח",
       description: "Test description",
       ogTitle: "Test Article",
       ogDescription: "Test description",
@@ -54,7 +54,7 @@ describe("SEO Meta Injection", () => {
       canonicalUrl: "https://ruachwisdom.org/article/test",
     });
 
-    expect(result).toContain("<title>Test Article – רוח חכמה</title>");
+    expect(result).toContain("<title>Test Article – דרך הרוח</title>");
     expect(result).toContain('content="Test description"');
     expect(result).toContain('content="Test Article"');
     expect(result).toContain('content="https://example.com/image.jpg"');
@@ -306,7 +306,7 @@ describe("static route SEO — /tarot/deck", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה");
+    expect(html).toContain("החפיסה המלאה — 78 קלפי הטארוט של דרך הרוח");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/tarot/deck`);
   });
 });
@@ -320,7 +320,7 @@ describe("static route SEO — /accessibility", () => {
       `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`,
       req,
     );
-    expect(html).toContain("הצהרת נגישות | רוח חכמה");
+    expect(html).toContain("הצהרת נגישות | דרך הרוח");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/accessibility`);
   });
 });
@@ -338,7 +338,7 @@ describe("tarot card page SEO — /tarot/card/<slug>", () => {
 
     const seo = await resolveTarotCardSeo("the-fool");
     expect(seo).not.toBeNull();
-    expect(seo!.title).toBe("השוטה — פירוש הקלף בטארוט | רוח חכמה");
+    expect(seo!.title).toBe("השוטה — פירוש הקלף בטארוט | דרך הרוח");
     expect(seo!.description).toContain("התחלה חדשה");
     expect(seo!.description).toContain("The Fool");
     expect(seo!.canonicalUrl).toBe(`${SITE_URL_PRODUCTION}/tarot/card/the-fool`);
@@ -436,7 +436,7 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
     );
     const { status, html } = await run("/category/%D7%9B%D7%9C%D7%9C%D7%99");
     expect(status).toBe(200);
-    expect(html).toContain("כללי – מאמרים – רוח חכמה");
+    expect(html).toContain("כללי – מאמרים – דרך הרוח");
     expect(html).toContain(`${SITE_URL_PRODUCTION}/category/%D7%9B%D7%9C%D7%9C%D7%99`);
   });
 

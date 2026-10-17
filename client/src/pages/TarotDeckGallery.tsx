@@ -58,7 +58,7 @@ function CardTile({ card }: { card: CardStruct }) {
 }
 
 export default function TarotDeckGallery() {
-  useDocumentTitle("החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה");
+  useDocumentTitle("החפיסה המלאה — 78 קלפי הטארוט של דרך הרוח");
   const sections = deckSections();
 
   return (
@@ -223,7 +223,7 @@ export default function TarotDeckGallery() {
           </div>
           <p style={{ maxWidth: 540, margin: "18px auto 0", fontSize: 14, lineHeight: 1.8, color: "oklch(0.45 0.03 58)" }}>
             השימוש בחפיסה חופשי — להורדה, להדפסה, לשיתוף וליצירה — בתנאי אחד:
-            בכל פרסום או שימוש פומבי יש לציין את <strong>רוח חכמה</strong> כמקור ולצרף
+            בכל פרסום או שימוש פומבי יש לציין את <strong>דרך הרוח</strong> כמקור ולצרף
             קישור פעיל אל <a href="https://ruachwisdom.org/tarot" style={{ color: "oklch(0.45 0.10 55)", fontWeight: 600 }}>ruachwisdom.org/tarot</a>.
           </p>
           <p style={{ marginTop: 14, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>

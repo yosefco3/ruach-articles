@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { ArrowLeft, Accessibility as AccessibilityIcon } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
@@ -9,10 +10,11 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
  */
 
 const LAST_UPDATED = "10 בספטמבר 2026";
-const CONTACT_EMAIL = "yosefco12@gmail.com";
 
 export default function Accessibility() {
-  useDocumentTitle("הצהרת נגישות | רוח חכמה");
+  const { data: contactEmailData } = trpc.contact.getEmail.useQuery();
+  const contactEmail = contactEmailData?.email ?? null;
+  useDocumentTitle("הצהרת נגישות | דרך הרוח");
 
   return (
     <div className="min-h-screen" dir="rtl">
@@ -36,7 +38,7 @@ export default function Accessibility() {
 
         <div className="prose-rtl max-w-none space-y-6">
           <p>
-            אתר רוח חכמה הוא אתר תוכן חינמי בנושאי רוחניות, פילוסופיה וריפוי. אנו
+            אתר דרך הרוח הוא אתר תוכן חינמי בנושאי רוחניות, פילוסופיה וריפוי. אנו
             רואים חשיבות בהנגשת התוכן לכלל הציבור, ובכלל זה אנשים עם מוגבלות,
             ופועלים להתאמת האתר להנחיות הנגישות WCAG 2.1 ברמה AA, ברוח התקן
             הישראלי (ת&quot;י 5568).
@@ -71,12 +73,14 @@ export default function Accessibility() {
             שתפנו אלינו ונטפל בפנייה בהקדם:
           </p>
           <ul className="list-disc pr-6 space-y-2">
-            <li>
-              בדוא&quot;ל:{" "}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-4">
-                {CONTACT_EMAIL}
-              </a>
-            </li>
+            {contactEmail && (
+              <li>
+                בדוא&quot;ל:{" "}
+                <a href={`mailto:${contactEmail}`} className="text-primary underline underline-offset-4">
+                  {contactEmail}
+                </a>
+              </li>
+            )}
             <li>
               דרך{" "}
               <Link href="/contact" className="text-primary underline underline-offset-4">

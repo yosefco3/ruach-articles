@@ -148,7 +148,7 @@ describe("card page view (/tarot/card/<slug>)", () => {
     expect(page.view.name).toBe("השוטה");
     expect(page.view.summary).toBe("התחלה");
     expect(page.view.interpretationHtml).toBe("<p>גוף</p>");
-    expect(page.alt).toBe("קלף השוטה (The Fool) — חפיסת הטארוט של רוח חכמה");
+    expect(page.alt).toBe("קלף השוטה (The Fool) — חפיסת הטארוט של דרך הרוח");
     expect(page.view.imageUrl).toContain("/tarot-cards/major-00.webp");
   });
 
@@ -167,7 +167,7 @@ describe("card page view (/tarot/card/<slug>)", () => {
 
   it("cardAltText prefers the override name and keeps the en name", () => {
     expect(cardAltText(fool)).toContain("השוטה");
-    expect(cardAltText(fool, "התם")).toBe("קלף התם (The Fool) — חפיסת הטארוט של רוח חכמה");
+    expect(cardAltText(fool, "התם")).toBe("קלף התם (The Fool) — חפיסת הטארוט של דרך הרוח");
   });
 });
 

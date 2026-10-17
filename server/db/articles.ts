@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { articles, users, attachments, comments, likes, teachers, type InsertArticle } from "../../drizzle/schema";
 import { getDb } from "./connection";
+import { AUTHOR_NAME } from "@shared/const";
 import { safeDeleteObject } from "./storage-cleanup";
 
 export async function getArticles(opts?: { category?: string; published?: boolean; bookId?: number }) {
@@ -25,7 +26,7 @@ export async function getArticles(opts?: { category?: string; published?: boolea
       createdAt: articles.createdAt,
       updatedAt: articles.updatedAt,
       authorId: articles.authorId,
-      authorName: users.name,
+      authorName: sql<string>`COALESCE(${teachers.name}, ${AUTHOR_NAME})`,
       bookId: articles.bookId,
       bookRole: articles.bookRole,
       chapterNo: articles.chapterNo,
@@ -73,7 +74,7 @@ export async function getNextArticleInCategory(currentSlug: string, category: st
     .select({
       id: articles.id, title: articles.title, slug: articles.slug, excerpt: articles.excerpt,
       coverImage: articles.coverImage, category: articles.category, tags: articles.tags,
-      createdAt: articles.createdAt, sortOrder: articles.sortOrder, authorName: users.name,
+      createdAt: articles.createdAt, sortOrder: articles.sortOrder, authorName: sql<string>`${AUTHOR_NAME}`,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
@@ -95,7 +96,7 @@ export async function getRandomArticle(excludeId?: number) {
     .select({
       id: articles.id, title: articles.title, slug: articles.slug, excerpt: articles.excerpt,
       coverImage: articles.coverImage, category: articles.category, tags: articles.tags,
-      createdAt: articles.createdAt, authorName: users.name,
+      createdAt: articles.createdAt, authorName: sql<string>`${AUTHOR_NAME}`,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
@@ -111,7 +112,8 @@ export async function getArticleBySlug(slug: string) {
     id: articles.id, title: articles.title, slug: articles.slug, excerpt: articles.excerpt,
     body: articles.body, coverImage: articles.coverImage, category: articles.category,
     tags: articles.tags, published: articles.published, createdAt: articles.createdAt,
-    updatedAt: articles.updatedAt, authorId: articles.authorId, authorName: users.name,
+    updatedAt: articles.updatedAt, authorId: articles.authorId,
+    authorName: sql<string>`COALESCE(${teachers.name}, ${AUTHOR_NAME})`,
     bookId: articles.bookId, bookRole: articles.bookRole, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
     teacherId: articles.teacherId, teacherName: teachers.name, teacherSlug: teachers.slug,
   }).from(articles).leftJoin(users, eq(articles.authorId, users.id)).leftJoin(teachers, eq(articles.teacherId, teachers.id))

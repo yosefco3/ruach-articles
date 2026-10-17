@@ -24,7 +24,7 @@ export default function TarotCardPage() {
 
   const page = content ? cardPageView(content, slug) : null;
   useDocumentTitle(
-    page ? `${page.view.name} — פירוש הקלף בטארוט | רוח חכמה` : "טארוט — רוח חכמה",
+    page ? `${page.view.name} — פירוש הקלף בטארוט | דרך הרוח` : "טארוט — דרך הרוח",
   );
 
   if (!content) return null; // SSR prefetch ממלא; ברענון-לקוח רגע של ריק
@@ -50,7 +50,7 @@ export default function TarotCardPage() {
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 24px 96px" }}>
         {/* ── ניווט עליון (breadcrumb) ── */}
         <nav aria-label="ניווט" style={{ fontSize: 14, color: "oklch(0.50 0.03 60)" }}>
-          <Link href="/" style={LINK_STYLE}>רוח חכמה</Link>
+          <Link href="/" style={LINK_STYLE}>דרך הרוח</Link>
           {" › "}
           <Link href="/tarot" style={LINK_STYLE}>טארוט</Link>
           {" › "}

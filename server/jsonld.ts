@@ -1,13 +1,13 @@
-import { SITE_URL_PRODUCTION } from "@shared/const";
+import { SITE_URL_PRODUCTION, SITE_NAME, AUTHOR_NAME } from "@shared/const";
 
 // ─── schema.org JSON-LD builders ─────────────────────────────────────────────
 //
 // Pure builders that return plain objects; server/seo.ts serialises them into
 // <script type="application/ld+json"> tags inside the SSR <head>. Structured data
 // lets Google build rich results (article cards, breadcrumbs) and a brand entity
-// (Organization + WebSite) around "רוח חכמה" / "יוסף כהן".
+// (Organization + WebSite) around the site brand and the author's pen name (shared/const).
 
-const ORG_NAME = "רוח חכמה";
+const ORG_NAME = SITE_NAME;
 const LOGO_URL = `${SITE_URL_PRODUCTION}/favicon.png`;
 
 /**
@@ -23,7 +23,7 @@ export function organizationLd(): Record<string, unknown> {
     name: ORG_NAME,
     url: SITE_URL_PRODUCTION,
     logo: LOGO_URL,
-    founder: { "@type": "Person", name: "יוסף כהן" },
+    founder: { "@type": "Person", name: AUTHOR_NAME },
     ...(SOCIAL_PROFILES.length ? { sameAs: SOCIAL_PROFILES } : {}),
   };
 }
@@ -65,7 +65,7 @@ export function articleLd(a: ArticleLdInput): Record<string, unknown> {
     description: a.description,
     mainEntityOfPage: a.url,
     ...(a.image ? { image: a.image } : {}),
-    author: { "@type": "Person", name: a.authorName || "יוסף כהן" },
+    author: { "@type": "Person", name: a.authorName || AUTHOR_NAME },
     publisher: organizationLd(),
     ...(a.datePublished ? { datePublished: a.datePublished } : {}),
     ...(a.dateModified ? { dateModified: a.dateModified } : {}),
@@ -95,7 +95,7 @@ export function bookLd(b: BookLdInput): Record<string, unknown> {
     url: b.url,
     mainEntityOfPage: b.url,
     ...(b.image ? { image: b.image } : {}),
-    author: { "@type": "Person", name: b.authorName || "יוסף כהן" },
+    author: { "@type": "Person", name: b.authorName || AUTHOR_NAME },
     ...(b.isbn ? { isbn: b.isbn } : {}),
     ...(b.publisher ? { publisher: { "@type": "Organization", name: b.publisher } } : {}),
     inLanguage: "he-IL",

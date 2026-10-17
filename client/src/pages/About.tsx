@@ -17,7 +17,7 @@ export default function About() {
 
   const title = aboutContent?.title || "אודות";
   const subtitle = settings?.heroSubtitle || "";
-  const siteTitle = settings?.siteTitle || "רוּחַ חָכְמָה";
+  const siteTitle = settings?.siteTitle || "דרך הרוח";
 
   return (
     <div className="min-h-screen" dir="rtl">

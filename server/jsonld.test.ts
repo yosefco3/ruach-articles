@@ -16,7 +16,7 @@ describe("jsonld builders", () => {
     const org = organizationLd();
     expect(org["@type"]).toBe("Organization");
     expect(org["@id"]).toBe(`${SITE_URL_PRODUCTION}/#organization`);
-    expect(org.name).toBe("רוח חכמה");
+    expect(org.name).toBe("דרך הרוח");
     expect(org.logo).toBe(`${SITE_URL_PRODUCTION}/favicon.png`);
     // sameAs omitted while no social profiles are configured
     expect(org).not.toHaveProperty("sameAs");
@@ -43,7 +43,7 @@ describe("jsonld builders", () => {
     });
     expect(a["@type"]).toBe("BlogPosting");
     expect(a.headline).toBe("כותרת");
-    expect(a.author).toEqual({ "@type": "Person", name: "יוסף כהן" });
+    expect(a.author).toEqual({ "@type": "Person", name: "יונתן בן חנן" });
     expect(a.publisher).toMatchObject({ "@type": "Organization" });
     expect(a).not.toHaveProperty("image");
     expect(a).not.toHaveProperty("datePublished");
@@ -99,7 +99,7 @@ describe("jsonld builders", () => {
     const base = { title: "דרך הרוח", url: `${SITE_URL_PRODUCTION}/book/derech-haruach`, description: "d" };
     const plain = bookLd(base);
     expect(plain["@type"]).toBe("Book");
-    expect(plain.author).toEqual({ "@type": "Person", name: "יוסף כהן" });
+    expect(plain.author).toEqual({ "@type": "Person", name: "יונתן בן חנן" });
     expect(plain).not.toHaveProperty("offers");
     expect(plain).not.toHaveProperty("isbn");
     const full = bookLd({ ...base, authorName: "יונתן בן חנן", isbn: "978-1", publisher: "הוצאה",

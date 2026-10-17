@@ -1,10 +1,9 @@
 import { type Request, type Response } from "express";
 import { getArticles } from "./db";
-import { SITE_URL_PRODUCTION } from "@shared/const";
+import { SITE_URL_PRODUCTION, SITE_NAME, SITE_DESCRIPTION } from "@shared/const";
 
-const FEED_TITLE = "רוח חכמה";
-const FEED_DESCRIPTION =
-  "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.";
+const FEED_TITLE = SITE_NAME;
+const FEED_DESCRIPTION = SITE_DESCRIPTION;
 const MAX_ITEMS = 30;
 
 function escapeXml(str: string): string {

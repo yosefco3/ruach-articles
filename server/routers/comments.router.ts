@@ -43,7 +43,7 @@ export const createCommentsRouter = (deps: RouterDeps) => router({
             const resend = new Resend(process.env.RESEND_API_KEY);
             const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || DEFAULT_FROM_EMAIL;
             await resend.emails.send({
-              from: `${settings.siteTitle || "רוּחַ חָכְמָה"} <${FROM_EMAIL}>`,
+              from: `${settings.siteTitle || "דרך הרוח"} <${FROM_EMAIL}>`,
               to: adminEmail,
               subject: `תגובה חדשה: ${article.title}`,
               html: `<div dir="rtl" style="font-family:Arial,sans-serif;background:#1a1008;color:#f0e6d0;padding:32px;border-radius:12px;max-width:600px;">

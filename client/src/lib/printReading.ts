@@ -132,7 +132,7 @@ function aiSectionHtml(aiHtml: string | null | undefined): string {
 
 function footerHtml(): string {
   const date = new Date().toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" });
-  return `<div class="foot">הודפס מאתר רוח חכמה · ruachwisdom.org · ${escapeHtml(date)}</div>`;
+  return `<div class="foot">הודפס מאתר דרך הרוח · ruachwisdom.org · ${escapeHtml(date)}</div>`;
 }
 
 // ── טארוט ──

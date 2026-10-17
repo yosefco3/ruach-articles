@@ -4,7 +4,7 @@ import { parsePurchaseLinks, BOOK_STATUS_LABELS } from "@shared/books";
 import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
 import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
-import { SITE_URL_PRODUCTION } from "@shared/const";
+import { SITE_URL_PRODUCTION, SITE_NAME as BRAND, SITE_DESCRIPTION, AUTHOR_NAME } from "@shared/const";
 import { legacyArticleSlugTarget } from "@shared/legacySlugs";
 import { isRetiredArticle, RETIRED_ARTICLE_TARGET } from "@shared/retiredArticles";
 import { siteLd, articleLd, bookLd, personLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
@@ -34,7 +34,7 @@ interface SeoData {
   };
 }
 
-const SITE_NAME = "רוח חכמה";
+const SITE_NAME = BRAND;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -52,10 +52,10 @@ export function toAbsoluteImageUrl(url: string | null | undefined): string | und
 // ─── Default SEO (fallback) ─────────────────────────────────────────────────
 
 const DEFAULT_SEO: SeoData = {
-  title: "רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי",
-  description: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
-  ogTitle: "רוח חכמה – מאמרים ברוחניות, פילוסופיה וריפוי",
-  ogDescription: "האתר של יוסף כהן - פלטפורמה למאמרים בנושאי יהדות, פילוסופיה, רוחניות וריפוי. קריאה ממוחשבת באי צ'ינג.",
+  title: "דרך הרוח – הנבואה הטבעית: ספרים, קריאות ומורים",
+  description: SITE_DESCRIPTION,
+  ogTitle: "דרך הרוח – הנבואה הטבעית",
+  ogDescription: SITE_DESCRIPTION,
   ogImage: `${SITE_URL_PRODUCTION}/og-image.jpg`,
   ogUrl: SITE_URL_PRODUCTION,
   ogType: "website",
@@ -66,9 +66,9 @@ const DEFAULT_SEO: SeoData = {
 
 /** Head for a page that does not exist — served with HTTP 404 (see pageStatus). */
 export const NOT_FOUND_SEO: SeoData = {
-  title: "הדף לא נמצא – רוח חכמה",
+  title: "הדף לא נמצא – דרך הרוח",
   description: "הדף שחיפשתם אינו קיים. אולי הכתובת שגויה, או שהדף הוסר.",
-  ogTitle: "הדף לא נמצא – רוח חכמה",
+  ogTitle: "הדף לא נמצא – דרך הרוח",
   ogDescription: "הדף שחיפשתם אינו קיים.",
   ogUrl: SITE_URL_PRODUCTION,
   ogType: "website",
@@ -176,7 +176,7 @@ const ICHING_SEO: SeoData = {
 };
 
 const DERECH_SEO: SeoData = {
-  title: "דרך הרוח — הנבואה הטבעית | רוח חכמה",
+  title: "דרך הרוח — הנבואה הטבעית | דרך הרוח",
   description:
     "השיטה שמאחורי כל המאמרים באתר: חמישה עקרונות לקשר חי, טבעי ובלתי-מתווך עם האל — מהרמב\"ם והרמח\"ל ועד דון חואן.",
   ogTitle: "דרך הרוח — הנבואה הטבעית",
@@ -190,10 +190,10 @@ const DERECH_SEO: SeoData = {
 };
 
 const TAROT_SEO: SeoData = {
-  title: "קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה",
+  title: "קריאת טארוט אונליין חינם — שליפת קלפים בעברית | דרך הרוח",
   description:
     "קריאת טארוט אונליין בחינם: שלפו שלושה קלפים מחפיסת ריידר־וייט מקורית שצוירה לאתר, עם פירוש מלא בעברית לכל קלף. מראה סמלית להבנת המצב — לא הגדת עתידות, והשאלה אינה נשמרת.",
-  ogTitle: "קריאת טארוט אונליין חינם — רוח חכמה",
+  ogTitle: "קריאת טארוט אונליין חינם — דרך הרוח",
   ogDescription:
     "שלפו שלושה קלפים מחפיסה מקורית עם פירוש מלא בעברית — חינם, והשאלה אינה נשמרת.",
   ogUrl: `${SITE_URL_PRODUCTION}/tarot`,
@@ -204,10 +204,10 @@ const TAROT_SEO: SeoData = {
 };
 
 const TAROT_DECK_SEO: SeoData = {
-  title: "החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה",
+  title: "החפיסה המלאה — 78 קלפי הטארוט של דרך הרוח",
   description:
     "כל 78 הקלפים של חפיסת הטארוט המקורית שצוירה לאתר בסגנון גואש — ארקנה גדולה וארבע הסדרות, צמודים לקומפוזיציות הקלאסיות של ריידר־וייט, בלי צלבים ובלי עירום. כולל הורדה חופשית.",
-  ogTitle: "החפיסה המלאה — 78 קלפי הטארוט של רוח חכמה",
+  ogTitle: "החפיסה המלאה — 78 קלפי הטארוט של דרך הרוח",
   ogDescription:
     "כל 78 הקלפים של החפיסה המקורית של האתר, בסגנון גואש — כולל הורדה חופשית.",
   ogUrl: `${SITE_URL_PRODUCTION}/tarot/deck`,
@@ -218,11 +218,11 @@ const TAROT_DECK_SEO: SeoData = {
 };
 
 const ACCESSIBILITY_SEO: SeoData = {
-  title: "הצהרת נגישות | רוח חכמה",
+  title: "הצהרת נגישות | דרך הרוח",
   description:
-    "הצהרת הנגישות של אתר רוח חכמה: מה נגיש באתר, מה בתהליך הנגשה, ולאן פונים בכל קושי או הצעה.",
-  ogTitle: "הצהרת נגישות | רוח חכמה",
-  ogDescription: "מה נגיש באתר רוח חכמה, מה בתהליך, ודרכי פנייה.",
+    "הצהרת הנגישות של אתר דרך הרוח: מה נגיש באתר, מה בתהליך הנגשה, ולאן פונים בכל קושי או הצעה.",
+  ogTitle: "הצהרת נגישות | דרך הרוח",
+  ogDescription: "מה נגיש באתר דרך הרוח, מה בתהליך, ודרכי פנייה.",
   ogUrl: `${SITE_URL_PRODUCTION}/accessibility`,
   ogType: "website",
   ogLocale: "he_IL",
@@ -231,7 +231,7 @@ const ACCESSIBILITY_SEO: SeoData = {
 };
 
 const TAROT_GUIDE_SEO: SeoData = {
-  title: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים בעברית | רוח חכמה",
+  title: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים בעברית | דרך הרוח",
   description:
     "מה זה טארוט, מהי חפיסת ריידר־וייט (1909), מה ההבדל בין ארקנה גדולה לקטנה ואיך קוראים פריסת שלושה קלפים — מדריך מלא בעברית עם קישור לפירוש של כל אחד מ-78 הקלפים.",
   ogTitle: "המדריך לקלפי הטארוט — פירוש כל 78 הקלפים",
@@ -245,7 +245,7 @@ const TAROT_GUIDE_SEO: SeoData = {
     siteLd(),
     faqPageLd(TAROT_GUIDE_FAQ.map((f) => ({ question: f.question, answer: f.answer }))),
     breadcrumbLd([
-      { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+      { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
       { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
       { name: "המדריך לקלפים", url: `${SITE_URL_PRODUCTION}/tarot/guide` },
     ]),
@@ -366,9 +366,9 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
   }
   const name = row?.name.trim() ? row.name : card.he;
   const cardUrl = `${SITE_URL_PRODUCTION}/tarot/card/${cardSlug(card)}`;
-  const title = `${name} — פירוש הקלף בטארוט | רוח חכמה`;
+  const title = `${name} — פירוש הקלף בטארוט | דרך הרוח`;
   const description = row?.summary.trim()
-    ? `${name} (${card.en}) — ${row.summary}. פירוש מלא של הקלף בחפיסת ריידר־וייט, מתוך חפיסת הטארוט המקורית של רוח חכמה.`
+    ? `${name} (${card.en}) — ${row.summary}. פירוש מלא של הקלף בחפיסת ריידר־וייט, מתוך חפיסת הטארוט המקורית של דרך הרוח.`
     : `פירוש הקלף ${name} (${card.en}) בטארוט — משמעות, סמליות ומה הוא אומר בקריאה.`;
   const image = toAbsoluteImageUrl(cardImagePath(card.id));
 
@@ -378,7 +378,7 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
     ogTitle: title,
     ogDescription: description,
     ogImage: image,
-    ogImageAlt: `קלף ${name} — חפיסת הטארוט של רוח חכמה`,
+    ogImageAlt: `קלף ${name} — חפיסת הטארוט של דרך הרוח`,
     ogUrl: cardUrl,
     ogType: "article",
     ogLocale: "he_IL",
@@ -389,10 +389,10 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
         url: cardUrl,
         description,
         image,
-        authorName: "יוסף כהן",
+        authorName: AUTHOR_NAME,
       }),
       breadcrumbLd([
-        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
         { name: "טארוט", url: `${SITE_URL_PRODUCTION}/tarot` },
         { name, url: cardUrl },
       ]),
@@ -497,8 +497,8 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
   if (!article || !article.published) return null;
 
   const articleUrl = `${SITE_URL_PRODUCTION}/article/${article.slug}`;
-  const title = `${article.title} – רוח חכמה`;
-  const description = article.excerpt || `מאמר מאת ${article.authorName || "יוסף כהן"} בנושא ${article.category}`;
+  const title = `${article.title} – דרך הרוח`;
+  const description = article.excerpt || `מאמר מאת ${article.authorName || AUTHOR_NAME} בנושא ${article.category}`;
   const image = toAbsoluteImageUrl(article.coverImage);
 
   // Human-readable category name for the breadcrumb (article.category is a slug).
@@ -520,7 +520,7 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
     articleMeta: {
       publishedTime: toIsoDateTime(article.createdAt),
       modifiedTime: toIsoDateTime(article.updatedAt || article.createdAt),
-      author: article.authorName || "יוסף כהן",
+      author: article.authorName || AUTHOR_NAME,
       section: categoryName,
     },
     jsonLd: [
@@ -534,7 +534,7 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
         dateModified: toIsoDateTime(article.updatedAt || article.createdAt),
       }),
       breadcrumbLd([
-        { name: "רוח חכמה", url: SITE_URL_PRODUCTION },
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
         { name: categoryName, url: categoryUrl },
         { name: article.title, url: articleUrl },
       ]),
@@ -664,7 +664,7 @@ async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
 
   const categoryUrl = `${SITE_URL_PRODUCTION}/category/${encodeURIComponent(slug)}`;
   const categoryName = category?.name || slug;
-  const title = `${categoryName} – מאמרים – רוח חכמה`;
+  const title = `${categoryName} – מאמרים – דרך הרוח`;
   const description = category?.description || `מאמרים בקטגוריית ${categoryName}`;
 
   return {

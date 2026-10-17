@@ -12,7 +12,7 @@ export default function CategoryPage() {
   const { data: articles, isLoading } = trpc.articles.list.useQuery({ category });
   const { data: categoryInfo } = trpc.categories.bySlug.useQuery({ slug: category });
   const { getCategoryLabel, getCategoryBadgeStyle } = useDynamicCategories();
-  useDocumentTitle(`${categoryInfo?.name ?? category} – מאמרים – רוח חכמה`);
+  useDocumentTitle(`${categoryInfo?.name ?? category} – מאמרים – דרך הרוח`);
 
   const color = categoryInfo?.color || "#8B6914";
 

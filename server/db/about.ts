@@ -4,9 +4,9 @@ import { getDb } from "./connection";
 
 export async function getAboutPage() {
   const db = await getDb();
-  if (!db) return { id: 1, title: "אודות", content: "" };
+  if (!db) return { id: 1, title: "על המחבר", content: "" };
   const rows = await db.select().from(aboutPage).limit(1);
-  return rows.length > 0 ? rows[0] : { id: 1, title: "אודות", content: "" };
+  return rows.length > 0 ? rows[0] : { id: 1, title: "על המחבר", content: "" };
 }
 
 export async function updateAboutPage(data: Partial<InsertAboutPage>) {

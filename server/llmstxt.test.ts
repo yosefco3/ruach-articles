@@ -36,8 +36,9 @@ describe("llms.txt", () => {
       expect.objectContaining({ "Content-Type": "text/markdown; charset=utf-8" }),
     );
     const body = res.send.mock.calls[0][0] as string;
-    expect(body).toMatch(/^# רוח חכמה/);
-    expect(body).toContain("> אתר מאמרים בעברית");
+    expect(body).toMatch(/^# דרך הרוח/);
+    expect(body).toContain("> אתר שיטת");
+    expect(body).not.toContain("יוסף כהן");
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/derech)`);
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/iching)`);
     expect(body).toContain(`(${SITE_URL_PRODUCTION}/tarot)`);

@@ -34,7 +34,7 @@ export default function ArticlePage() {
     return i >= 0 ? siblings[i + 1] : undefined;
   })();
   useDocumentTitle(
-    article ? (isChapter && book ? `${article.title} – ${book.title} – דרך הרוח` : `${article.title} – רוח חכמה`) : undefined,
+    article ? (isChapter && book ? `${article.title} – ${book.title} – דרך הרוח` : `${article.title} – דרך הרוח`) : undefined,
   );
 
   const { data: comments, isLoading: commentsLoading } = trpc.comments.list.useQuery(
@@ -163,7 +163,7 @@ export default function ArticlePage() {
                 <User className="w-4 h-4" />
                 {article.teacherName}
               </Link>
-            ) : article.authorName && !isChapter ? (
+            ) : !isChapter ? (
               <span className="flex items-center gap-1.5">
                 <User className="w-4 h-4" />
                 {article.authorName}

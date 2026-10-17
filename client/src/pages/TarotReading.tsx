@@ -68,7 +68,7 @@ function prefersReducedMotion(): boolean {
 
 export default function TarotReading() {
   const { data, isLoading } = trpc.tarot.getContent.useQuery();
-  useDocumentTitle("קריאת טארוט אונליין חינם — שליפת קלפים בעברית | רוח חכמה");
+  useDocumentTitle("קריאת טארוט אונליין חינם — שליפת קלפים בעברית | דרך הרוח");
 
   const { isAuthenticated } = useAuth();
   const [phase, setPhase] = useState<Phase>("intro");
@@ -399,7 +399,7 @@ function DeckDownload() {
         <a href="/tarot/deck" style={{ color: "oklch(0.45 0.10 55)", fontWeight: 700 }}>
           לצפות בכל 78 הקלפים
         </a>
-        , להוריד, להדפיס ולהשתמש באופן חופשי — בתנאי ייחוס לרוח חכמה וצירוף
+        , להוריד, להדפיס ולהשתמש באופן חופשי — בתנאי ייחוס לדרך הרוח וצירוף
         קישור פעיל לאתר בכל פרסום או שימוש פומבי.
       </p>
       <a

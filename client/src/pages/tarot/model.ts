@@ -256,7 +256,7 @@ export function cardFallbackGlyph(cardId: string): string {
 
 /** alt עשיר לתמונת קלף — שם + שם אנגלי + מקור החפיסה (SEO תמונות). */
 export function cardAltText(struct: CardStruct, name?: string): string {
-  return `קלף ${name?.trim() || struct.he} (${struct.en}) — חפיסת הטארוט של רוח חכמה`;
+  return `קלף ${name?.trim() || struct.he} (${struct.en}) — חפיסת הטארוט של דרך הרוח`;
 }
 
 export interface CardPageView {

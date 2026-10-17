@@ -80,8 +80,8 @@ export type InsertAttachment = typeof attachments.$inferInsert;
 
 export const siteSettings = mysqlTable("siteSettings", {
   id: int("id").autoincrement().primaryKey(),
-  siteTitle: varchar("siteTitle", { length: 256 }).default("רוּחַ").notNull(),
-  heroSubtitle: varchar("heroSubtitle", { length: 512 }).default("רוחניות xb7 פילוסופיה xb7 ריפוי").notNull(),
+  siteTitle: varchar("siteTitle", { length: 256 }).default("דרך הרוח").notNull(),
+  heroSubtitle: varchar("heroSubtitle", { length: 512 }).default("הנבואה הטבעית").notNull(),
   contactEmail: varchar("contactEmail", { length: 320 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

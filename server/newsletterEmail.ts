@@ -86,7 +86,7 @@ export async function sendArticleNewsletter(
   article: ArticleEmailPayload
 ): Promise<{ sent: number; failed: number }> {
   const settings = await getSiteSettings();
-  const siteTitle = (settings as any)?.siteTitle || "רוּחַ חָכְמָה";
+  const siteTitle = (settings as any)?.siteTitle || "דרך הרוח";
 
   const allSubscribers = await getNewsletterSubscribers();
   const active = allSubscribers.filter((s) => s.active);

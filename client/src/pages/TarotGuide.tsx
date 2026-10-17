@@ -35,7 +35,7 @@ const H3_STYLE = {
 const P_STYLE = { fontSize: 17, lineHeight: 1.95, margin: "0 0 14px" } as const;
 
 export default function TarotGuide() {
-  useDocumentTitle("המדריך לקלפי הטארוט — פירוש כל 78 הקלפים | רוח חכמה");
+  useDocumentTitle("המדריך לקלפי הטארוט — פירוש כל 78 הקלפים | דרך הרוח");
   const sections = deckSections();
 
   return (
@@ -51,7 +51,7 @@ export default function TarotGuide() {
     >
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "56px 24px 96px" }}>
         <nav aria-label="ניווט" style={{ fontSize: 14, color: "oklch(0.50 0.03 60)" }}>
-          <Link href="/" style={LINK_STYLE}>רוח חכמה</Link>
+          <Link href="/" style={LINK_STYLE}>דרך הרוח</Link>
           {" › "}
           <Link href="/tarot" style={LINK_STYLE}>טארוט</Link>
           {" › "}
