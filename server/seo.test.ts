@@ -6,6 +6,8 @@ vi.mock("./db", () => ({
   getArticles: vi.fn(),
   getCategoryBySlug: vi.fn(),
   getDerechContent: vi.fn(),
+  getBookBySlug: vi.fn(),
+  getBookById: vi.fn(),
 }));
 vi.mock("./db/tarot", () => ({ getCardText: vi.fn() }));
 
@@ -543,5 +545,83 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
   it("pageStatus defaults to 200 when the middleware did not run", async () => {
     const { pageStatus } = await import("./seo");
     expect(pageStatus({} as any)).toBe(200);
+  });
+
+  // ── site-pivot-books: /books, /book/<slug>, /book/<slug>/<chapter> ──
+  const book = (o: Record<string, unknown> = {}) => ({
+    id: 5, slug: "derech-haruach", title: "דרך הרוח", subtitle: "הנבואה הטבעית", blurb: "<p>על הספר <b>בקצרה</b>.</p>",
+    coverImage: "/uploads/cover.webp", status: "coming_soon", visible: true, publisher: "", purchaseLinks: null,
+    tocJson: null, year: null, pages: null, isbn: "", sortOrder: 0, createdAt: new Date(), updatedAt: new Date(), ...o,
+  });
+  const chapter = (o: Record<string, unknown> = {}) => ({
+    id: 70, slug: "mavo", title: "מבוא: האלבום", excerpt: "", body: "<p>x</p>", coverImage: null, category: "derech-haruach",
+    tags: "", published: true, createdAt: new Date("2026-10-01"), updatedAt: new Date("2026-10-02"), authorId: 1,
+    authorName: "Yosef Cohen", bookId: 5, bookRole: "chapter", chapterNo: 0, chapterLabel: "מבוא", ...o,
+  });
+
+  it("/books is a static public page", async () => {
+    const { status, html } = await run("/books");
+    expect(status).toBe(200);
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/books`);
+  });
+
+  it("hidden or missing book → 404 noindex; visible book → 200 with Book JSON-LD", async () => {
+    const { getBookBySlug } = await import("./db");
+    vi.mocked(getBookBySlug).mockResolvedValue(book({ visible: false }) as any);
+    expect((await run("/book/derech-haruach")).status).toBe(404);
+    vi.mocked(getBookBySlug).mockResolvedValue(undefined as any);
+    expect((await run("/book/nope")).status).toBe(404);
+
+    vi.mocked(getBookBySlug).mockResolvedValue(book({ status: "available",
+      purchaseLinks: '[{"label":"בוקפוד","url":"https://bookfood.co.il/x","kind":"print"}]' }) as any);
+    const { status, html } = await run("/book/derech-haruach");
+    expect(status).toBe(200);
+    expect(html).toContain('rel="canonical" href="https://ruachwisdom.org/book/derech-haruach"');
+    expect(html).toContain("על הספר בקצרה.");
+    expect(html).toContain('"@type":"Book"');
+    expect(html).toContain('"@type":"Offer"');
+    expect(html).toContain("https://ruachwisdom.org/uploads/cover.webp");
+    expect(html).toContain("יונתן בן חנן");
+  });
+
+  it("chapter page: 404 unless published, attached to this book, and the book is visible", async () => {
+    const { getBookBySlug, getArticleBySlug } = await import("./db");
+    vi.mocked(getBookBySlug).mockResolvedValue(book() as any);
+    vi.mocked(getArticleBySlug).mockResolvedValue(chapter({ bookId: 9 }) as any);
+    expect((await run("/book/derech-haruach/mavo")).status).toBe(404);
+    vi.mocked(getArticleBySlug).mockResolvedValue(chapter({ published: false }) as any);
+    expect((await run("/book/derech-haruach/mavo")).status).toBe(404);
+    vi.mocked(getArticleBySlug).mockResolvedValue(chapter() as any);
+    vi.mocked(getBookBySlug).mockResolvedValue(book({ visible: false }) as any);
+    expect((await run("/book/derech-haruach/mavo")).status).toBe(404);
+
+    vi.mocked(getBookBySlug).mockResolvedValue(book() as any);
+    const { status, html } = await run("/book/derech-haruach/mavo");
+    expect(status).toBe(200);
+    expect(html).toContain('rel="canonical" href="https://ruachwisdom.org/book/derech-haruach/mavo"');
+    expect(html).toContain('"@type":"BlogPosting"');
+    expect(html).toContain("מבוא: האלבום");
+    expect(html).not.toContain("Yosef Cohen");
+  });
+
+  it("/article/<slug> of a chapter → 301 to its URL under the book", async () => {
+    const { seoMiddleware } = await import("./seo");
+    const { getArticleBySlug, getBookById } = await import("./db");
+    vi.mocked(getArticleBySlug).mockResolvedValue(chapter() as any);
+    vi.mocked(getBookById).mockResolvedValue(book() as any);
+    const res = { redirect: vi.fn() } as any;
+    const next = vi.fn();
+    await seoMiddleware({ method: "GET", path: "/article/mavo" } as any, res, next);
+    expect(res.redirect).toHaveBeenCalledWith(301, "/book/derech-haruach/mavo");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("htmlToDescription strips tags and cuts at a word boundary", async () => {
+    const { htmlToDescription } = await import("./seo");
+    expect(htmlToDescription("<p>שלום&nbsp;<b>עולם</b></p>")).toBe("שלום עולם");
+    const long = htmlToDescription("<p>" + "מילה ".repeat(60) + "</p>", 100);
+    expect(long.length).toBeLessThanOrEqual(101);
+    expect(long.endsWith("…")).toBe(true);
+    expect(htmlToDescription(null)).toBe("");
   });
 });

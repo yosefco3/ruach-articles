@@ -73,6 +73,45 @@ export function articleLd(a: ArticleLdInput): Record<string, unknown> {
   };
 }
 
+export interface BookLdInput {
+  title: string;
+  url: string;
+  description: string;
+  image?: string;
+  authorName?: string | null;
+  isbn?: string | null;
+  publisher?: string | null;
+  /** קישורי רכישה — רק כשהספר זמין; נהפכים ל-offers. */
+  offers?: { url: string; label: string }[];
+}
+
+/** schema.org Book — דף ספר (site-pivot-books). offers מופיעים רק כשיש קישורי רכישה. */
+export function bookLd(b: BookLdInput): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    name: b.title,
+    description: b.description,
+    url: b.url,
+    mainEntityOfPage: b.url,
+    ...(b.image ? { image: b.image } : {}),
+    author: { "@type": "Person", name: b.authorName || "יוסף כהן" },
+    ...(b.isbn ? { isbn: b.isbn } : {}),
+    ...(b.publisher ? { publisher: { "@type": "Organization", name: b.publisher } } : {}),
+    inLanguage: "he-IL",
+    ...(b.offers && b.offers.length > 0
+      ? {
+          offers: b.offers.map((o) => ({
+            "@type": "Offer",
+            url: o.url,
+            name: o.label,
+            availability: "https://schema.org/InStock",
+          })),
+        }
+      : {}),
+  };
+}
+
 export interface FaqItem {
   question: string;
   answer: string;

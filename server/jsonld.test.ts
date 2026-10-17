@@ -4,6 +4,7 @@ import {
   webSiteLd,
   siteLd,
   articleLd,
+  bookLd,
   breadcrumbLd,
   faqPageLd,
   jsonLdToScript,
@@ -92,5 +93,20 @@ describe("jsonld builders", () => {
     const out = jsonLdToScript({ name: "</script>" });
     expect(out).not.toContain("</script>");
     expect(out).toContain("\\u003c/script>");
+  });
+
+  it("bookLd: Book with author, optional isbn/publisher, offers only when given", () => {
+    const base = { title: "דרך הרוח", url: `${SITE_URL_PRODUCTION}/book/derech-haruach`, description: "d" };
+    const plain = bookLd(base);
+    expect(plain["@type"]).toBe("Book");
+    expect(plain.author).toEqual({ "@type": "Person", name: "יוסף כהן" });
+    expect(plain).not.toHaveProperty("offers");
+    expect(plain).not.toHaveProperty("isbn");
+    const full = bookLd({ ...base, authorName: "יונתן בן חנן", isbn: "978-1", publisher: "הוצאה",
+      offers: [{ url: "https://bookfood.co.il/x", label: "בוקפוד" }] });
+    expect(full.author).toEqual({ "@type": "Person", name: "יונתן בן חנן" });
+    expect(full.isbn).toBe("978-1");
+    expect(full.publisher).toEqual({ "@type": "Organization", name: "הוצאה" });
+    expect(full.offers).toEqual([{ "@type": "Offer", url: "https://bookfood.co.il/x", name: "בוקפוד", availability: "https://schema.org/InStock" }]);
   });
 });

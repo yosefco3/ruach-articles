@@ -1,12 +1,13 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent } from "./db";
+import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent, getBookBySlug, getBookById } from "./db";
+import { parsePurchaseLinks, BOOK_STATUS_LABELS } from "@shared/books";
 import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
 import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION } from "@shared/const";
 import { legacyArticleSlugTarget } from "@shared/legacySlugs";
 import { isRetiredArticle, RETIRED_ARTICLE_TARGET } from "@shared/retiredArticles";
-import { siteLd, articleLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
+import { siteLd, articleLd, bookLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -251,7 +252,19 @@ const TAROT_GUIDE_SEO: SeoData = {
   ],
 };
 
+const BOOKS_SEO: SeoData = {
+  title: "הספרים – דרך הרוח",
+  description: "ספרי שיטת דרך הרוח — הנבואה הטבעית: תקצירים, תוכן עניינים, פרקים לדוגמה וחומרי עזר.",
+  ogTitle: "הספרים – דרך הרוח",
+  ogDescription: "ספרי שיטת דרך הרוח — הנבואה הטבעית: תקצירים, תוכן עניינים, פרקים לדוגמה וחומרי עזר.",
+  ogUrl: `${SITE_URL_PRODUCTION}/books`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/books`,
+};
+
 const STATIC_ROUTE_SEO: Record<string, SeoData> = {
+  "/books": BOOKS_SEO,
   "/iching": ICHING_SEO,
   "/tarot": TAROT_SEO,
   "/tarot/deck": TAROT_DECK_SEO,
@@ -385,6 +398,7 @@ export async function resolveTarotCardSeo(slug: string): Promise<SeoData | null>
  */
 const STATIC_PUBLIC_PATHS = new Set([
   "/",
+  "/books",
   "/about",
   "/contact",
   "/derech",
@@ -426,6 +440,30 @@ function matchArticleSlug(pathname: string): string | null {
 export function matchTarotCardSlug(pathname: string): string | null {
   const match = pathname.match(/^\/tarot\/card\/([^/]+)$/);
   return match ? match[1] : null;
+}
+
+/** /book/<slug> */
+export function matchBookSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/book\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+/** /book/<book>/<chapter-or-material slug> */
+export function matchBookChapter(pathname: string): { book: string; slug: string } | null {
+  const match = pathname.match(/^\/book\/([^/]+)\/([^/]+)$/);
+  return match ? { book: match[1], slug: match[2] } : null;
+}
+
+/** HTML → טקסט קצר ל-meta description. */
+export function htmlToDescription(html: string | null | undefined, max = 160): string {
+  const text = (html ?? "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,;:!?…])/g, "$1")
+    .trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  return cut.slice(0, Math.max(cut.lastIndexOf(" "), 80)).trim() + "…";
 }
 
 function matchCategorySlug(pathname: string): string | null {
@@ -486,6 +524,88 @@ async function resolveArticleSeo(slug: string): Promise<SeoData | null> {
 }
 
 /** ISO-8601 timestamp for schema.org date fields; undefined if unparseable. */
+/** דף ספר — null כשאין ספר כזה או שהוא עדיין מוסתר (404 + noindex). */
+export async function resolveBookSeo(slug: string): Promise<SeoData | null> {
+  const book = await getBookBySlug(slug);
+  if (!book || !book.visible) return null;
+  const url = `${SITE_URL_PRODUCTION}/book/${encodeURIComponent(book.slug)}`;
+  const status = BOOK_STATUS_LABELS[book.status] ?? "";
+  const title = `${book.title}${book.subtitle ? ` — ${book.subtitle}` : ""} – דרך הרוח`;
+  const description =
+    htmlToDescription(book.blurb) || book.subtitle || `${book.title} — ספר מאת יונתן בן חנן (${status}).`;
+  const image = toAbsoluteImageUrl(book.coverImage);
+  const links = book.status === "available" ? parsePurchaseLinks(book.purchaseLinks) : [];
+  return {
+    title,
+    description,
+    ogTitle: book.title,
+    ogDescription: description,
+    ogImage: image,
+    ogImageAlt: image ? `כריכת הספר ${book.title}` : undefined,
+    ogUrl: url,
+    ogType: "book",
+    ogLocale: "he_IL",
+    canonicalUrl: url,
+    jsonLd: [
+      bookLd({
+        title: book.title, url, description, image, authorName: "יונתן בן חנן",
+        isbn: book.isbn, publisher: book.publisher,
+        offers: links.map((l) => ({ url: l.url, label: l.label })),
+      }),
+      breadcrumbLd([
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
+        { name: "ספרים", url: `${SITE_URL_PRODUCTION}/books` },
+        { name: book.title, url },
+      ]),
+    ],
+  };
+}
+
+/** פרק לדוגמה / חומר עזר — חייב להיות מפורסם, משויך לספר הזה, והספר גלוי. */
+export async function resolveBookChapterSeo(bookSlug: string, slug: string): Promise<SeoData | null> {
+  const book = await getBookBySlug(bookSlug);
+  if (!book || !book.visible) return null;
+  const article = await getArticleBySlug(slug);
+  if (!article || !article.published || article.bookId !== book.id) return null;
+  const bookUrl = `${SITE_URL_PRODUCTION}/book/${encodeURIComponent(book.slug)}`;
+  const url = `${bookUrl}/${encodeURIComponent(article.slug)}`;
+  const what = article.chapterLabel || (article.bookRole === "material" ? "חומר עזר" : "פרק לדוגמה");
+  const title = `${article.title} – ${book.title} – דרך הרוח`;
+  const description = article.excerpt || `${what} מתוך הספר "${book.title}" מאת יונתן בן חנן.`;
+  const image = toAbsoluteImageUrl(article.coverImage) ?? toAbsoluteImageUrl(book.coverImage);
+  return {
+    title,
+    description,
+    ogTitle: article.title,
+    ogDescription: description,
+    ogImage: image,
+    ogImageAlt: image ? article.title : undefined,
+    ogUrl: url,
+    ogType: "article",
+    ogLocale: "he_IL",
+    canonicalUrl: url,
+    articleMeta: {
+      publishedTime: toIsoDateTime(article.createdAt),
+      modifiedTime: toIsoDateTime(article.updatedAt || article.createdAt),
+      author: "יונתן בן חנן",
+      section: book.title,
+    },
+    jsonLd: [
+      articleLd({
+        title: article.title, url, description, image, authorName: "יונתן בן חנן",
+        datePublished: toIsoDateTime(article.createdAt),
+        dateModified: toIsoDateTime(article.updatedAt || article.createdAt),
+      }),
+      breadcrumbLd([
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
+        { name: "ספרים", url: `${SITE_URL_PRODUCTION}/books` },
+        { name: book.title, url: bookUrl },
+        { name: article.title, url },
+      ]),
+    ],
+  };
+}
+
 function toIsoDateTime(date: Date | string | null | undefined): string | undefined {
   if (!date) return undefined;
   const d = typeof date === "string" ? new Date(date) : date;
@@ -519,6 +639,15 @@ async function resolveCategorySeo(slug: string): Promise<SeoData | null> {
   };
 }
 
+/** /article/<slug> של פרק/חומר עזר → הכתובת תחת הספר (null למאמר רגיל / לא קיים). */
+async function bookUrlForArticle(slug: string): Promise<string | null> {
+  const article = await getArticleBySlug(slug);
+  if (!article || article.bookId == null) return null;
+  const book = await getBookById(article.bookId);
+  if (!book) return null;
+  return `/book/${encodeURIComponent(book.slug)}/${encodeURIComponent(article.slug)}`;
+}
+
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
 /**
@@ -546,7 +675,9 @@ export async function seoMiddleware(
   const articleSlug = matchArticleSlug(pathname);
   const categorySlug = matchCategorySlug(pathname);
   const tarotCardSlug = matchTarotCardSlug(pathname);
-  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug);
+  const bookSlug = matchBookSlug(pathname);
+  const bookChapter = matchBookChapter(pathname);
+  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug || bookSlug || bookChapter);
 
   // Files with extensions (.js, .css, .png…): a real file is served by the static
   // layer before the SSR handler runs, so whatever reaches the renderer with a
@@ -572,7 +703,19 @@ export async function seoMiddleware(
     } else if (tarotCardSlug) {
       seo = await resolveTarotCardSeo(tarotCardSlug);
       dynamicMiss = seo === null;
+    } else if (bookSlug) {
+      seo = await resolveBookSeo(bookSlug);
+      dynamicMiss = seo === null;
+    } else if (bookChapter) {
+      seo = await resolveBookChapterSeo(bookChapter.book, bookChapter.slug);
+      dynamicMiss = seo === null;
     } else if (articleSlug) {
+      // A chapter / companion material lives under its book: one canonical URL.
+      const bookHome = await bookUrlForArticle(articleSlug);
+      if (bookHome) {
+        res.redirect(301, bookHome);
+        return;
+      }
       seo = await resolveArticleSeo(articleSlug);
       dynamicMiss = seo === null;
       // A renamed article: once the old slug no longer resolves, send readers
