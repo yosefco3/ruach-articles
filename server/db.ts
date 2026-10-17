@@ -10,7 +10,7 @@ export { upsertUser, getUserByOpenId, getAllUsers } from "./db/users";
 
 // Articles
 export {
-  getArticles, getNextArticleInCategory, getRandomArticle,
+  getArticles, getBookChapters, getNextArticleInCategory, getRandomArticle,
   getArticleBySlug, getArticleById, createArticle, updateArticle,
   deleteArticle, reorderArticles,
 } from "./db/articles";

@@ -3,7 +3,7 @@ import { articles, users, attachments, comments, likes, type InsertArticle } fro
 import { getDb } from "./connection";
 import { safeDeleteObject } from "./storage-cleanup";
 
-export async function getArticles(opts?: { category?: string; published?: boolean }) {
+export async function getArticles(opts?: { category?: string; published?: boolean; bookId?: number }) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [];
@@ -11,6 +11,7 @@ export async function getArticles(opts?: { category?: string; published?: boolea
   if (opts?.category) {
     conditions.push(eq(articles.category, opts.category));
   }
+  if (opts?.bookId !== undefined) conditions.push(eq(articles.bookId, opts.bookId));
   const rows = await db
     .select({
       id: articles.id,
@@ -25,12 +26,35 @@ export async function getArticles(opts?: { category?: string; published?: boolea
       updatedAt: articles.updatedAt,
       authorId: articles.authorId,
       authorName: users.name,
+      bookId: articles.bookId,
+      chapterNo: articles.chapterNo,
+      chapterLabel: articles.chapterLabel,
     })
     .from(articles)
     .leftJoin(users, eq(articles.authorId, users.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(articles.sortOrder), desc(articles.createdAt));
   return rows;
+}
+
+/**
+ * פרקי הדוגמה של ספר, בסדר הפרקים (chapterNo, ואז sortOrder/תאריך).
+ * publishedOnly=false מחזיר גם טיוטות — לאדמין ולטבלת הניהול בלבד.
+ */
+export async function getBookChapters(bookId: number, opts?: { publishedOnly?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(articles.bookId, bookId)];
+  if (opts?.publishedOnly !== false) conditions.push(eq(articles.published, true));
+  return db
+    .select({
+      id: articles.id, title: articles.title, slug: articles.slug, excerpt: articles.excerpt,
+      coverImage: articles.coverImage, published: articles.published, createdAt: articles.createdAt,
+      bookId: articles.bookId, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
+    })
+    .from(articles)
+    .where(and(...conditions))
+    .orderBy(asc(articles.chapterNo), asc(articles.sortOrder), asc(articles.createdAt));
 }
 
 export async function getNextArticleInCategory(currentSlug: string, category: string) {
@@ -79,6 +103,7 @@ export async function getArticleBySlug(slug: string) {
     body: articles.body, coverImage: articles.coverImage, category: articles.category,
     tags: articles.tags, published: articles.published, createdAt: articles.createdAt,
     updatedAt: articles.updatedAt, authorId: articles.authorId, authorName: users.name,
+    bookId: articles.bookId, chapterNo: articles.chapterNo, chapterLabel: articles.chapterLabel,
   }).from(articles).leftJoin(users, eq(articles.authorId, users.id)).where(eq(articles.slug, slug)).limit(1);
   return rows.length > 0 ? rows[0] : undefined;
 }

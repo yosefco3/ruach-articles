@@ -5,12 +5,23 @@ import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { adminProcedure, writerProcedure, assertCanEditArticle } from "./middleware";
 import type { RouterDeps } from "./context";
 
+/** שדות "פרק לדוגמה" (site-pivot-books) — null מנתק מהספר. */
+const chapterFields = {
+  bookId: z.number().int().nullable().optional(),
+  chapterNo: z.number().int().min(0).max(999).nullable().optional(),
+  chapterLabel: z.string().max(128).optional(),
+};
+function stripChapterFields(o: Record<string, unknown>) {
+  delete o.bookId; delete o.chapterNo; delete o.chapterLabel;
+}
+
 export const createArticlesRouter = (deps: RouterDeps) => router({
   list: publicProcedure
     .input(
       z
         .object({
           category: z.string().optional(),
+          bookId: z.number().int().optional(),
           all: z.boolean().optional(),
         })
         .optional()
@@ -20,9 +31,18 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       const all = isAdmin && input?.all;
       const articles = await deps.db.getArticles({
         category: input?.category,
+        bookId: input?.bookId,
         published: all ? undefined : true,
       });
       return articles;
+    }),
+
+  /** פרקי הדוגמה של ספר (ציבורי: מפורסמים בלבד; אדמין: גם טיוטות עם all). */
+  chaptersOfBook: publicProcedure
+    .input(z.object({ bookId: z.number().int(), all: z.boolean().optional() }))
+    .query(async ({ input, ctx }) => {
+      const all = ctx.user?.role === "admin" && input.all;
+      return await deps.db.getBookChapters(input.bookId, { publishedOnly: !all });
     }),
 
   bySlug: publicProcedure
@@ -77,9 +97,12 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         coverImage: z.string().optional(),
         category: z.string().min(1),
         tags: z.string().optional(),
+        ...chapterFields,
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // שיוך לספר (פרק לדוגמה) הוא החלטת אדמין — כותב אחר לא יכול לשייך מאמר לספר.
+      if (ctx.user!.role !== "admin") stripChapterFields(input);
       // Prefer the supplied slug; otherwise generate a random one. Not derived
       // from the title.
       let slug = generateSlug(input.slug ?? "") || randomSlug();
@@ -111,6 +134,7 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
         tags: z.string().optional(),
         published: z.boolean().optional(),
         siteUrl: z.string().optional(),
+        ...chapterFields,
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -118,7 +142,10 @@ export const createArticlesRouter = (deps: RouterDeps) => router({
       await assertCanEditArticle(deps.db, ctx.user, id);
       // Publishing stays an admin decision — an author editing their own article
       // cannot flip the flag, so the review flow can't be self-approved.
-      if (ctx.user.role !== "admin") delete (data as { published?: boolean }).published;
+      if (ctx.user.role !== "admin") {
+        delete (data as { published?: boolean }).published;
+        stripChapterFields(data);
+      }
       const updated = await deps.db.updateArticle(id, data);
       return updated;
     }),
