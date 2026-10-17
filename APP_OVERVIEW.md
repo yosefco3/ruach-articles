@@ -1,16 +1,32 @@
 # APP_OVERVIEW — רוּחַ / Ruach Articles
 
-> עדכון אחרון / Last updated: 2026-10-08
+> עדכון אחרון / Last updated: 2026-10-17
 > מסמך חי. עדכן אותו אחרי כל שינוי שנוגע בפיצ'רים/מודלים/endpoints/workflow/ארכיטקטורה.
 
 ## מה זה / What it is
-פלטפורמת מאמרים עברית RTL בנושא רוחניות, פילוסופיה וריפוי. כוללת ניהול מאמרים
-(עורך TipTap), קטגוריות ותגיות, מערכת תגובות, likes, חיפוש בזמן אמת, ניוזלטר,
-והרשאות אדמין. Full-stack: React frontend + Express/tRPC backend מעל MySQL.
-בנוסף: **קריאת אִי צִ׳ינְג** (`/iching`) — דף ציבורי שבו מבקר כותב שאלה (שאינה נשמרת),
+**אתר שיטת "דרך הרוח — הנבואה הטבעית"** (ruachwisdom.org) מאת **יונתן בן חנן** (שם עט; השם האמיתי לעולם
+אינו מופיע באתר — `AUTHOR_NAME` ב-`shared/const.ts`). שלושה עמודים, בסדר הזה (פיבוט 2026-10-17,
+`feature-prompts/site-pivot-books/`):
+1. **ספרים** (`/books`, `/book/<slug>`) — הספרים הם "הקטגוריות": "דרך הרוח" ו"לאחי החרדי". לכל ספר תקציר, סטטוס
+   (בכתיבה / בקרוב / זמין לרכישה), תוכן עניינים, קישורי רכישה (הוצאה/בוקפוד — נתוני אדמין), **פרקים לדוגמה**
+   ו**חומרי עזר** (תרגילים, סרטונים) — מאמרים עם `bookId`+`bookRole`, בכתובת `/book/<book>/<slug>`; ו"עדכנו אותי
+   כשהספר יוצא" (ניוזלטר עם `interest`).
+2. **כלים נלווים** — **קריאת אִי צִ׳ינְג** (`/iching`) ו**קריאה בקלפי טארוט** (`/tarot`, `/tarot/deck`, `/tarot/guide`,
+   78 דפי קלף) — ללא שינוי בפיבוט (ראו להלן), עם תיבת קידום ספר (`BookPromo`).
+3. **מורים בשיטה** (`/teachers`, `/teacher/<slug>`) — ספריית מורים עם דף אישי, מאמרים לפי מורה וטופס קשר דרך
+   האתר (המייל מוסתר). מורה שחשבון הגוגל שלו קושר (`teachers.userId`) כותב **ומפרסם בעצמו** ועורך את הפרופיל
+   ב-`/my-teacher-profile`. **אירועים** (`/events`) — תשתית נסתרת, מוצגת רק כש-`siteSettings.eventsVisible` דלוק.
+
+דף השיטה `/derech` נשאר הלב (עם תיבת המייסד מ-`teachers.isFounder`). **67 מאמרי האתר הישן יוצאו לריפו**
+`github.com/yosefco3/ruach-way-articles` ונמחקו מה-DB (2026-10-17); `/article/<slug>` ישן → 301 `/derech`
+(`shared/retiredArticles.ts`), `/category/*` → 301 `/books`. זרימת "פוסט אורח" נמחקה. נקודת ציון לפני הפיבוט:
+תג `pre-pivot-articles-site`.
+Full-stack: React frontend + Express/tRPC backend מעל MySQL, SSR מלא.
+
+פירוט הכלים: **קריאת אִי צִ׳ינְג** — מבקר כותב שאלה (שאינה נשמרת),
 מטיל 3 מטבעות 6 פעמים בצד הלקוח, ורואה הקסגרמה ראשית (+נגזרת אם יש קווים משתנים)
 עם פירוש; אדמין עורך את הטקסטים ב-`/admin/iching`.
-וכן **קריאה בקלפי טארוט** (`/tarot`) — שליפת 3 קלפים (מרכזי + שני מסייעים) מחפיסה
+**קריאה בקלפי טארוט** — שליפת 3 קלפים (מרכזי + שני מסייעים) מחפיסה
 מקורית של האתר — או, כשה-AI זמין (מתג דלוק + מחובר), **פריסה שה-AI בוחר** לשאלה
 (פריסת בחירה בין 2–6 דרכים: 6/8/10/12/14 קלפים; יותר מ-6 → שלושה קלפים עם הודעה מסבירה); פירוש סטטי לכל קלף בלחיצה + פירוש AI
 לפריסה כולה (מכסה נפרדת), ואחריו **עד שתי שאלות המשך** — לכל אחת קלף מבהיר אחד
@@ -83,6 +99,19 @@
 ## מודלים / Data models
 מוגדרים ב-`drizzle/schema.ts` (Drizzle). ישויות מרכזיות: מאמרים, קטגוריות, תגיות,
 תגובות, משתמשים/אדמין, ניוזלטר. _TODO: למפות שדות ויחסים מדויקים מ-schema.ts._
+- **Books (site-pivot-books):** `books` (slug, title, subtitle, blurb HTML, coverImage, `status` writing|coming_soon|available,
+  `visible`, publisher, `purchaseLinks` JSON, `tocJson`, year/pages/isbn, sortOrder). היגיון טהור ב-`shared/books.ts`
+  (`parsePurchaseLinks`, `bookCta`). מיגרציה `0020`.
+- **Articles — שדות ספר/מורה:** `bookId`, `bookRole` chapter|material, `chapterNo`, `chapterLabel` (`0021`,`0022`),
+  `teacherId` (`0023`). `authorName` בשאילתות = `COALESCE(teachers.name, AUTHOR_NAME)` — `users.name` לעולם לא נחשף.
+  כתובת ציבורית: `shared/articleUrl.ts` (`articlePath`: פרק תחת הספר, null לספר מוסתר).
+- **Teachers:** `teachers` (slug, name, photo, tagline, area, formats, bio HTML, quote, website, publicEmail, phone,
+  `contactEmail` *מוסתר*, `userId` unique → חשבון מקושר, `isFounder`, `visible`, sortOrder). לא תפקיד ב-`users.role`
+  (ההתחברות דורסת את התפקיד בכל כניסה). `0023`.
+- **Events:** `events` (slug, title, description HTML, startsAt, endsAt, location, isOnline, registrationUrl, price,
+  teacherId, bookId, coverImage, published) + `siteSettings.eventsVisible` (`0026`). `newsletterSubscribers.interest`
+  (`book:<slug>`, `0025`). ברירות מחדל מותג ב-`siteSettings` (`0024`). מיגרציות prod מוחלות ב-`pnpm run:sql <file>` דרך
+  `railway run` (`scripts/run-sql.ts`).
 - **I Ching (טקסט ערוך בלבד):** `ichingHexagramText` (number 1..64 + `name` override +
   `trigramExplanation`/`interpretation` + `line1..line6` — טקסט קו משתנה לכל קו, קו 1=תחתון), `ichingTrigramText`
   (`trigramKey` + `name`/`element`/`attr` overrides + `description` HTML),
@@ -103,6 +132,14 @@
 ## Endpoints / API
 tRPC routers תחת `server/routers/` (articles, auth, categories, newsletter, contact, …),
 מוגשים תחת `/api` דרך Vite middleware. _TODO: לרשום את הפרוצדורות העיקריות per router._
+- **`books`** — `list` (ציבורי, גלויים), `bySlug` (לא-גלוי → NOT_FOUND למבקר, תצוגה מקדימה לאדמין), `listAll/create/update/delete/reorder` (אדמין).
+- **`articles`** (תוספות הפיבוט) — `list({bookId})`, `chaptersOfBook({bookId, role, all})`; `create` = `teacherProcedure`
+  (אדמין או מורה מקושר; מורה → `teacherId` שלו ו-`published` לבחירתו); שדות ספר/`teacherId` — אדמין בלבד.
+- **`teachers`** — `list`/`bySlug` (ציבורי, בלי contactEmail/userId, עם `hasContact`), `articlesOf`, `me`/`updateMe`
+  (מורה מקושר), אדמין: `listAll/create/update/delete/reorder/linkUser(email)/unlinkUser`. `contact.toTeacher` שולח
+  למייל המוסתר (Resend, reply-to של הפונה).
+- **`events`** — `list` (`{visible, upcoming, past}`; `[]` כשהמדור כבוי), `bySlug` (מפורסם+מדור דלוק, או אדמין), אדמין CRUD.
+  `settings.update` מקבל `eventsVisible`; `newsletter.subscribe` מקבל `interest`.
 - **`iching`** — `getContent` (ציבורי: מחזיר hexagrams+trigrams+intro ממוזגים);
   `refineQuestion` (ציבורי, **לפני ההטלה**: בודק את ניסוח השאלה ומציע עד 2 ניסוחים חלופיים
   כשהיא בעייתית בבירור; חופשי לכולם, מוגבל-קצב פר-IP (`ICHING_REFINE_RATE_PER_HOUR`),
@@ -173,7 +210,10 @@ BlogPosting+BreadcrumbList במאמר, FAQPage ב-`/derech` — נבנית די�
 **סטטוס HTTP אמיתי:** `seoMiddleware` קובע גם את הסטטוס (`pageStatus(req)`) — 404
 עם head `noindex` וללא canonical למאמר/קטגוריה/קלף שלא נפתר, לנתיב-על לא מוכר
 (רשימת `STATIC_PUBLIC_PATHS` משקפת את `client/src/routes/public.tsx`) ולקובץ שהגיע
-עד ה-renderer; כשל DB לעולם לא הופך דף ל-404. **URL קנוני אחד:** `server/canonical.ts`
+עד ה-renderer; כשל DB לעולם לא הופך דף ל-404. **כתובות הפיבוט:** `/article/<retired>` (67 הסלאגים ב-`shared/retiredArticles.ts`, מחולל ע"י
+`scripts/archive-articles.ts`) → 301 `/derech`; `/article/<slug>` של פרק/חומר עזר → 301 `/book/<book>/<slug>`;
+`/category/*` → 301 `/books`; ספר/מורה/פרק מוסתרים או לא-מפורסמים → 404 אמיתי; `/events`,`/event/*` → 404 כשהמדור
+כבוי. sitemap/RSS/llms.txt בנויים מספרים גלויים, מורים גלויים ו-`articlePath`. **URL קנוני אחד:** `server/canonical.ts`
 (ראשון ב-`createApp`) מחזיר 301 מ-`www.` ל-apex ומסלאש-סופי לבלעדיו (`/api`,
 `/uploads`, `/cdn-cgi` פטורים). **slug ישן של מאמר:** `shared/legacySlugs.ts` —
 301 ל-slug החדש רק אחרי שהישן כבר לא נפתר ב-DB. `robots.txt` חוסם גם `/cdn-cgi/`
@@ -220,6 +260,7 @@ _TODO: לאמת את מעברי הסטטוס מול הקוד._
 ## היסטוריית שינויים משמעותיים / Significant change history
 | תאריך / Date | שינוי / Change | קבצים עיקריים / Key files |
 |---|---|---|
+| 2026-10-17 | **Site pivot → "דרך הרוח" method site** (`feature-prompts/site-pivot-books/`, 22 steps in one day): checkpoint tag `pre-pivot-articles-site` + Desktop zip; all 67 articles exported (markdown/HTML/images/JSON) to `github.com/yosefco3/ruach-way-articles` via `pnpm archive:articles` and deleted from prod via `pnpm delete:archived --apply` (guarded: only slugs present in the archive); old URLs 301 (`shared/retiredArticles.ts`). New entities: **books** (= categories; status/purchase links/TOC; sample chapters + companion materials as articles with `bookId`/`bookRole`), **teachers** (profiles, linked Google account → self-publish, hidden contact email + `contact.toTeacher`), **events** (hidden until `siteSettings.eventsVisible`), newsletter `interest`. New pages: `/books`, `/book/:slug`, `/book/:book/:slug` (article page in chapter mode), `/teachers`, `/teacher/:slug`, `/my-teacher-profile`, `/events`, `/event/:slug`, admin `/admin/{books,teachers,events}`. New home (method → books → כלים נלווים → teachers → updates), new nav/footer, `BookPromo` on all tool pages + `/derech` (founder box). Guest-post flow deleted; category page deleted (`/category/*` → `/books`). **Brand:** site = "דרך הרוח / הנבואה הטבעית", author = pen name "יונתן בן חנן" (`shared/const.ts`); `authorName` = `COALESCE(teachers.name, AUTHOR_NAME)`; the production hero line that carried the real name was rewritten by migration `0024`. Migrations `0020`–`0026` applied to dev and prod with the new `pnpm run:sql` (via `railway run`). Nothing is published yet (books `visible=0`, chapters `published=0`) — infrastructure only, per the user. Tests 720→788. | `drizzle/schema.ts`+`0020`–`0026`, `shared/{books,articleUrl,retiredArticles,const}.ts`, `server/db/{books,teachers,events,articles}.ts`, `server/routers/{books,teachers,events,articles,settings,middleware}.ts`, `server/{seo,jsonld,sitemap,rss,llmstxt,contact}.ts`, `scripts/{archive-articles,delete-archived-articles,run-sql}.ts`, `client/src/pages/{Home,BookPage,BooksIndex,TeachersIndex,TeacherPage,MyTeacherProfile,EventsIndex,EventPage,AdminBooks,AdminTeachers,AdminEvents,ArticlePage,AdminArticleForm,AdminPage,Derech}.tsx`, `client/src/components/{SiteLayout,BookPromo}.tsx`, `client/src/routes/*` |
 | 2026-09-15 | **Print file name from the question** (tarot & I Ching): the print document's `<title>` (= the "Save as PDF" file name) is now `readingFileTitle(prefix, question, aiTitle)` — the tarot `chooseSpread` classification also returns a short `title` (2–6 Hebrew words naming the topic; `sanitizeReadingTitle` strips file-name-hostile chars, cap 60), kept on `SpreadChoice.title` and surviving the login restore; without AI the title falls back to the question (cut at a word boundary past 60 chars, no "?") and, with no question, to the date. +6 tests (529→535). | `shared/tarot/spreads.ts`(+test), `server/tarotAi.ts`(+test), `client/src/lib/printReading.ts`(+test), `client/src/pages/TarotReading.tsx` |
 | 2026-09-15 | **Tarot AI interpretation as a background job** (`feature-prompts/tarot-async-interpret/`): prod failure "אירעה שגיאה בפירוש" on a 6-card choice reading — measured locally at 98s, i.e. past Cloudflare's ~100s proxy timeout (524) while the server kept working. New in-memory job store `server/_core/jobs.ts` (`startJob`/`getJob`, owner-scoped, 15-min TTL, single dyno like the rate limiter); `tarot.interpret` now returns `{jobId}` immediately (early errors AI_DISABLED/QUOTA_EXCEEDED/SPREAD_SIZE_MISMATCH still thrown synchronously; count-on-success inside the job), new `tarot.interpretResult` query; `TarotAiPanel` polls every 3s; a lost job (NOT_FOUND — the server was redeployed mid-reading, which is exactly what hit the user on 2026-09-15) is restarted once automatically and silently (safe: count-on-success), a second loss or a provider error counts as a failure with retry; a poll that fails without a server response (mobile app switch aborting the fetch, flaky 4G — the actual 2026-09-15 failure on the user's phone) is ignored and polling continues, also while the tab is in the background (`refetchIntervalInBackground`). Also: `REASONING_HEADROOM` 12000→20000, choice-spread answer budget 5000, and `[tarot] interpret ok/failed` + `chooseSpread` outcome/duration logging (never the question). I Ching stays synchronous for now. +7 tests (522→529). | `server/_core/jobs.ts`(+test), `server/routers/tarot.router.ts`(+test), `server/tarotAi.ts`(+test), `server/_core/aiProvider.ts`, `client/src/components/tarot/TarotAiPanel.tsx` |
 | 2026-09-15 | **Tarot: AI-chosen spread for choice questions** (`feature-prompts/tarot-choice-spread/`, 6 steps): new shared spread catalog `shared/tarot/spreads.ts` (`three` = existing center-card method; `choice` = "הצומת" + 2 cards per option [מה מציעה / לאן מובילה] + "מה שאינך רואה", 2–4 options → 6/8/10 cards; `normalizeSpreadChoice` fail-opens to three). **Who picks: the AI, only when it is available** (admin switch on + signed in + non-empty question) via new `tarot.chooseSpread` (protected; short JSON classification, "X או לא" = yes/no → three; per-user hourly cap `TAROT_SPREAD_RATE_PER_HOUR`=30, not counted in the quota); otherwise always 3 cards. `tarot.interpret` takes `spread`, validates card count against the plan, and `buildTarotPrompt` branches to a compare-the-roads prompt for `choice`. Client: `runDeal({count})`, `choiceLayout`/`positionLabels`, pending reading keeps the spread (old array payload still restores), result view renders the choice layout with role labels and column headers, print uses the plan labels; guide got a "שאלת בחירה?" section + FAQ entry, llms.txt wording. +40 tests (481→521). | `shared/tarot/spreads.ts`(+test), `server/tarotAi.ts`(+test), `server/routers/tarot.router.ts`(+test), `server/routers/{context,index}.ts`, `server/_core/env.ts`, `server/test-helpers/trpc.ts`, `client/src/pages/TarotReading.tsx`, `client/src/pages/tarot/{model,reveal}.ts`(+tests), `client/src/lib/{pendingReading,printReading}.ts`(+tests), `client/src/components/tarot/TarotAiPanel.tsx`(+test), `client/src/pages/TarotGuide.tsx`, `shared/tarotGuide.ts`, `server/llmstxt.ts` |

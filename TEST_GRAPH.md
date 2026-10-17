@@ -1,16 +1,16 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-10-08 03:40_
+_נוצר אוטומטית ב: 2026-10-17 14:48_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 229 |
-| מכוסים / covered | 55 |
-| ללא טסט / uncovered | 174 |
-| כיסוי / coverage | 24% →0% |
-| טסטים עוברים / passing | 720 ✅ |
+| קבצי קוד / source files | 246 |
+| מכוסים / covered | 67 |
+| ללא טסט / uncovered | 179 |
+| כיסוי / coverage | 27% ↑3% |
+| טסטים עוברים / passing | 788 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -20,6 +20,8 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | `(no source found for about-image.test.ts)` | `server/about-image.test.ts` |
 | `(no source found for admin-small-routers.test.ts)` | `server/routers/admin-small-routers.test.ts` |
 | `(no source found for article-body-capacity.test.ts)` | `server/article-body-capacity.test.ts` |
+| `(no source found for articles.chapters.test.ts)` | `server/db/articles.chapters.test.ts` |
+| `(no source found for articles.chapters.test.ts)` | `server/routers/articles.chapters.test.ts` |
 | `(no source found for attachments.delete.test.ts)` | `server/db/attachments.delete.test.ts` |
 | `(no source found for auth.logout.test.ts)` | `server/auth.logout.test.ts` |
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |
@@ -61,11 +63,15 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
 | `client/src/lib/pendingReading.ts` | `client/src/lib/pendingReading.test.ts` |
 | `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
+| `client/src/pages/books/adminForm.ts` | `client/src/pages/books/adminForm.test.ts` |
+| `client/src/pages/books/articleKind.ts` | `client/src/pages/books/articleKind.test.ts` |
+| `client/src/pages/events/format.ts` | `client/src/pages/events/format.test.ts` |
 | `client/src/pages/iching/model.ts` | `client/src/pages/iching/model.test.ts` |
 | `client/src/pages/iching/reveal.ts` | `client/src/pages/iching/reveal.test.ts` |
 | `client/src/pages/tarot/job.ts` | `client/src/pages/tarot/job.test.ts` |
 | `client/src/pages/tarot/model.ts` | `client/src/pages/tarot/model.test.ts` |
 | `client/src/pages/tarot/reveal.ts` | `client/src/pages/tarot/reveal.test.ts` |
+| `client/src/pages/teachers/adminForm.ts` | `client/src/pages/teachers/adminForm.test.ts` |
 | `client/src/routes/ssrData.ts` | `client/src/routes/ssrData.test.ts` |
 | `server/_core/auth/returnTo.ts` | `server/_core/auth/returnTo.test.ts` |
 | `server/_core/jobs.ts` | `server/_core/jobs.test.ts` |
@@ -74,28 +80,36 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | `server/articleDocx.ts` | `server/articleDocx.test.ts` |
 | `server/canonical.ts` | `server/canonical.test.ts` |
 | `server/contact.ts` | `server/contact.test.ts` |
+| `server/db/books.ts` | `server/db/books.test.ts` |
+| `server/db/events.ts` | `server/db/events.test.ts` |
+| `server/db/teachers.ts` | `server/db/teachers.test.ts` |
 | `server/ichingAi.ts` | `server/ichingAi.test.ts` |
 | `server/jsonld.ts` | `server/jsonld.test.ts` |
 | `server/llmstxt.ts` | `server/llmstxt.test.ts` |
 | `server/robots.ts` | `server/robots.test.ts` |
 | `server/routers/articles.router.ts` | `server/routers/articles.router.test.ts` |
+| `server/routers/books.router.ts` | `server/routers/books.router.test.ts` |
 | `server/routers/comments.router.ts` | `server/routers/comments.router.test.ts` |
 | `server/routers/derech.router.ts` | `server/routers/derech.router.test.ts` |
+| `server/routers/events.router.ts` | `server/routers/events.router.test.ts` |
 | `server/routers/featured.router.ts` | `server/routers/featured.router.test.ts` |
-| `server/routers/guestPosts.router.ts` | `server/routers/guestPosts.router.test.ts` |
 | `server/routers/iching.router.ts` | `server/routers/iching.router.test.ts` |
 | `server/routers/likes.router.ts` | `server/routers/likes.router.test.ts` |
 | `server/routers/profiles.router.ts` | `server/routers/profiles.router.test.ts` |
 | `server/routers/settings.router.ts` | `server/routers/settings.router.test.ts` |
 | `server/routers/tarot.router.ts` | `server/routers/tarot.router.test.ts` |
+| `server/routers/teachers.router.ts` | `server/routers/teachers.router.test.ts` |
 | `server/rss.ts` | `server/rss.test.ts` |
 | `server/seo.ts` | `server/seo.test.ts` |
 | `server/sitemap.ts` | `server/sitemap.test.ts` |
 | `server/tarotAi.ts` | `server/tarotAi.test.ts` |
 | `server/tarotDeckZip.ts` | `server/tarotDeckZip.test.ts` |
 | `server/tarotReadingToken.ts` | `server/tarotReadingToken.test.ts` |
+| `shared/articleUrl.ts` | `shared/articleUrl.test.ts` |
+| `shared/books.ts` | `shared/books.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
 | `shared/legacySlugs.ts` | `shared/legacySlugs.test.ts` |
+| `shared/retiredArticles.ts` | `shared/retiredArticles.test.ts` |
 | `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
 | `shared/tarot/followup.ts` | `shared/tarot/followup.test.ts` |
 | `shared/tarot/spreads.ts` | `shared/tarot/spreads.test.ts` |
@@ -113,7 +127,6 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | 🔴 HIGH | `server/routers/auth.router.ts` |
 | 🔴 HIGH | `server/routers/categories.router.ts` |
 | 🔴 HIGH | `server/routers/context.ts` |
-| 🔴 HIGH | `server/routers/guestWriters.router.ts` |
 | 🔴 HIGH | `server/routers/index.ts` |
 | 🔴 HIGH | `server/routers/middleware.ts` |
 | 🔴 HIGH | `server/routers/newsletter.router.ts` |
@@ -121,6 +134,7 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | 🟡 MEDIUM | `client/src/App.tsx` |
 | 🟡 MEDIUM | `client/src/_core/hooks/useAuth.ts` |
 | 🟡 MEDIUM | `client/src/components/ArticleCard.tsx` |
+| 🟡 MEDIUM | `client/src/components/BookPromo.tsx` |
 | 🟡 MEDIUM | `client/src/components/CommentsSection.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayout.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayoutSkeleton.tsx` |
@@ -198,27 +212,34 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | 🟡 MEDIUM | `client/src/pages/Accessibility.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleForm.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminArticleOrder.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminBooks.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminCategories.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminDerech.tsx` |
-| 🟡 MEDIUM | `client/src/pages/AdminGuestPosts.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminEvents.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminIChing.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminNewsletter.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminSettings.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminTarot.tsx` |
+| 🟡 MEDIUM | `client/src/pages/AdminTeachers.tsx` |
 | 🟡 MEDIUM | `client/src/pages/AdminUsers.tsx` |
 | 🟡 MEDIUM | `client/src/pages/ArticlePage.tsx` |
-| 🟡 MEDIUM | `client/src/pages/CategoryPage.tsx` |
+| 🟡 MEDIUM | `client/src/pages/BookPage.tsx` |
+| 🟡 MEDIUM | `client/src/pages/BooksIndex.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Contact.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Derech.tsx` |
-| 🟡 MEDIUM | `client/src/pages/GuestPostForm.tsx` |
+| 🟡 MEDIUM | `client/src/pages/EventPage.tsx` |
+| 🟡 MEDIUM | `client/src/pages/EventsIndex.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
 | 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
+| 🟡 MEDIUM | `client/src/pages/MyTeacherProfile.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotCardPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotDeckGallery.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotGuide.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotReading.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TeacherPage.tsx` |
+| 🟡 MEDIUM | `client/src/pages/TeachersIndex.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
 | 🟡 MEDIUM | `server/_core/aiProvider.ts` |
 | 🟡 MEDIUM | `server/_core/auth/session.ts` |
@@ -245,8 +266,6 @@ _נוצר אוטומטית ב: 2026-10-08 03:40_
 | 🟡 MEDIUM | `server/db/connection.ts` |
 | 🟡 MEDIUM | `server/db/derech.ts` |
 | 🟡 MEDIUM | `server/db/featured.ts` |
-| 🟡 MEDIUM | `server/db/guest-posts.ts` |
-| 🟡 MEDIUM | `server/db/guest-writers.ts` |
 | 🟡 MEDIUM | `server/db/iching.ts` |
 | 🟡 MEDIUM | `server/db/ichingUsage.ts` |
 | 🟡 MEDIUM | `server/db/likes.ts` |

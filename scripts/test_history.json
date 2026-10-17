@@ -1,11 +1,5 @@
 [
   {
-    "timestamp": "2026-06-23T21:17:58",
-    "coverage%": 11,
-    "passed": 222,
-    "failed": 0
-  },
-  {
     "timestamp": "2026-06-23T21:30:58",
     "coverage%": 11,
     "passed": 217,
@@ -297,6 +291,12 @@
     "timestamp": "2026-10-08T03:40:23",
     "coverage%": 24,
     "passed": 720,
+    "failed": 0
+  },
+  {
+    "timestamp": "2026-10-17T14:48:13",
+    "coverage%": 27,
+    "passed": 788,
     "failed": 0
   }
 ]
