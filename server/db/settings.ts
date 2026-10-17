@@ -5,9 +5,9 @@ import { SITE_NAME, SITE_TAGLINE } from "@shared/const";
 
 export async function getSiteSettings() {
   const db = await getDb();
-  if (!db) return { siteTitle: SITE_NAME, heroSubtitle: SITE_TAGLINE, contactEmail: null as string | null };
+  if (!db) return { siteTitle: SITE_NAME, heroSubtitle: SITE_TAGLINE, contactEmail: null as string | null, eventsVisible: false };
   const rows = await db.select().from(siteSettings).limit(1);
-  return rows.length > 0 ? rows[0] : { siteTitle: SITE_NAME, heroSubtitle: SITE_TAGLINE, contactEmail: null as string | null };
+  return rows.length > 0 ? rows[0] : { siteTitle: SITE_NAME, heroSubtitle: SITE_TAGLINE, contactEmail: null as string | null, eventsVisible: false };
 }
 
 export async function updateSiteSettings(data: Partial<InsertSiteSettings>) {

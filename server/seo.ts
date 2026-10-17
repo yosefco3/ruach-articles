@@ -1,5 +1,5 @@
 import { type Request, type Response, type NextFunction } from "express";
-import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent, getBookBySlug, getBookById, getTeacherBySlug } from "./db";
+import { getArticleBySlug, getArticles, getCategoryBySlug, getDerechContent, getBookBySlug, getBookById, getTeacherBySlug, getEventBySlug, getSiteSettings } from "./db";
 import { parsePurchaseLinks, BOOK_STATUS_LABELS } from "@shared/books";
 import { getCardText } from "./db/tarot";
 import { cardBySlug, cardImagePath, cardSlug } from "@shared/tarot";
@@ -7,7 +7,7 @@ import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
 import { SITE_URL_PRODUCTION, SITE_NAME as BRAND, SITE_DESCRIPTION, AUTHOR_NAME } from "@shared/const";
 import { legacyArticleSlugTarget } from "@shared/legacySlugs";
 import { isRetiredArticle, RETIRED_ARTICLE_TARGET } from "@shared/retiredArticles";
-import { siteLd, articleLd, bookLd, personLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
+import { siteLd, articleLd, bookLd, personLd, eventLd, breadcrumbLd, faqPageLd, jsonLdToScript, type FaqItem } from "./jsonld";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -466,6 +466,64 @@ export function matchBookChapter(pathname: string): { book: string; slug: string
   return match ? { book: match[1], slug: match[2] } : null;
 }
 
+/** /event/<slug> */
+export function matchEventSlug(pathname: string): string | null {
+  const match = pathname.match(/^\/event\/([^/]+)$/);
+  return match ? match[1] : null;
+}
+
+async function eventsSectionVisible(): Promise<boolean> {
+  try {
+    const s = await getSiteSettings();
+    return !!(s as { eventsVisible?: boolean }).eventsVisible;
+  } catch {
+    return false;
+  }
+}
+
+const EVENTS_SEO: SeoData = {
+  title: "אירועים – דרך הרוח",
+  description: "סדנאות, מפגשים והרצאות של שיטת דרך הרוח — קרובים ושהיו.",
+  ogTitle: "אירועים – דרך הרוח",
+  ogDescription: "סדנאות, מפגשים והרצאות של שיטת דרך הרוח — קרובים ושהיו.",
+  ogUrl: `${SITE_URL_PRODUCTION}/events`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/events`,
+};
+
+/** דף האירועים — null (404) כשהמדור כבוי. */
+export async function resolveEventsIndexSeo(): Promise<SeoData | null> {
+  return (await eventsSectionVisible()) ? EVENTS_SEO : null;
+}
+
+/** דף אירוע — מפורסם, והמדור דלוק. */
+export async function resolveEventSeo(slug: string): Promise<SeoData | null> {
+  if (!(await eventsSectionVisible())) return null;
+  const e = await getEventBySlug(slug);
+  if (!e || !e.published) return null;
+  const url = `${SITE_URL_PRODUCTION}/event/${encodeURIComponent(e.slug)}`;
+  const title = `${e.title} – אירועים – דרך הרוח`;
+  const description = htmlToDescription(e.description) || `${e.title} — ${e.isOnline ? "אונליין" : e.location || "אירוע"} של שיטת דרך הרוח.`;
+  const image = toAbsoluteImageUrl(e.coverImage);
+  return {
+    title, description, ogTitle: e.title, ogDescription: description, ogImage: image,
+    ogImageAlt: image ? e.title : undefined, ogUrl: url, ogType: "website", ogLocale: "he_IL", canonicalUrl: url,
+    jsonLd: [
+      eventLd({
+        name: e.title, url, description, image,
+        startDate: new Date(e.startsAt).toISOString(), endDate: e.endsAt ? new Date(e.endsAt).toISOString() : undefined,
+        location: e.location, isOnline: e.isOnline, registrationUrl: e.registrationUrl || undefined, price: e.price || undefined,
+      }),
+      breadcrumbLd([
+        { name: "דרך הרוח", url: SITE_URL_PRODUCTION },
+        { name: "אירועים", url: `${SITE_URL_PRODUCTION}/events` },
+        { name: e.title, url },
+      ]),
+    ],
+  };
+}
+
 /** /teacher/<slug> */
 export function matchTeacherSlug(pathname: string): string | null {
   const match = pathname.match(/^\/teacher\/([^/]+)$/);
@@ -694,7 +752,9 @@ export async function seoMiddleware(
   const bookSlug = matchBookSlug(pathname);
   const bookChapter = matchBookChapter(pathname);
   const teacherSlug = matchTeacherSlug(pathname);
-  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug || bookSlug || bookChapter || teacherSlug);
+  const eventSlug = matchEventSlug(pathname);
+  const isEventsIndex = pathname === "/events";
+  const isDynamic = Boolean(articleSlug || categorySlug || tarotCardSlug || bookSlug || bookChapter || teacherSlug || eventSlug || isEventsIndex);
 
   // Files with extensions (.js, .css, .png…): a real file is served by the static
   // layer before the SSR handler runs, so whatever reaches the renderer with a
@@ -728,6 +788,12 @@ export async function seoMiddleware(
       dynamicMiss = seo === null;
     } else if (teacherSlug) {
       seo = await resolveTeacherSeo(teacherSlug);
+      dynamicMiss = seo === null;
+    } else if (isEventsIndex) {
+      seo = await resolveEventsIndexSeo();
+      dynamicMiss = seo === null;
+    } else if (eventSlug) {
+      seo = await resolveEventSeo(eventSlug);
       dynamicMiss = seo === null;
     } else if (articleSlug) {
       // A chapter / companion material lives under its book: one canonical URL.

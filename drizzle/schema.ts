@@ -83,6 +83,8 @@ export const siteSettings = mysqlTable("siteSettings", {
   siteTitle: varchar("siteTitle", { length: 256 }).default("דרך הרוח").notNull(),
   heroSubtitle: varchar("heroSubtitle", { length: 512 }).default("הנבואה הטבעית").notNull(),
   contactEmail: varchar("contactEmail", { length: 320 }),
+  // דף האירועים + קישור בניווט מוצגים רק כשדלוק (site-pivot-books; כבוי כברירת מחדל).
+  eventsVisible: boolean("eventsVisible").default(false).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -367,3 +369,25 @@ export const teachers = mysqlTable("teachers", {
 });
 export type Teacher = typeof teachers.$inferSelect;
 export type InsertTeacher = typeof teachers.$inferInsert;
+
+// ── אירועים (site-pivot-books, 2026-10-17) — תשתית נסתרת: מוצגת רק כש-siteSettings.eventsVisible דלוק ──
+export const events = mysqlTable("events", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 128 }).notNull().unique(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: mediumtext("description"), // HTML מה-RTE
+  startsAt: timestamp("startsAt").notNull(),
+  endsAt: timestamp("endsAt"),
+  location: varchar("location", { length: 256 }).default("").notNull(), // "ירושלים, בית X" / ריק לאונליין
+  isOnline: boolean("isOnline").default(false).notNull(),
+  registrationUrl: varchar("registrationUrl", { length: 1024 }).default("").notNull(),
+  price: varchar("price", { length: 64 }).default("").notNull(), // "חינם" / "120 ₪"
+  teacherId: int("teacherId"), // → teachers.id (המנחה)
+  bookId: int("bookId"), // → books.id (סדנה סביב ספר)
+  coverImage: varchar("coverImage", { length: 1024 }),
+  published: boolean("published").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = typeof events.$inferInsert;

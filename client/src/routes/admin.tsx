@@ -12,6 +12,7 @@ import {
   LazyAdminDerech,
   LazyAdminBooks,
   LazyAdminTeachers,
+  LazyAdminEvents,
 } from "./lazy";
 
 /**
@@ -32,4 +33,5 @@ export const adminRoutes = [
   <Route key="admin-derech" path="/admin/derech" component={LazyAdminDerech} />,
   <Route key="admin-books" path="/admin/books" component={LazyAdminBooks} />,
   <Route key="admin-teachers" path="/admin/teachers" component={LazyAdminTeachers} />,
+  <Route key="admin-events" path="/admin/events" component={LazyAdminEvents} />,
 ];

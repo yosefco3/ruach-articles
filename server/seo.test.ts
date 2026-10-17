@@ -9,6 +9,8 @@ vi.mock("./db", () => ({
   getBookBySlug: vi.fn(),
   getBookById: vi.fn(),
   getTeacherBySlug: vi.fn(),
+  getEventBySlug: vi.fn(),
+  getSiteSettings: vi.fn(),
 }));
 vi.mock("./db/tarot", () => ({ getCardText: vi.fn() }));
 
@@ -622,5 +624,25 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
     expect(html).toContain('rel="canonical" href="https://ruachwisdom.org/teacher/yonatan"');
     expect(html).toContain("https://example.com");
     expect(html).not.toContain("secret@example.com");
+  });
+
+  it("events: /events and /event/<slug> are 404 while the section is off; Event JSON-LD when on", async () => {
+    const { getSiteSettings, getEventBySlug } = await import("./db");
+    const e = { id: 1, slug: "sadna", title: "סדנת נשימה", description: "<p>ערב אחד</p>", startsAt: new Date("2027-01-01T18:00:00Z"),
+      endsAt: null, location: "ירושלים", isOnline: false, registrationUrl: "https://tickets.example/x", price: "120 ₪",
+      teacherId: null, bookId: null, coverImage: null, published: true, createdAt: new Date(), updatedAt: new Date() };
+    vi.mocked(getSiteSettings).mockResolvedValue({ eventsVisible: false } as any);
+    vi.mocked(getEventBySlug).mockResolvedValue(e as any);
+    expect((await run("/events")).status).toBe(404);
+    expect((await run("/event/sadna")).status).toBe(404);
+    vi.mocked(getSiteSettings).mockResolvedValue({ eventsVisible: true } as any);
+    expect((await run("/events")).status).toBe(200);
+    const { status, html } = await run("/event/sadna");
+    expect(status).toBe(200);
+    expect(html).toContain('"@type":"Event"');
+    expect(html).toContain("OfflineEventAttendanceMode");
+    expect(html).toContain("https://tickets.example/x");
+    vi.mocked(getEventBySlug).mockResolvedValue({ ...e, published: false } as any);
+    expect((await run("/event/sadna")).status).toBe(404);
   });
 });

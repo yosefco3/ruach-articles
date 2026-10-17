@@ -147,6 +147,16 @@ const routes: SsrRoute[] = [
     },
   },
   {
+    pattern: "/events",
+    prefetch: (qc, client) =>
+      prefetch(qc, getQueryKey(trpc.events.list, undefined, "query"), () => client.events.list.query()),
+  },
+  {
+    pattern: "/event/:slug",
+    prefetch: (qc, client, p) =>
+      prefetch(qc, getQueryKey(trpc.events.bySlug, { slug: p.slug }, "query"), () => client.events.bySlug.query({ slug: p.slug })),
+  },
+  {
     pattern: "/article/:slug",
     prefetch: (qc, client, p) =>
       prefetch(

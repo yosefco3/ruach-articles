@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, X, ArrowRight, Users, Upload, ImageIcon, Trash2 } from "lucide-react";
@@ -21,6 +22,7 @@ export default function AdminSettings() {
   const [siteTitle, setSiteTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [eventsVisible, setEventsVisible] = useState(false);
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutContent_, setAboutContent] = useState("");
   const [aboutImageUrl, setAboutImageUrl] = useState<string | null>(null);
@@ -32,6 +34,7 @@ export default function AdminSettings() {
       setSiteTitle(settings.siteTitle || "");
       setHeroSubtitle(settings.heroSubtitle || "");
       setContactEmail(settings.contactEmail || "");
+      setEventsVisible(!!(settings as { eventsVisible?: boolean }).eventsVisible);
     }
   }, [settings]);
 
@@ -60,7 +63,7 @@ export default function AdminSettings() {
   });
 
   const handleSaveSettings = () => {
-    updateSettings.mutate({ siteTitle, heroSubtitle, contactEmail: contactEmail || undefined });
+    updateSettings.mutate({ siteTitle, heroSubtitle, contactEmail: contactEmail || undefined, eventsVisible });
   };
 
   const handleSaveAbout = () => {
@@ -216,6 +219,14 @@ export default function AdminSettings() {
               className="text-left"
             />
             <p className="text-xs text-muted-foreground mt-1">כל פנייה דרך טופס יצירת הקשר תשלח לכתובת זו בנוסף להתראה בדף יצירת הקשר</p>
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-border p-4">
+            <div>
+              <p className="font-medium text-foreground">מדור אירועים</p>
+              <p className="text-xs text-muted-foreground mt-1">כשדלוק: דף /events וקישור "אירועים" בניווט מוצגים לציבור. אירועים מנהלים ב-<Link href="/admin/events" className="underline">אירועים</Link>.</p>
+            </div>
+            <Switch checked={eventsVisible} onCheckedChange={setEventsVisible} aria-label="מדור אירועים" />
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

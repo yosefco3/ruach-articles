@@ -13,6 +13,8 @@ vi.mock("./db", () => ({
   ]),
   listBooks: vi.fn().mockResolvedValue([{ slug: "derech-haruach", createdAt: new Date("2026-01-01") }]),
   listTeachers: vi.fn().mockResolvedValue([{ slug: "yonatan", createdAt: new Date("2026-01-01") }]),
+  listEvents: vi.fn().mockResolvedValue([{ slug: "sadna", createdAt: new Date("2026-01-01") }]),
+  getSiteSettings: vi.fn().mockResolvedValue({ eventsVisible: false }),
 }));
 
 import { serveSitemap } from "./sitemap";
@@ -45,6 +47,7 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("/teacher/yonatan");
     expect(xml).toContain("/books</loc>");
     expect(xml).not.toContain("/category/");
+    expect(xml).not.toContain("/event"); // section off
     expect(xml).toContain("2026-01-15");
   });
 

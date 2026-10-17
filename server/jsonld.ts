@@ -137,6 +137,42 @@ export function personLd(p: PersonLdInput): Record<string, unknown> {
   };
 }
 
+export interface EventLdInput {
+  name: string;
+  url: string;
+  description?: string;
+  image?: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  isOnline?: boolean;
+  registrationUrl?: string;
+  price?: string;
+}
+
+/** schema.org Event — דף אירוע (site-pivot-books). */
+export function eventLd(e: EventLdInput): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: e.name,
+    url: e.url,
+    ...(e.description ? { description: e.description } : {}),
+    ...(e.image ? { image: e.image } : {}),
+    startDate: e.startDate,
+    ...(e.endDate ? { endDate: e.endDate } : {}),
+    eventAttendanceMode: e.isOnline
+      ? "https://schema.org/OnlineEventAttendanceMode"
+      : "https://schema.org/OfflineEventAttendanceMode",
+    location: e.isOnline
+      ? { "@type": "VirtualLocation", url: e.registrationUrl || e.url }
+      : { "@type": "Place", name: e.location || SITE_NAME, address: e.location || "" },
+    organizer: organizationLd(),
+    ...(e.registrationUrl ? { offers: { "@type": "Offer", url: e.registrationUrl, ...(e.price ? { description: e.price } : {}) } } : {}),
+    inLanguage: "he-IL",
+  };
+}
+
 export interface FaqItem {
   question: string;
   answer: string;

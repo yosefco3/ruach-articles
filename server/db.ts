@@ -93,3 +93,6 @@ export {
   listTeachers, getTeacherBySlug, getTeacherById, getTeacherByUserId, createTeacher, updateTeacher,
   deleteTeacher, reorderTeachers, getTeacherArticles, getUserByEmail,
 } from "./db/teachers";
+
+// Events (site-pivot-books — hidden infrastructure)
+export { listEvents, listPastEvents, getEventBySlug, getEventById, createEvent, updateEvent, deleteEvent } from "./db/events";

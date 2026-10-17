@@ -95,7 +95,7 @@ export default function Home() {
       {/* ── Tools: readings ── */}
       <section className="py-16 bg-secondary/30">
         <div className="container">
-          {sectionHeader("הכלים")}
+          {sectionHeader("כלים נלווים")}
           <div className="grid md:grid-cols-2 gap-6">
             <Link href="/tarot" className="group flex items-start gap-5 rounded-2xl border border-border bg-card p-6 hover:shadow-xl transition-all">
               <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0"><WandSparkles className="w-6 h-6 text-primary" /></div>

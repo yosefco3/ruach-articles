@@ -14,6 +14,8 @@ export const createSettingsRouter = (deps: RouterDeps) => router({
         siteTitle: z.string().optional(),
         heroSubtitle: z.string().optional(),
         contactEmail: z.string().email().optional().or(z.literal("")),
+        /** מדור האירועים (site-pivot-books) — כבוי כברירת מחדל. */
+        eventsVisible: z.boolean().optional(),
       })
     )
     .mutation(async ({ input }) => {

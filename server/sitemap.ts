@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { getArticles, listBooks, listTeachers } from "./db";
+import { getArticles, listBooks, listTeachers, listEvents, getSiteSettings } from "./db";
 import { articlePath } from "@shared/articleUrl";
 import { CARDS, cardSlug } from "@shared/tarot";
 import { SITE_URL_PRODUCTION } from "@shared/const";
@@ -143,6 +143,19 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     }
   } catch (err) {
     console.warn("[Sitemap] Error fetching teachers:", err);
+  }
+
+  // ── Events — only while the section is switched on ──
+  try {
+    const s = await getSiteSettings();
+    if ((s as { eventsVisible?: boolean }).eventsVisible) {
+      entries.push({ loc: `${baseUrl}/events`, changefreq: "weekly", priority: 0.7 });
+      for (const e of await listEvents({ publishedOnly: true })) {
+        entries.push({ loc: `${baseUrl}/event/${encodeURIComponent(e.slug)}`, lastmod: toIsoDate(e.updatedAt || e.createdAt), changefreq: "weekly", priority: 0.6 });
+      }
+    }
+  } catch (err) {
+    console.warn("[Sitemap] Error fetching events:", err);
   }
 
   // ── Articles: sample chapters / materials under their (visible) book, teacher articles at /article ──

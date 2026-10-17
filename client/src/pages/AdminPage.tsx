@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useDynamicCategories } from "@/hooks/useDynamicCategories";
-import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass, WandSparkles, BookOpen, Users } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Eye, EyeOff, Settings, Mail, Send, ArrowUpDown, Sparkles, Search, X, Compass, WandSparkles, BookOpen, Users, CalendarDays } from "lucide-react";
 import { bookBadge, kindOfRow } from "./books/articleKind";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -144,6 +144,12 @@ export default function AdminPage() {
           <Link href="/admin/teachers" className="gap-2">
             <Users className="w-4 h-4" />
             מורים בשיטה
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/admin/events" className="gap-2">
+            <CalendarDays className="w-4 h-4" />
+            אירועים
           </Link>
         </Button>
         <Button variant="outline" size="sm" asChild>

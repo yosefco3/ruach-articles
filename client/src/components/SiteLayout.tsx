@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown, Mail, Sparkles, WandSparkles, BookOpen, Users, Compass } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Mail, Sparkles, WandSparkles, BookOpen, Users, Compass, CalendarDays } from "lucide-react";
 import { useState } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
@@ -83,6 +83,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               {textLink("/books", "ספרים", false)}
               {textLink("/derech", "הדרך")}
               {textLink("/teachers", "מורים", false)}
+              {settings?.eventsVisible && textLink("/events", "אירועים", false)}
               {textLink("/about", "אודות")}
               {textLink("/contact", "יצירת קשר")}
             </nav>
@@ -127,6 +128,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                           <Link href="/admin/teachers" className="flex items-center gap-2 cursor-pointer">
                             <Users className="w-4 h-4" />
                             <span>מורים</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/events" className="flex items-center gap-2 cursor-pointer">
+                            <CalendarDays className="w-4 h-4" />
+                            <span>אירועים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -252,6 +259,15 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             >
               מורים בשיטה
             </Link>
+            {settings?.eventsVisible && (
+              <Link
+                href="/events"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                אירועים
+              </Link>
+            )}
             <Link
               href="/about"
               onClick={() => setMobileOpen(false)}
@@ -313,6 +329,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               >
                 מורים בשיטה
               </Link>
+              {settings?.eventsVisible && (
+                <Link
+                  href="/events"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  אירועים
+                </Link>
+              )}
               <Link
                 href="/iching"
                 className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
