@@ -6,6 +6,7 @@
  * מ-`shared/tarot` (deckSections), התמונות מ-/tarot-cards/<id>.webp.
  */
 import { Link } from "wouter";
+import BookPromo from "@/components/BookPromo";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { DECK_ASSETS_VERSION, cardImagePath, cardSlug, type CardStruct } from "@shared/tarot";
 import { cardAltText, deckSections } from "@/pages/tarot/model";
@@ -230,6 +231,7 @@ export default function TarotDeckGallery() {
           </p>
         </div>
       </div>
+      <BookPromo />
     </div>
   );
 }

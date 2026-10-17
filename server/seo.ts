@@ -417,7 +417,6 @@ const STATIC_PUBLIC_PATHS = new Set([
   "/contact",
   "/derech",
   "/accessibility",
-  "/guest-post",
   "/iching",
   "/tarot",
   "/tarot/deck",

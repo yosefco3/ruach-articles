@@ -10,19 +10,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
-import { Menu, X, User, LogOut, Settings, ChevronDown, Tag, Mail, Sparkles, WandSparkles } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, ChevronDown, Mail, Sparkles, WandSparkles, BookOpen, Users, Compass } from "lucide-react";
 import { useState } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { data: settings } = trpc.settings.get.useQuery();
-  const { data: categories } = trpc.categories.listWithCounts.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [catsOpen, setCatsOpen] = useState(false);
   const [location] = useLocation();
+  // מורה מקושר רואה קישור לעריכת הפרופיל שלו
+  const { data: teacherMe } = trpc.teachers.me.useQuery(undefined, { enabled: isAuthenticated, retry: false });
 
   const isAdmin = user?.role === "admin";
-  const siteName = settings?.siteTitle || "רוּחַ";
+  const siteName = settings?.siteTitle || "דרך הרוח";
+  const textLink = (href: string, label: string, exact = true) => (
+    <Link
+      href={href}
+      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
+        (exact ? location === href : location.startsWith(href)) ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+      }`}
+    >
+      {label}
+    </Link>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -41,7 +51,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <div className="flex flex-col leading-none">
                 <span className="font-display font-bold text-xl text-foreground tracking-tight">{siteName}</span>
                 <span className="text-[10px] text-muted-foreground font-sans tracking-wide hidden sm:block">
-                  {settings?.heroSubtitle?.split(" — ")?.[0] || "רוחניות · פילוסופיה · ריפוי"}
+                  {settings?.heroSubtitle?.split(" — ")?.[0] || "הנבואה הטבעית"}
                 </span>
               </div>
             </Link>
@@ -70,67 +80,11 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <WandSparkles className="w-3.5 h-3.5" />
                 קריאה בטארוט
               </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={`inline-flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                      location.startsWith("/category/")
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    מאמרים
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-[24rem] p-2">
-                  <div className="grid grid-cols-2 gap-0.5">
-                    {(categories ?? []).map((cat) => (
-                      <DropdownMenuItem key={cat.slug} asChild>
-                        <Link
-                          href={`/category/${cat.slug}`}
-                          className="flex items-center justify-between gap-2 cursor-pointer rounded-md"
-                        >
-                          <span className="flex items-center gap-2 min-w-0">
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: cat.color ?? "#8B6914" }}
-                            />
-                            <span className="truncate">{cat.name}</span>
-                          </span>
-                          <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                            {cat.articleCount}
-                          </span>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Link
-                href="/derech"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                  location === "/derech" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-                }`}
-              >
-                הדרך
-              </Link>
-              <Link
-                href="/about"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                  location === "/about" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-                }`}
-              >
-                אודות
-              </Link>
-              <Link
-                href="/contact"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${
-                  location === "/contact" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-                }`}
-              >
-                יצירת קשר
-              </Link>
+              {textLink("/books", "ספרים", false)}
+              {textLink("/derech", "הדרך")}
+              {textLink("/teachers", "מורים", false)}
+              {textLink("/about", "אודות")}
+              {textLink("/contact", "יצירת קשר")}
             </nav>
 
             {/* Auth Actions */}
@@ -164,21 +118,21 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href="/admin/categories" className="flex items-center gap-2 cursor-pointer">
-                            <Tag className="w-4 h-4" />
-                            <span>קטגוריות</span>
+                          <Link href="/admin/books" className="flex items-center gap-2 cursor-pointer">
+                            <BookOpen className="w-4 h-4" />
+                            <span>ספרים</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/teachers" className="flex items-center gap-2 cursor-pointer">
+                            <Users className="w-4 h-4" />
+                            <span>מורים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/newsletter" className="flex items-center gap-2 cursor-pointer">
                             <Mail className="w-4 h-4" />
                             <span>ניוזלטר</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin/guest-posts" className="flex items-center gap-2 cursor-pointer">
-                            <Settings className="w-4 h-4" />
-                            <span>הצעות אורחים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -197,6 +151,23 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                           <Link href="/admin/tarot" className="flex items-center gap-2 cursor-pointer">
                             <WandSparkles className="w-4 h-4" />
                             <span>טָארוֹט</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {teacherMe && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/my-teacher-profile" className="flex items-center gap-2 cursor-pointer">
+                            <Compass className="w-4 h-4" />
+                            <span>הפרופיל שלי כמורה</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/new" className="flex items-center gap-2 cursor-pointer">
+                            <Settings className="w-4 h-4" />
+                            <span>מאמר חדש</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -260,39 +231,26 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <WandSparkles className="w-4 h-4" />
               קריאה בטארוט
             </Link>
-            <button
-              onClick={() => setCatsOpen(!catsOpen)}
-              className="flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            <Link
+              href="/books"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
-              <span>מאמרים</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${catsOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {catsOpen && (
-              <div className="grid grid-cols-2 gap-0.5 pb-1 ps-2">
-                {(categories ?? []).map((cat) => (
-                  <Link
-                    key={cat.slug}
-                    href={`/category/${cat.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: cat.color ?? "#8B6914" }}
-                    />
-                    <span className="truncate">{cat.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
+              ספרים
+            </Link>
             <Link
               href="/derech"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               הדרך
+            </Link>
+            <Link
+              href="/teachers"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              מורים בשיטה
             </Link>
             <Link
               href="/about"
@@ -338,20 +296,23 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 <span className="font-display font-bold text-lg text-foreground">{siteName}</span>
               </div>
               <p className="text-sm text-muted-foreground text-center md:text-right">
-                {settings?.heroSubtitle || "רוחניות · פילוסופיה · ריפוי"}
+                {settings?.heroSubtitle || "הנבואה הטבעית"}
               </p>
             </div>
 
             <nav aria-label="ניווט תחתון" className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-              {(categories ?? []).map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/category/${cat.slug}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {cat.name}
-                </Link>
-              ))}
+              <Link
+                href="/books"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ספרים
+              </Link>
+              <Link
+                href="/teachers"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                מורים בשיטה
+              </Link>
               <Link
                 href="/iching"
                 className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"

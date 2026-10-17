@@ -6,8 +6,6 @@ import { createCommentsRouter } from "./comments.router";
 import { createCategoriesRouter } from "./categories.router";
 import { createNewsletterRouter } from "./newsletter.router";
 import { createLikesRouter } from "./likes.router";
-import { createGuestPostsRouter } from "./guestPosts.router";
-import { createGuestWritersRouter } from "./guestWriters.router";
 import { createSettingsRouter } from "./settings.router";
 import { createAboutRouter } from "./about.router";
 import { createDerechRouter } from "./derech.router";
@@ -34,8 +32,6 @@ export const createAppRouter = (deps: RouterDeps) => router({
   settings: createSettingsRouter(deps),
   about: createAboutRouter(deps),
   derech: createDerechRouter(deps),
-  guestPosts: createGuestPostsRouter(deps),
-  guestWriters: createGuestWritersRouter(deps),
   likes: createLikesRouter(deps),
   profiles: createProfilesRouter(deps),
   users: createUsersRouter(deps),

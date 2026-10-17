@@ -51,14 +51,8 @@ const routes: SsrRoute[] = [
     pattern: "/",
     prefetch: (qc, client) =>
       Promise.all([
-        prefetch(
-          qc,
-          getQueryKey(trpc.categories.listWithCounts, undefined, "query"),
-          () => client.categories.listWithCounts.query()
-        ),
-        prefetch(qc, getQueryKey(trpc.featured.get, undefined, "query"), () =>
-          client.featured.get.query()
-        ),
+        prefetch(qc, getQueryKey(trpc.books.list, undefined, "query"), () => client.books.list.query()),
+        prefetch(qc, getQueryKey(trpc.teachers.list, undefined, "query"), () => client.teachers.list.query()),
         prefetch(qc, getQueryKey(trpc.articles.list, undefined, "query"), () =>
           client.articles.list.query()
         ),

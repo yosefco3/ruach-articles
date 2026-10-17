@@ -5,6 +5,7 @@
  * הניסוח לפני ההטלה (כשהפיצר דלוק) ולפירוש ה-AI (`IChingAiPanel`) — ואינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
+import BookPromo from "@/components/BookPromo";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
 import { buildIchingPrintHtml, printHtmlDocument } from "@/lib/printReading";
@@ -505,6 +506,7 @@ export default function IChingReading() {
           />
         )}
       </div>
+      <BookPromo />
     </div>
   );
 }

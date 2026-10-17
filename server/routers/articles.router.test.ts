@@ -174,10 +174,16 @@ describe("articles.update", () => {
     expect(db.updateArticle).toHaveBeenCalledWith(3, { published: true });
   });
 
-  it("strips published for a non-admin author", async () => {
-    const { caller, db } = makeCaller(writerCtx({ dbId: 7 }), ownedBy(7));
+  it("strips published for a non-admin author who is not a linked teacher", async () => {
+    const { caller, db } = makeCaller(userCtx({ dbId: 9 }), ownedBy(9));
     await caller.articles.update({ id: 3, title: "new", published: true });
     expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new" });
+  });
+
+  it("a linked teacher keeps published on their own article", async () => {
+    const { caller, db } = makeCaller(writerCtx(), ownedBy(7));
+    await caller.articles.update({ id: 3, title: "new", published: true });
+    expect(db.updateArticle).toHaveBeenCalledWith(3, { title: "new", published: true });
   });
 });
 

@@ -5,6 +5,7 @@
  * ה-FAQ מגיע מ-shared/tarotGuide (אותו טקסט שמוזרק כ-FAQPage JSON-LD).
  */
 import { Link } from "wouter";
+import BookPromo from "@/components/BookPromo";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { cardSlug } from "@shared/tarot";
 import { TAROT_GUIDE_FAQ } from "@shared/tarotGuide";
@@ -215,6 +216,7 @@ export default function TarotGuide() {
           <Link href="/derech" style={LINK_STYLE}>דרך הרוח — שיטת האתר</Link>
         </div>
       </div>
+      <BookPromo />
     </div>
   );
 }

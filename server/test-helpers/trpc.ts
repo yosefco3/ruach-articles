@@ -33,9 +33,13 @@ export const publicCtx = () => ctxWith(null);
 export const userCtx = (o: Partial<AuthUser> = {}) => ctxWith(makeUser({ role: "user", ...o }));
 export const adminCtx = (o: Partial<AuthUser> = {}) => ctxWith(makeUser({ role: "admin", dbId: 99, ...o }));
 
-/** Approved guest writer: role 'user' + the guestPostApproved flag writerProcedure checks. */
+/**
+ * A linked teacher (site-pivot-books): a plain user whose dbId (7 by default) has a
+ * teachers row — makeDeps seeds getTeacherByUserId accordingly unless overridden.
+ */
+export const TEACHER_USER_DB_ID = 7;
 export const writerCtx = (o: Partial<AuthUser> = {}) =>
-  ctxWith({ ...makeUser({ role: "user", ...o }), guestPostApproved: true } as AuthUser);
+  ctxWith(makeUser({ role: "user", dbId: TEACHER_USER_DB_ID, ...o }));
 
 /**
  * Build RouterDeps where every db method is a vi.fn(). A Proxy lazily creates a
@@ -71,6 +75,12 @@ export function makeDeps(dbOverrides: Record<string, unknown> = {}, extra: Extra
   // אותה ברירת מחדל לטארוט — AI דלוק אלא אם הטסט דורס את getTarotIntro.
   if (!("getTarotIntro" in seeded)) {
     seeded.getTarotIntro = vi.fn(async () => ({ aiEnabled: true }));
+  }
+  // מורה מקושר ברירת-מחדל: המשתמש עם dbId=7 (writerCtx) הוא מורה; כל אחד אחר — לא.
+  if (!("getTeacherByUserId" in seeded)) {
+    seeded.getTeacherByUserId = vi.fn(async (userId: number) =>
+      userId === TEACHER_USER_DB_ID ? { id: 1, userId, slug: "writer", name: "כותב", visible: true } : undefined,
+    );
   }
   const db = new Proxy(seeded, {
     get(target, prop: string) {

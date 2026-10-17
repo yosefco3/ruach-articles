@@ -4,6 +4,7 @@
  * המיזוג ב-cardPageView. קלף לא מוכר → NotFound.
  */
 import { Link, useParams } from "wouter";
+import BookPromo from "@/components/BookPromo";
 import { trpc } from "@/lib/trpc";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { cardPageView } from "@/pages/tarot/model";
@@ -184,6 +185,7 @@ export default function TarotCardPage() {
           </Link>
         </div>
       </div>
+      <BookPromo />
     </div>
   );
 }

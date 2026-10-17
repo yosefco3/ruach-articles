@@ -65,7 +65,8 @@ export default function AdminArticleForm() {
   );
 
   // Editing is gated by that ownership check; creating still needs the writer role.
-  const canWrite = isEdit ? !articleError : isAdmin || (user as any)?.guestPostApproved;
+  const { data: teacherMe } = trpc.teachers.me.useQuery(undefined, { enabled: !!user && !isAdmin, retry: false });
+  const canWrite = isEdit ? !articleError : isAdmin || !!teacherMe;
 
   // ?from=article — opened via the action bar on the article page, so leaving the
   // editor (save / cancel / back) should land back on the article, not the admin table.

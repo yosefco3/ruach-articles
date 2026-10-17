@@ -2,10 +2,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Search, UserCheck, UserX, Shield, ArrowRight } from "lucide-react";
+import { Loader2, Search, Shield, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { toast } from "sonner";
 
 export default function AdminUsers() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -14,24 +13,6 @@ export default function AdminUsers() {
   const utils = trpc.useUtils();
 
   const { data: allUsers, isLoading: usersLoading } = trpc.users.list.useQuery();
-
-  const approveMutation = trpc.guestWriters.approve.useMutation({
-    onSuccess: () => {
-      utils.users.list.invalidate();
-      utils.guestWriters.list.invalidate();
-      toast.success("המשתמש אושר כסופר אורח");
-    },
-    onError: (err) => toast.error(err.message || "שגיאה באישור המשתמש"),
-  });
-
-  const revokeMutation = trpc.guestWriters.revoke.useMutation({
-    onSuccess: () => {
-      utils.users.list.invalidate();
-      utils.guestWriters.list.invalidate();
-      toast.success("ההרשאה הוסרה");
-    },
-    onError: (err) => toast.error(err.message || "שגיאה בהסרת ההרשאה"),
-  });
 
   if (loading) {
     return (
@@ -105,7 +86,6 @@ export default function AdminUsers() {
                   <th className="text-right p-4 font-medium text-muted-foreground">שם</th>
                   <th className="text-right p-4 font-medium text-muted-foreground">אימייל</th>
                   <th className="text-right p-4 font-medium text-muted-foreground">תפקיד</th>
-                  <th className="text-right p-4 font-medium text-muted-foreground">סטטוס כתיבה</th>
                   <th className="text-center p-4 font-medium text-muted-foreground">פעולות</th>
                 </tr>
               </thead>
@@ -128,46 +108,10 @@ export default function AdminUsers() {
                         {u.role === "admin" ? "מנהל" : "משתמש"}
                       </span>
                     </td>
-                    <td className="p-4">
-                      {u.role === "admin" ? (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      ) : u.guestPostApproved ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/40 text-green-400">
-                          <UserCheck className="w-3 h-3" />
-                          מאושר
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
-                          לא מאושר
-                        </span>
-                      )}
-                    </td>
                     <td className="p-4 text-center">
-                      {u.role !== "admin" && (
-                        u.guestPostApproved ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => revokeMutation.mutate({ userId: u.id })}
-                            disabled={revokeMutation.isPending}
-                            className="gap-1 text-destructive hover:bg-destructive/10"
-                          >
-                            <UserX className="w-3.5 h-3.5" />
-                            הסר הרשאה
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => approveMutation.mutate({ userId: u.id })}
-                            disabled={approveMutation.isPending}
-                            className="gap-1 text-green-400 hover:bg-green-900/30"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                            אשר כסופר
-                          </Button>
-                        )
-                      )}
+                      <Link href="/admin/teachers" className="text-xs text-primary hover:underline">
+                        לקשר כמורה בשיטה
+                      </Link>
                     </td>
                   </tr>
                 ))}

@@ -29,11 +29,6 @@ export {
 // Settings
 export { getSiteSettings, updateSiteSettings } from "./db/settings";
 
-// Guest Posts
-export {
-  getGuestPosts, createGuestPost, updateGuestPostStatus, deleteGuestPost,
-} from "./db/guest-posts";
-
 // Likes
 export { getLikeCount, getUserLike, createLike, deleteLike } from "./db/likes";
 
@@ -47,11 +42,6 @@ export { getAboutPage, updateAboutPage } from "./db/about";
 
 // Derech (method page)
 export { getDerechContent, updateDerechContent } from "./db/derech";
-
-// Guest Writers
-export {
-  approveGuestWriter, revokeGuestWriter, getApprovedGuestWriters,
-} from "./db/guest-writers";
 
 // Categories
 export {

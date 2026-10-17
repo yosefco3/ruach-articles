@@ -37,18 +37,3 @@ describe("users router", () => {
   });
 });
 
-describe("guestWriters router (admin-only)", () => {
-  it("approve and revoke call the db with the userId", async () => {
-    const { caller, db } = makeCaller(adminCtx());
-    await caller.guestWriters.approve({ userId: 7 });
-    expect(db.approveGuestWriter).toHaveBeenCalledWith(7);
-    await caller.guestWriters.revoke({ userId: 7 });
-    expect(db.revokeGuestWriter).toHaveBeenCalledWith(7);
-  });
-
-  it("rejects a regular user", async () => {
-    await expect(
-      makeCaller(userCtx()).caller.guestWriters.approve({ userId: 7 }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-  });
-});

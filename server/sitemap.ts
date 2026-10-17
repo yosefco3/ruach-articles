@@ -106,11 +106,6 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     priority: 0.8, // the method page — the site's brand
   });
   entries.push({
-    loc: `${baseUrl}/guest-post`,
-    changefreq: "monthly",
-    priority: 0.5,
-  });
-  entries.push({
     loc: `${baseUrl}/accessibility`,
     changefreq: "yearly",
     priority: 0.3, // accessibility statement

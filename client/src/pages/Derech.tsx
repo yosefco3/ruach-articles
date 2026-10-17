@@ -11,6 +11,7 @@ import {
 import { trpc } from "@/lib/trpc";
 import { DEFAULT_DERECH_CONTENT, type DerechContent } from "@shared/derech";
 import { renderMdLite } from "@/lib/mdLite";
+import BookPromo from "@/components/BookPromo";
 
 /**
  * /derech — the site's method page: "דרך הרוח — הנבואה הטבעית".
@@ -25,6 +26,8 @@ const PRINCIPLE_ICONS = [Sprout, Link2, Scale, Globe, Music];
 export default function Derech() {
   const { data } = trpc.derech.get.useQuery();
   const content: DerechContent = data ?? DEFAULT_DERECH_CONTENT;
+  const { data: teachers } = trpc.teachers.list.useQuery();
+  const founder = teachers?.find((t) => t.isFounder);
 
   return (
     <div className="min-h-screen" dir="rtl">
@@ -172,6 +175,24 @@ export default function Derech() {
           </div>
         </section>
 
+        {/* ── The founder (from the teachers directory) ── */}
+        {founder && (
+          <section className="mb-16">
+            <Link
+              href={`/teacher/${encodeURIComponent(founder.slug)}`}
+              className="flex flex-col sm:flex-row items-center gap-6 rounded-2xl border border-border bg-card p-6 hover:shadow-lg transition-all"
+            >
+              {founder.photo && <img src={founder.photo} alt={founder.name} className="w-24 h-24 rounded-full object-cover ring-2 ring-primary/20 shrink-0" />}
+              <div className="text-center sm:text-right">
+                <span className="text-xs font-semibold text-primary">מייסד השיטה</span>
+                <p className="font-display font-bold text-2xl text-foreground mt-1">{founder.name}</p>
+                {founder.tagline && <p className="text-muted-foreground mt-1">{founder.tagline}</p>}
+                <span className="inline-block mt-3 text-sm font-medium text-primary underline underline-offset-4">על המייסד</span>
+              </div>
+            </Link>
+          </section>
+        )}
+
         {/* ── Closing ── */}
         <section className="text-center">
           <div className="divider-gold mb-10 mx-auto max-w-xs" />
@@ -184,14 +205,15 @@ export default function Derech() {
             <p className="mt-8 text-muted-foreground text-sm mb-4">{content.closingCta}</p>
           )}
           <Link
-            href="/"
+            href="/books"
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/20 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            לכל המאמרים
+            לספרי השיטה
           </Link>
         </section>
       </div>
+      <BookPromo lead="השיטה בכתב" />
     </div>
   );
 }

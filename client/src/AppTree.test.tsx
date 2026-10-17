@@ -34,7 +34,7 @@ describe("AppTree SSR-safety", () => {
     );
 
     // Stable marker from SiteLayout's header (renders before the lazy routes).
-    expect(html).toContain("רוּחַ");
+    expect(html).toContain("דרך הרוח");
   });
 
   it("honours the injected location (wouter ssrPath)", () => {

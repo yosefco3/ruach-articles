@@ -109,7 +109,7 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("<loc>https://ruachwisdom.org/accessibility</loc>");
   });
 
-  it("includes the public static pages (about, contact, guest-post)", async () => {
+  it("includes the public static pages (about, contact)", async () => {
     const res = {
       status: vi.fn().mockReturnThis(),
       set: vi.fn().mockReturnThis(),
@@ -121,7 +121,7 @@ describe("Sitemap Generator", () => {
     const xml = res.send.mock.calls[0][0] as string;
     expect(xml).toContain("<loc>https://ruachwisdom.org/about</loc>");
     expect(xml).toContain("<loc>https://ruachwisdom.org/contact</loc>");
-    expect(xml).toContain("<loc>https://ruachwisdom.org/guest-post</loc>");
+    expect(xml).not.toContain("/guest-post");
   });
 });
 describe("sitemap — tarot card pages", () => {

@@ -5,6 +5,7 @@
  * רק לפירוש ה-AI בלחיצה מפורשת (צעד 11) — ואינה נשמרת בשרת.
  */
 import { useEffect, useRef, useState } from "react";
+import BookPromo from "@/components/BookPromo";
 import { Link } from "wouter";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
@@ -356,6 +357,7 @@ export default function TarotReading() {
 
         <DeckDownload />
       </div>
+      <BookPromo />
     </div>
   );
 }

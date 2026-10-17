@@ -17,7 +17,6 @@ export default function AdminSettings() {
 
   const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery();
   const { data: aboutContent, isLoading: aboutLoading } = trpc.about.get.useQuery();
-  const { data: guestWriters, isLoading: writersLoading } = trpc.guestWriters.list.useQuery();
 
   const [siteTitle, setSiteTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
@@ -26,7 +25,7 @@ export default function AdminSettings() {
   const [aboutContent_, setAboutContent] = useState("");
   const [aboutImageUrl, setAboutImageUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"site" | "about" | "writers">("site");
+  const [activeTab, setActiveTab] = useState<"site" | "about">("site");
 
   useEffect(() => {
     if (settings) {
@@ -58,15 +57,6 @@ export default function AdminSettings() {
       toast.success("עמוד האודות עודכן בהצלחה");
     },
     onError: (err) => toast.error(err.message || "שגיאה בעדכון עמוד האודות"),
-  });
-
-  const revokeWriter = trpc.guestWriters.revoke.useMutation({
-    onSuccess: () => {
-      utils.guestWriters.list.invalidate();
-      utils.users.list.invalidate();
-      toast.success("הרשאת הסופר האורח בוטלה");
-    },
-    onError: (err) => toast.error(err.message || "שגיאה בביטול ההרשאה"),
   });
 
   const handleSaveSettings = () => {
@@ -144,7 +134,7 @@ export default function AdminSettings() {
     );
   }
 
-  if (settingsLoading || aboutLoading || writersLoading) {
+  if (settingsLoading || aboutLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -185,16 +175,6 @@ export default function AdminSettings() {
           }`}
         >
           עמוד אודות
-        </button>
-        <button
-          onClick={() => setActiveTab("writers")}
-          className={`px-4 py-2 font-medium transition-colors ${
-            activeTab === "writers"
-              ? "text-primary border-b-2 border-primary"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          סופרים אורחים
         </button>
       </div>
 
@@ -370,53 +350,6 @@ export default function AdminSettings() {
         </div>
       )}
 
-      {/* Guest Writers Tab */}
-      {activeTab === "writers" && (
-        <div className="bg-card border border-border rounded-xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-medium text-foreground">סופרים אורחים מאושרים</h3>
-            <Button variant="outline" size="sm" asChild className="gap-2">
-              <Link href="/admin/users">
-                <Users className="w-4 h-4" />
-                ניהול משתמשים
-              </Link>
-            </Button>
-          </div>
-
-          {guestWriters && guestWriters.length > 0 ? (
-            <div className="space-y-3">
-              {guestWriters.map((writer) => (
-                <div key={writer.id} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
-                  <div>
-                    <p className="font-medium text-foreground">{writer.name || "ללא שם"}</p>
-                    <p className="text-sm text-muted-foreground">{writer.email || "—"}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => revokeWriter.mutate({ userId: writer.id })}
-                    disabled={revokeWriter.isPending}
-                    className="gap-2"
-                  >
-                    {revokeWriter.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <X className="w-4 h-4" />
-                    )}
-                    ביטול אישור
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-center py-6">
-              אין סופרים אורחים מאושרים עדיין.{" "}
-              <Link href="/admin/users" className="text-primary hover:underline">לחצו כאן</Link>{" "}
-              כדי לאשר משתמשים.
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

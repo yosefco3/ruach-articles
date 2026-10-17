@@ -15,29 +15,14 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 /**
- * Writer procedure guard
- * Allows admin OR approved guest writers (legacy flow, removed in site-pivot step 13)
- */
-export const writerProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const isAdmin = ctx.user.role === "admin";
-  const isApprovedWriter = (ctx.user as any).guestPostApproved === true;
-  if (!isAdmin && !isApprovedWriter) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
-  }
-  return next({ ctx });
-});
-
-/**
- * Who may write articles (site-pivot-books): the admin, a teacher whose account is
- * linked (teachers.userId), or — until the guest-post flow is deleted — an approved
- * guest writer. Resolves the teacher row once and hands it down as ctx.teacher.
+ * Who may write articles (site-pivot-books): the admin, or a teacher whose account is
+ * linked (teachers.userId). Resolves the teacher row once and hands it down as ctx.teacher.
  */
 export const makeTeacherProcedure = (db: RouterDeps["db"]) =>
   protectedProcedure.use(async ({ ctx, next }) => {
     const isAdmin = ctx.user.role === "admin";
     const teacher = isAdmin ? undefined : await db.getTeacherByUserId(ctx.user.dbId);
-    const isApprovedWriter = (ctx.user as any).guestPostApproved === true;
-    if (!isAdmin && !teacher && !isApprovedWriter) {
+    if (!isAdmin && !teacher) {
       throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" });
     }
     return next({ ctx: { ...ctx, teacher: teacher ?? null } });

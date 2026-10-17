@@ -466,7 +466,7 @@ describe("seoMiddleware — HTTP status (real 404 instead of soft 404)", () => {
   });
 
   it("static public pages, home, profiles → 200 with a canonical", async () => {
-    for (const p of ["/", "/about", "/contact", "/guest-post", "/tarot/guide", "/profile/12"]) {
+    for (const p of ["/", "/about", "/contact", "/books", "/teachers", "/tarot/guide", "/profile/12"]) {
       const { status, html, next } = await run(p);
       expect(status, p).toBe(200);
       expect(html, p).toContain('rel="canonical"');
