@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo || true",
             "timeout": 10
           }
         ]
@@ -37,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo || true",
             "timeout": 10
           }
         ]
@@ -48,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/model-router/router_nudge.py\" --repo || true",
             "timeout": 10
           }
         ]
