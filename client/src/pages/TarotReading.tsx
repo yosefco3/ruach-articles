@@ -21,6 +21,7 @@ import {
   draw,
   normalizeSpreadChoice,
   spreadPlan,
+  spreadStance,
   type SpreadChoice,
   type SpreadPlan,
   type TarotReading as Reading,
@@ -46,7 +47,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 type Phase = "intro" | "drawing" | "result";
 
 // הקלף שנפתח אוטומטית עם התוצאה: בשלושה קלפים — האמצעי ("נושא את התשובה");
-// בפריסת בחירה — "הצומת" (הראשון).
+// בפריסת בחירה — "הצומת" / "המצב" (הראשון).
 function focusIndex(plan: SpreadPlan): number {
   return plan.kind === "choice" ? 0 : 1;
 }
@@ -273,7 +274,7 @@ export default function TarotReading() {
                   <span>
                     חדש באתר: <strong>פירוש AI אישי לפריסה</strong> — שלפו קלפים וקבלו פירוש
                     המחבר את הקלפים לשאלתכם; ה-AI גם בוחר את הפריסה המתאימה לשאלה (למשל
-                    פריסת בחירה בין דרכים). חינם, למשתמשים מחוברים.
+                    פריסת בחירה בין דרכים או בין אפשרויות). חינם, למשתמשים מחוברים.
                   </span>
                 </div>
               )}
@@ -631,7 +632,7 @@ function ResultView({
       )}
 
       {layout ? (
-        /* ── פריסת בחירה: הצומת → עמודה לכל דרך → מה שאינך רואה ── */
+        /* ── פריסת בחירה: הצומת → עמודה לכל דרך/אפשרות → מה שאינך רואה ── */
         <div style={{ animation: "fadeUp 0.6s ease both" }}>
           <div style={{ textAlign: "center", fontFamily: SERIF, fontWeight: 700, fontSize: 20, color: "oklch(0.42 0.09 55)", marginBottom: 22 }}>
             {plan.title}
@@ -667,7 +668,7 @@ function ResultView({
               >
                 <div style={{ textAlign: "center", marginBottom: 14 }}>
                   <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 18, color: "oklch(0.24 0.03 55)" }}>
-                    {`דֶּרֶךְ ${col.letter}`}
+                    {spreadStance(spread) === "outcome" ? `אֶפְשָׁרוּת ${col.letter}` : `דֶּרֶךְ ${col.letter}`}
                   </div>
                   <div style={{ fontSize: 14, color: "oklch(0.42 0.04 58)", marginTop: 2, maxWidth: 260 }}>{col.option}</div>
                 </div>

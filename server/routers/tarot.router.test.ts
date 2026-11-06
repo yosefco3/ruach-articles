@@ -330,6 +330,15 @@ describe("tarot.interpret — spread plans", () => {
     expect(generateTarotInterpretation).toHaveBeenCalledWith({ question: "ש", cards: SIX, spread: CHOICE });
   });
 
+  it("outcome stance reaches the AI service intact", async () => {
+    const { caller, generateTarotInterpretation } = makeCaller(userCtx(), enabled());
+    const spread = { ...CHOICE, stance: "outcome" as const };
+    await interpretDone(caller, { question: "ש", cards: SIX, spread });
+    expect(generateTarotInterpretation).toHaveBeenCalledWith(
+      expect.objectContaining({ spread: expect.objectContaining({ kind: "choice", stance: "outcome" }) }),
+    );
+  });
+
   it("card count must match the plan: choice with 3 cards, or no spread with 6 cards → BAD_REQUEST", async () => {
     const { caller, generateTarotInterpretation, db } = makeCaller(userCtx(), enabled());
     await expect(caller.tarot.interpret({ question: "ש", cards: CARDS, spread: CHOICE })).rejects.toMatchObject({

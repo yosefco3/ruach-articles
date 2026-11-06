@@ -6,8 +6,11 @@ import {
   THREE_SPREAD,
   normalizeSpreadChoice,
   optionLetter,
+  optionName,
+  optionNoun,
   spreadPlan,
   spreadSize,
+  spreadStance,
 } from "./spreads";
 
 describe("spreadPlan", () => {
@@ -152,5 +155,97 @@ describe("reading title (file name)", () => {
     expect(sanitizeReadingTitle("x".repeat(MAX_TITLE_LENGTH + 30))).toHaveLength(MAX_TITLE_LENGTH);
     expect(sanitizeReadingTitle("")).toBeUndefined();
     expect(sanitizeReadingTitle(null)).toBeUndefined();
+  });
+});
+
+describe("choice spread — outcome stance", () => {
+  it("2 options: neutral labels and roles, the shared keys, and the outcome title", () => {
+    const plan = spreadPlan({ kind: "choice", options: ["ביבי", "גנץ"], stance: "outcome" });
+    expect(plan.positions.map((p) => p.label)).toEqual([
+      "הַמַּצָּב",
+      "מָה בְּיָדָהּ",
+      "לְאָן נוֹטָה",
+      "מָה בְּיָדָהּ",
+      "לְאָן נוֹטָה",
+      "מָה שֶׁאֵינְךָ רוֹאֶה",
+    ]);
+    expect(plan.positions.map((p) => p.key)).toEqual(
+      spreadPlan({ kind: "choice", options: ["ביבי", "גנץ"] }).positions.map((p) => p.key),
+    );
+    const opt1 = plan.positions.filter((p) => p.option === 1);
+    expect(opt1[0].role).toContain("אפשרות ב׳");
+    expect(opt1[0].role).toContain("גנץ");
+    expect(plan.positions.some((p) => p.role.includes("דרך"))).toBe(false);
+    expect(plan.title).toBe("פְּרִיסַת שְׁתֵּי הָאֶפְשָׁרֻיּוֹת");
+  });
+
+  it("3 options: fan title, same size as decision (2 + 2n)", () => {
+    const options = ["א", "ב", "ג"];
+    expect(spreadPlan({ kind: "choice", options, stance: "outcome" }).title).toBe("פְּרִיסַת הַמְּנִיפָה");
+    expect(spreadSize({ kind: "choice", options, stance: "outcome" })).toBe(8);
+    expect(spreadSize({ kind: "choice", options, stance: "outcome" })).toBe(spreadSize({ kind: "choice", options }));
+  });
+
+  it("an explicit decision stance equals the default plan", () => {
+    const options = ["לעבור", "להישאר"];
+    expect(spreadPlan({ kind: "choice", options, stance: "decision" })).toEqual(spreadPlan({ kind: "choice", options }));
+  });
+});
+
+describe("spreadStance / optionNoun / optionName", () => {
+  it("spreadStance defaults to decision; outcome only when stated (also on an overflow three)", () => {
+    expect(spreadStance({ kind: "choice" })).toBe("decision");
+    expect(spreadStance({ kind: "choice", stance: "decision" })).toBe("decision");
+    expect(spreadStance({ kind: "choice", stance: "outcome" })).toBe("outcome");
+    expect(spreadStance({ kind: "three", options: [], overflow: 7, stance: "outcome" })).toBe("outcome");
+  });
+
+  it("optionNoun and optionName follow the stance", () => {
+    expect(optionNoun("decision")).toBe("דרך");
+    expect(optionNoun("decision", true)).toBe("דרכים");
+    expect(optionNoun("outcome")).toBe("אפשרות");
+    expect(optionNoun("outcome", true)).toBe("אפשרויות");
+    expect(optionName("decision", 0)).toBe("דרך א׳");
+    expect(optionName("outcome", 0)).toBe("אפשרות א׳");
+    expect(optionName("outcome", 6)).toBe("אפשרות 7");
+  });
+});
+
+describe("normalizeSpreadChoice — stance", () => {
+  it("keeps outcome (with title), and the plan follows it", () => {
+    const res = normalizeSpreadChoice({ kind: "choice", options: ["א", "ב"], stance: "outcome", title: "מי ינצח" });
+    expect(res).toEqual({ kind: "choice", options: ["א", "ב"], stance: "outcome", title: "מי ינצח" });
+    expect(spreadStance(res)).toBe("outcome");
+  });
+
+  it.each([["decision"], ["other"], [1], [null], [undefined]])("stance %j yields no stance key", (stance) => {
+    const res = normalizeSpreadChoice({ kind: "choice", options: ["א", "ב"], stance });
+    expect(res).toEqual({ kind: "choice", options: ["א", "ב"] });
+    expect("stance" in res).toBe(false);
+  });
+
+  it("never adds stance to a plain three (kind three, single option)", () => {
+    for (const raw of [
+      { kind: "three", options: [], stance: "outcome" },
+      { kind: "choice", options: ["א"], stance: "outcome" },
+    ]) {
+      const res = normalizeSpreadChoice(raw);
+      expect(res.kind).toBe("three");
+      expect("stance" in res).toBe(false);
+    }
+  });
+
+  it("keeps the outcome stance on an overflow three, so the notice can say 'אפשרויות' — and survives re-normalisation", () => {
+    const first = normalizeSpreadChoice({
+      kind: "choice",
+      options: ["1", "2", "3", "4", "5", "6", "7"],
+      stance: "outcome",
+    });
+    expect(first).toEqual({ kind: "three", options: [], overflow: 7, stance: "outcome" });
+    expect(normalizeSpreadChoice(first)).toEqual(first);
+    // decision overflow stays stance-less, as before
+    expect(
+      normalizeSpreadChoice({ kind: "choice", options: ["1", "2", "3", "4", "5", "6", "7"] }),
+    ).toEqual({ kind: "three", options: [], overflow: 7 });
   });
 });

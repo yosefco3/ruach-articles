@@ -257,7 +257,7 @@ export function TarotFollowUp({
   const exhausted = left <= 0 || errorMessage === "FOLLOWUP_LIMIT";
   const failed = !!job.error && !job.error.business;
 
-  const base = suggestions && suggestions.length >= 2 ? suggestions : followUpSuggestions(spread.kind);
+  const base = suggestions && suggestions.length >= 2 ? suggestions : followUpSuggestions(spread.kind, spread.stance);
   const chips = unusedSuggestions(base, turns);
 
   return (

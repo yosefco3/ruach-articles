@@ -307,6 +307,11 @@ describe("overflowNotice — more options than the choice spread compares", () =
     expect(text).toContain("שלפו שוב");
   });
 
+  it("says options (not roads) for an outcome spread", () => {
+    const text = overflowNotice({ kind: "three", options: [], overflow: 7, stance: "outcome" })!;
+    expect(text).toContain("משווה עד 6 אפשרויות");
+  });
+
   it("is silent for ordinary readings", () => {
     expect(overflowNotice(THREE_SPREAD)).toBeNull();
     expect(overflowNotice({ kind: "choice", options: ["א", "ב"] })).toBeNull();

@@ -396,3 +396,54 @@ describe("generateTarotFollowUp", () => {
     vi.doUnmock("./_core/aiProvider");
   });
 });
+
+describe("outcome stance prompts", () => {
+  const six = [
+    { name: "השוטה", summary: "התחלה", text: "פירוש השוטה" },
+    { name: "המגדל", summary: "טלטלה", text: "פירוש המגדל" },
+    { name: "הכוכב", summary: "תקווה", text: "פירוש הכוכב" },
+    { name: "הקיסרית", summary: "שפע", text: "פירוש הקיסרית" },
+    { name: "הנזיר", summary: "התבודדות", text: "פירוש הנזיר" },
+    { name: "העולם", summary: "השלמה", text: "פירוש העולם" },
+  ];
+  const outcome = { kind: "choice" as const, options: ["ביבי", "גנץ"], stance: "outcome" as const };
+
+  it("the classifier prompt offers both stances and the who/what-among rule", () => {
+    const p = buildSpreadChoicePrompt("מי ירכיב את הממשלה: ביבי או גנץ?");
+    expect(p).toContain('"stance"');
+    expect(p).toContain('"decision"');
+    expect(p).toContain('"outcome"');
+    expect(p).toContain("מי/מה מבין");
+  });
+
+  it("buildTarotPrompt uses the option wording and drops the decision wording", () => {
+    const p = buildTarotPrompt({ question: "מי ירכיב ממשלה?", cards: six, spread: outcome });
+    for (const s of ["אפשרות א׳", "אפשרות ב׳", "המצב", "מה בידה", "לאן היא נוטה", "מה לעקוב אחריו"]) {
+      expect(p).toContain(s);
+    }
+    expect(p).not.toContain("הצומת");
+    expect(p).not.toContain("דרך א׳");
+  });
+
+  it("buildTarotPrompt with a decision spread is unchanged by an explicit stance", () => {
+    const options = ["לעבור", "להישאר"];
+    expect(buildTarotPrompt({ question: "ש", cards: six, spread: { kind: "choice", options, stance: "decision" } })).toBe(
+      buildTarotPrompt({ question: "ש", cards: six, spread: { kind: "choice", options } }),
+    );
+  });
+
+  it("buildFollowUpPrompt says options, not roads", () => {
+    const p = buildFollowUpPrompt({
+      question: "מי ירכיב ממשלה?",
+      cards: [...cards, ...cards],
+      interpretation: "הפירוש",
+      previous: [],
+      followUp: { question: "ולמה?", card: { name: "הנזיר", summary: "התבודדות", text: "פירוש הנזיר" } },
+      spread: outcome,
+    });
+    expect(p).toContain("אפשרויות");
+    expect(p).toContain("אפשרות א׳");
+    expect(p).toContain("(המצב, אחת האפשרויות,");
+    expect(p).not.toContain("(הצומת, אחת הדרכים,");
+  });
+});

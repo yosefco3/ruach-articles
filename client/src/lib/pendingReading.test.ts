@@ -48,6 +48,12 @@ describe("pending tarot reading", () => {
     expect(restored?.spread).toEqual(spread);
   });
 
+  it("פריסת בחירה עם stance outcome: נשמר בשחזור", () => {
+    const spread = { kind: "choice" as const, options: ["ביבי", "גנץ"], stance: "outcome" as const };
+    savePendingTarot("מי ינצח?", draw(6), spread);
+    expect(takePendingTarot()?.spread).toEqual(spread);
+  });
+
   it("payload ישן (מערך מזהים בלבד) → משוחזר כפריסת שלושה קלפים", () => {
     const ids = draw().cards.map((c) => c.card.id);
     sessionStorage.setItem("tarot:pending-reading", JSON.stringify({ q: "ש", ts: Date.now(), payload: ids }));

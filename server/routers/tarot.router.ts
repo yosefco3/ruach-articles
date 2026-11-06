@@ -15,7 +15,7 @@ import {
   spreadSize,
 } from "@shared/tarot";
 
-/** הפריסה הגדולה ביותר: הצומת + שני קלפים לכל אחת מ-MAX_CHOICE_OPTIONS הדרכים + הקלף הסוגר. */
+/** הפריסה הגדולה ביותר: הצומת + שני קלפים לכל אחת מ-MAX_CHOICE_OPTIONS הדרכים/האפשרויות + הקלף הסוגר. */
 const MAX_SPREAD_CARDS = 2 + 2 * MAX_CHOICE_OPTIONS;
 import {
   followUpsLeft,
@@ -36,6 +36,7 @@ const cardSchema = z.object({
 /** הפריסה שנפרסה (ברירת מחדל three). מספר הקלפים חייב להתאים לתוכנית. */
 const spreadSchema = z.object({
   kind: z.enum(["three", "choice"]),
+  stance: z.enum(["decision", "outcome"]).optional(),
   options: z.array(z.string().trim().min(1).max(MAX_OPTION_LENGTH)).max(MAX_CHOICE_OPTIONS).default([]),
 });
 

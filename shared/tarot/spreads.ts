@@ -9,14 +9,26 @@
  *   2 אופציות = 6 קלפים, 3 = 8, 4 = 10, 5 = 12, 6 = 14.
  *   (הורחב מ-4 ל-6 ב-2026-09-29, החלטת המשתמש: שני קלפים לכל אופציה גם ב-5 ו-6.)
  *   יותר מ-6 → שלושה קלפים, עם `overflow` כדי שהדף יסביר למה.
+ *   לפריסת הבחירה שתי עמדות-שואל (`stance`, 2026-11-06, החלטת המשתמש):
+ *   - `decision` (ברירת המחדל) — השואל עצמו בוחר בין דרכים ("לעבור או להישאר").
+ *   - `outcome` — השואל שואל איזו מבין אפשרויות חיצוניות תתממש ("מי ירכיב ממשלה: X, Y או Z").
+ *     אותו מבנה קלפים, ניסוח ניטרלי: "אפשרות" במקום "דרך", "מה בידה / לאן נוטה" במקום
+ *     "מה מציעה / לאן מובילה".
  */
 
 export type SpreadKind = "three" | "choice";
+/** עמדת השואל בשאלת בחירה: בוחר בעצמו (decision) או צופה באפשרויות חיצוניות (outcome). */
+export type SpreadStance = "decision" | "outcome";
 
 /** מה שה-AI מחזיר (ומה שהקליינט שולח ל-interpret): סוג + ניסוח האופציות. */
 export interface SpreadChoice {
   kind: SpreadKind;
   options: string[]; // ריק עבור three
+  /**
+   * עמדת השואל בשאלת בחירה. חסר = decision (תאימות לאחור לפריסות שנשמרו). נשמר גם על
+   * three-עם-overflow, כדי שהודעת החריגה תדבר על "אפשרויות" ולא על "דרכים".
+   */
+  stance?: SpreadStance;
   /** כותרת קצרה לקריאה שה-AI מזקק מהשאלה — משמשת כשם קובץ בהדפסה/שמירה כ-PDF. */
   title?: string;
   /**
@@ -73,6 +85,22 @@ export function optionLetter(i: number): string {
   return OPTION_LETTERS[i] ?? String(i + 1);
 }
 
+/** עמדת השואל של בחירה מנורמלת — `decision` כשלא צוין. */
+export function spreadStance(choice: Pick<SpreadChoice, "stance">): SpreadStance {
+  return choice.stance === "outcome" ? "outcome" : "decision";
+}
+
+/** שם העצם לאופציה בניסוח: "דרך" לבחירה אישית, "אפשרות" לאפשרויות חיצוניות. */
+export function optionNoun(stance: SpreadStance, plural = false): string {
+  if (stance === "outcome") return plural ? "אפשרויות" : "אפשרות";
+  return plural ? "דרכים" : "דרך";
+}
+
+/** "דרך א׳" / "אפשרות ב׳" — שם האופציה בתצוגה ובפרומפט. */
+export function optionName(stance: SpreadStance, i: number): string {
+  return `${optionNoun(stance)} ${optionLetter(i)}`;
+}
+
 /**
  * מנרמל תשובת AI (או קלט לקוח) לבחירת פריסה תקינה. Fail-open: כל דבר שאינו
  * `choice` תקין עם 2–6 אופציות לא-ריקות → THREE_SPREAD. יותר מ-6 אפשרויות →
@@ -80,15 +108,23 @@ export function optionLetter(i: number): string {
  */
 export function normalizeSpreadChoice(raw: unknown): SpreadChoice {
   if (!raw || typeof raw !== "object") return THREE_SPREAD;
-  const r = raw as { kind?: unknown; options?: unknown; title?: unknown; overflow?: unknown };
+  const r = raw as {
+    kind?: unknown;
+    options?: unknown;
+    stance?: unknown;
+    title?: unknown;
+    overflow?: unknown;
+  };
   const title = sanitizeReadingTitle(r.title);
   const three: SpreadChoice = title ? { ...THREE_SPREAD, title } : THREE_SPREAD;
+  const outcome = r.stance === "outcome";
   const withOverflow = (count: number): SpreadChoice => ({
     ...three,
     overflow: Math.min(count, MAX_COUNTED_OPTIONS),
+    ...(outcome ? { stance: "outcome" as const } : {}),
   });
   if (r.kind !== "choice") {
-    // שחזור של בחירה שכבר נורמלה (למשל אחרי התחברות) — שומרים על הודעת החריגה.
+    // שחזור של בחירה שכבר נורמלה (למשל אחרי התחברות) — שומרים על הודעת החריגה (ועמדתה).
     const kept = r.overflow;
     return typeof kept === "number" && Number.isInteger(kept) && kept > MAX_CHOICE_OPTIONS
       ? withOverflow(kept)
@@ -101,7 +137,11 @@ export function normalizeSpreadChoice(raw: unknown): SpreadChoice {
     .filter((o) => o.length > 0);
   if (options.length > MAX_CHOICE_OPTIONS) return withOverflow(options.length);
   if (options.length < MIN_CHOICE_OPTIONS) return three;
-  return title ? { kind: "choice", options, title } : { kind: "choice", options };
+  const choice: SpreadChoice = { kind: "choice", options };
+  // ערך לא מוכר (או חסר) = decision; לא כותבים אותו כדי לשמור על השוואות שוויון קיימות.
+  if (outcome) choice.stance = "outcome";
+  if (title) choice.title = title;
+  return choice;
 }
 
 const THREE_POSITIONS: SpreadPosition[] = [
@@ -115,22 +155,47 @@ export function spreadPlan(choice: SpreadChoice): SpreadPlan {
   if (choice.kind !== "choice") {
     return { kind: "three", options: [], positions: THREE_POSITIONS, title: "פְּרִיסַת שְׁלוֹשָׁה קְלָפִים" };
   }
-  const positions: SpreadPosition[] = [
-    { key: "now", label: "הַצֹּמֶת", role: "מקומך עכשיו — מה מביא אותך לצומת הזה ומאיזה מקום אתה בוחר" },
-  ];
+  const stance = spreadStance(choice);
+  const positions: SpreadPosition[] =
+    stance === "outcome"
+      ? [
+          {
+            key: "now",
+            label: "הַמַּצָּב",
+            role: "המצב עכשיו — השדה שבו הדברים מוכרעים: מה מניע את התהליך, ומאיזה מקום השואל מביט בו",
+          },
+        ]
+      : [{ key: "now", label: "הַצֹּמֶת", role: "מקומך עכשיו — מה מביא אותך לצומת הזה ומאיזה מקום אתה בוחר" }];
   choice.options.forEach((opt, i) => {
-    const letter = optionLetter(i);
+    const name = optionName(stance, i);
+    if (stance === "outcome") {
+      positions.push(
+        {
+          key: `opt${i}-offer`,
+          label: "מָה בְּיָדָהּ",
+          role: `${name} ("${opt}") — מה בידה: הכוחות שעומדים לרשותה, מה פועל לטובתה ומה מניע אותה`,
+          option: i,
+        },
+        {
+          key: `opt${i}-lead`,
+          label: "לְאָן נוֹטָה",
+          role: `${name} ("${opt}") — לאן היא נוטה: הכיוון הסביר, מה מקדם אותה ומה בולם אותה`,
+          option: i,
+        },
+      );
+      return;
+    }
     positions.push(
       {
         key: `opt${i}-offer`,
         label: "מָה מַצִּיעָה",
-        role: `דרך ${letter} ("${opt}") — מה הדרך מציעה: הצד הגלוי, מה מושך אליה ומה היא נותנת`,
+        role: `${name} ("${opt}") — מה הדרך מציעה: הצד הגלוי, מה מושך אליה ומה היא נותנת`,
         option: i,
       },
       {
         key: `opt${i}-lead`,
         label: "לְאָן מוֹבִילָה",
-        role: `דרך ${letter} ("${opt}") — לאן הדרך מובילה: התוצאה הסבירה, כולל המחיר והדרישה`,
+        role: `${name} ("${opt}") — לאן הדרך מובילה: התוצאה הסבירה, כולל המחיר והדרישה`,
         option: i,
       },
     );
@@ -138,9 +203,17 @@ export function spreadPlan(choice: SpreadChoice): SpreadPlan {
   positions.push({
     key: "hidden",
     label: "מָה שֶׁאֵינְךָ רוֹאֶה",
-    role: "מה שאינך רואה — עצה, גורם נסתר, או דרך שלישית שלא עלתה בשאלה",
+    role:
+      stance === "outcome"
+        ? "מה שאינך רואה — גורם נסתר, תפנית, או אפשרות שלא עלתה בשאלה"
+        : "מה שאינך רואה — עצה, גורם נסתר, או דרך שלישית שלא עלתה בשאלה",
   });
-  const title = choice.options.length === 2 ? "פְּרִיסַת שְׁתֵּי הַדְּרָכִים" : "פְּרִיסַת הַמְּנִיפָה";
+  const title =
+    choice.options.length !== 2
+      ? "פְּרִיסַת הַמְּנִיפָה"
+      : stance === "outcome"
+        ? "פְּרִיסַת שְׁתֵּי הָאֶפְשָׁרֻיּוֹת"
+        : "פְּרִיסַת שְׁתֵּי הַדְּרָכִים";
   return { kind: "choice", options: choice.options, positions, title };
 }
 

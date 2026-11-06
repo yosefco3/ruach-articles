@@ -12,6 +12,8 @@ import {
   cardSlug,
   drawMore,
   optionLetter,
+  optionNoun,
+  spreadStance,
   type CardStruct,
   type Rng,
   type SpreadChoice,
@@ -99,7 +101,7 @@ export interface ChoiceColumn {
   letter: string;
   /** ניסוח האופציה כפי שה-AI זיקק אותה. */
   option: string;
-  /** אינדקסי הקלפים (בסדר השליפה) השייכים לדרך זו: [מה מציעה, לאן מובילה]. */
+  /** אינדקסי הקלפים (בסדר השליפה) השייכים לדרך/אפשרות זו: [מה מציעה / מה בידה, לאן מובילה / לאן נוטה]. */
   indices: number[];
 }
 
@@ -110,7 +112,7 @@ export interface ChoiceLayout {
 }
 
 /**
- * מקבץ את עמדות פריסת הבחירה לתצוגה: הצומת → עמודה לכל דרך → מה שאינך רואה.
+ * מקבץ את עמדות פריסת הבחירה לתצוגה: הצומת/המצב → עמודה לכל דרך/אפשרות → מה שאינך רואה.
  * null לתוכנית שאינה choice (הפריסה הרגילה מוצגת בשורה אחת).
  */
 export function choiceLayout(plan: SpreadPlan): ChoiceLayout | null {
@@ -132,9 +134,12 @@ export function choiceLayout(plan: SpreadPlan): ChoiceLayout | null {
 export function overflowNotice(spread: SpreadChoice): string | null {
   const n = spread.overflow;
   if (spread.kind !== "three" || !n || n <= MAX_CHOICE_OPTIONS) return null;
+  const stance = spreadStance(spread);
+  const nouns = optionNoun(stance, true);
+  const subject = stance === "outcome" ? "השאלה" : "ההתלבטות";
   return (
-    `זיהינו בשאלה ${n} אפשרויות. פריסת הבחירה משווה עד ${MAX_CHOICE_OPTIONS} דרכים, ולכן נפרסו ` +
-    `שלושה קלפים לקריאה כללית של ההתלבטות. כדי להשוות בין הדרכים, צמצמו את השאלה לעד ` +
+    `זיהינו בשאלה ${n} אפשרויות. פריסת הבחירה משווה עד ${MAX_CHOICE_OPTIONS} ${nouns}, ולכן נפרסו ` +
+    `שלושה קלפים לקריאה כללית של ${subject}. כדי להשוות בין ה${nouns}, צמצמו את השאלה לעד ` +
     `${MAX_CHOICE_OPTIONS} אפשרויות ושלפו שוב.`
   );
 }

@@ -48,6 +48,17 @@ describe("followUpSuggestions", () => {
     expect(followUpSuggestions("three")).not.toEqual(followUpSuggestions("choice"));
   });
 
+  it("an outcome choice spread gets neutral chips — nothing to 'decide'", () => {
+    const outcome = followUpSuggestions("choice", "outcome");
+    expect(outcome).toHaveLength(4);
+    expect(outcome).not.toEqual(followUpSuggestions("choice"));
+    expect(outcome).toEqual(followUpSuggestions("choice", "outcome"));
+    for (const q of outcome) expect(q).not.toMatch(/להכריע/);
+    // stance is ignored outside a choice spread
+    expect(followUpSuggestions("three", "outcome")).toEqual(followUpSuggestions("three"));
+    expect(followUpSuggestions("choice", "decision")).toEqual(followUpSuggestions("choice"));
+  });
+
   it("returns a copy — mutating it does not affect later calls", () => {
     const list = followUpSuggestions("three");
     list.pop();

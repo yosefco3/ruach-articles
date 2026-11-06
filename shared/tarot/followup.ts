@@ -3,7 +3,7 @@
  * אחרי פירוש AI לפריסה אפשר לשאול עד MAX_FOLLOWUPS שאלות; לכל אחת נשלף קלף מבהיר אחד
  * ממה שנשאר בחפיסה (drawMore). השאלות אינן נספרות במכסה החודשית ואינן נשמרות.
  */
-import type { SpreadKind } from "./spreads";
+import type { SpreadKind, SpreadStance } from "./spreads";
 
 /** כמה שאלות המשך מותרות לקריאה אחת. */
 export const MAX_FOLLOWUPS = 2;
@@ -23,7 +23,7 @@ export function followUpsLeftLabel(left: number): string {
  * שאלות מוצעות (תגיות) לפי סוג הפריסה. לחיצה ממלאת את שדה השאלה ואינה שולחת.
  * בכוונה אין כאן שאלת "מתי" בתאריכים — שאלות זמן נענות כבשלות וקצב.
  */
-const SUGGESTIONS: Record<SpreadKind, readonly string[]> = {
+const SUGGESTIONS: Record<SpreadKind | "outcome", readonly string[]> = {
   three: [
     "מה הצעד הראשון שנכון לעשות?",
     "מה מעכב אותי כאן?",
@@ -36,8 +36,17 @@ const SUGGESTIONS: Record<SpreadKind, readonly string[]> = {
     "איזה מחיר קשה לי לשלם?",
     "להכריע עכשיו או להמתין?",
   ],
+  // פריסת בחירה בעמדת outcome ("מי/מה מבין כמה"): ההכרעה אינה בידי השואל.
+  outcome: [
+    "אחרי מה כדאי לי לעקוב?",
+    "מה יכול לשנות את הכיוון?",
+    "מה זה אומר עבורי?",
+    "מה לא עלה בשאלה?",
+  ],
 };
 
-export function followUpSuggestions(kind: SpreadKind): string[] {
-  return [...(SUGGESTIONS[kind] ?? SUGGESTIONS.three)];
+/** שאלות מוצעות לפריסה; לפריסת בחירה בעמדת outcome — רשימה ניטרלית (אין מה "להכריע"). */
+export function followUpSuggestions(kind: SpreadKind, stance?: SpreadStance): string[] {
+  const key = kind === "choice" && stance === "outcome" ? "outcome" : kind;
+  return [...(SUGGESTIONS[key] ?? SUGGESTIONS.three)];
 }
