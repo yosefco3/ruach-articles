@@ -110,4 +110,9 @@ describe("TarotAiPanel (static render)", () => {
     });
     expect(seen).toEqual([]);
   });
+
+  it("authenticated: always renders an (idle, empty) polite status region", () => {
+    const html = renderPanel({ isAuthenticated: true });
+    expect(html).toMatch(/<p[^>]*role="status"[^>]*aria-live="polite"[^>]*><\/p>/);
+  });
 });

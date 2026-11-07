@@ -35,4 +35,11 @@ describe("TarotCard", () => {
     const clickable = renderToString(<TarotCard view={view} faceUp onClick={() => {}} />);
     expect(clickable).toContain('role="button"');
   });
+
+  it("clickable card is keyboard reachable: tabindex 0 and pressed state", () => {
+    const html = renderToString(<TarotCard view={view} faceUp selected onClick={() => {}} />);
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('aria-pressed="true"');
+    expect(renderToString(<TarotCard view={view} faceUp />)).not.toContain("tabindex");
+  });
 });

@@ -99,8 +99,23 @@ export function TarotCard({
   return (
     <div
       role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-pressed={onClick ? selected : undefined}
       aria-label={faceUp ? view.name : "קלף מכוסה"}
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      className={
+        onClick ? "rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" : undefined
+      }
       style={{
         perspective: 900,
         width: "100%",

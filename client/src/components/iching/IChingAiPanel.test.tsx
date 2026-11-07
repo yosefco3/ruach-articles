@@ -76,4 +76,9 @@ describe("IChingAiPanel (static render)", () => {
     expect(html).not.toContain("ניצלת את");
     expect(html).not.toMatch(/<button[^>]*disabled/);
   });
+
+  it("authenticated: always renders an (idle, empty) polite status region", () => {
+    const html = renderPanel({ isAuthenticated: true });
+    expect(html).toMatch(/<p[^>]*role="status"[^>]*aria-live="polite"[^>]*><\/p>/);
+  });
 });
