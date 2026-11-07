@@ -3,6 +3,10 @@ import { publicProcedure, router } from "./_core/trpc";
 import { getSiteSettings, getTeacherById } from "./db";
 import { DEFAULT_FROM_EMAIL } from "@shared/const";
 
+/** Escapes visitor text before it goes into the HTML of a notification email. */
+export const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
 export const contactRouter = router({
   // Public: get contact email for display on contact page
   getEmail: publicProcedure.query(async () => {
@@ -40,15 +44,15 @@ export const contactRouter = router({
               html: `<div dir="rtl" style="font-family:Arial,sans-serif;background:#1a1008;color:#f0e6d0;padding:32px;border-radius:12px;max-width:600px;">
   <h2 style="color:#c9a84c;">📬 הודעה חדשה מטופס יצירת קשר</h2>
   <div style="background:#231508;border-radius:8px;padding:20px;margin:20px 0;border-right:4px solid #c9a84c;">
-    <p style="margin:8px 0;"><strong>📌 נושא:</strong> ${input.subject}</p>
-    <p style="margin:8px 0;"><strong>👤 שם:</strong> ${input.name}</p>
-    <p style="margin:8px 0;"><strong>📧 דוא"ל השולח:</strong> <a href="mailto:${input.email}" style="color:#c9a84c;">${input.email}</a></p>
+    <p style="margin:8px 0;"><strong>📌 נושא:</strong> ${escapeHtml(input.subject)}</p>
+    <p style="margin:8px 0;"><strong>👤 שם:</strong> ${escapeHtml(input.name)}</p>
+    <p style="margin:8px 0;"><strong>📧 דוא"ל השולח:</strong> <a href="mailto:${escapeHtml(input.email)}" style="color:#c9a84c;">${escapeHtml(input.email)}</a></p>
   </div>
   <div style="background:#231508;border-radius:8px;padding:16px;margin:16px 0;">
     <p style="margin:0 0 8px 0;"><strong>💬 הודעה:</strong></p>
-    <p style="margin:0;white-space:pre-wrap;">${input.message}</p>
+    <p style="margin:0;white-space:pre-wrap;">${escapeHtml(input.message)}</p>
   </div>
-  <p style="font-size:12px;color:#8B7355;margin-top:24px;">הודעה זו נשלחה דרך טופס יצירת הקשר באתר ${siteName}</p>
+  <p style="font-size:12px;color:#8B7355;margin-top:24px;">הודעה זו נשלחה דרך טופס יצירת הקשר באתר ${escapeHtml(siteName)}</p>
 </div>`,
             });
           } catch (emailError) {
@@ -93,17 +97,16 @@ export const contactRouter = router({
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         const FROM_EMAIL = process.env.NEWSLETTER_FROM_EMAIL || DEFAULT_FROM_EMAIL;
-        const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
         await resend.emails.send({
           from: `${siteName} <${FROM_EMAIL}>`,
           to,
           replyTo: input.email,
           subject: `✉️ פנייה מ-${input.name} דרך דף המורה שלך באתר ${siteName}`,
           html: `<div dir="rtl" style="font-family:Arial,sans-serif;padding:24px;max-width:600px;">
-  <p>שלום ${esc(teacher.name)},</p>
-  <p>התקבלה פנייה דרך דף המורה שלך באתר ${esc(siteName)}:</p>
-  <p><strong>מאת:</strong> ${esc(input.name)} &lt;${esc(input.email)}&gt;</p>
-  <p style="white-space:pre-wrap;border-right:3px solid #c9a84c;padding-right:12px;">${esc(input.message)}</p>
+  <p>שלום ${escapeHtml(teacher.name)},</p>
+  <p>התקבלה פנייה דרך דף המורה שלך באתר ${escapeHtml(siteName)}:</p>
+  <p><strong>מאת:</strong> ${escapeHtml(input.name)} &lt;${escapeHtml(input.email)}&gt;</p>
+  <p style="white-space:pre-wrap;border-right:3px solid #c9a84c;padding-right:12px;">${escapeHtml(input.message)}</p>
   <p style="font-size:12px;color:#888;">אפשר להשיב ישירות למייל הזה.</p>
 </div>`,
         });
