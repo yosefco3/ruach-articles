@@ -381,7 +381,7 @@ export default function AdminArticleForm() {
     <div className="container py-10 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => navigate(exitTo())}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(exitTo())} aria-label="יציאה מעריכת המאמר">
           <ArrowRight className="w-5 h-5" />
         </Button>
         <div>

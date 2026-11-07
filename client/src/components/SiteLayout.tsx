@@ -11,15 +11,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link, useLocation } from "wouter";
 import { Menu, X, User, LogOut, Settings, ChevronDown, Mail, Sparkles, WandSparkles, BookOpen, Users, Compass, CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { data: settings } = trpc.settings.get.useQuery();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const [location] = useLocation();
   // מורה מקושר רואה קישור לעריכת הפרופיל שלו
   const { data: teacherMe } = trpc.teachers.me.useQuery(undefined, { enabled: isAuthenticated, retry: false });
+
+  // Escape סוגר את התפריט הנייד ומחזיר את הפוקוס לכפתור הפתיחה (רק כשהתפריט פתוח)
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return; // שכבה מעליה (דרופדאון/דיאלוג) כבר טיפלה ב-Escape
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        mobileToggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
 
   const isAdmin = user?.role === "admin";
   const siteName = settings?.siteTitle || "דרך הרוח";
@@ -66,7 +81,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                     : "border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles aria-hidden="true" className="w-3.5 h-3.5" />
                 קריאה באי צינג
               </Link>
               <Link
@@ -77,7 +92,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                     : "border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground"
                 }`}
               >
-                <WandSparkles className="w-3.5 h-3.5" />
+                <WandSparkles aria-hidden="true" className="w-3.5 h-3.5" />
                 קריאה בטארוט
               </Link>
               {textLink("/books", "ספרים", false)}
@@ -95,12 +110,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 h-9 px-3">
                       <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="w-4 h-4 text-primary" />
+                        <User aria-hidden="true" className="w-4 h-4 text-primary" />
                       </div>
                       <span className="text-sm font-medium hidden sm:block max-w-[100px] truncate">
                         {user?.name || "משתמש"}
                       </span>
-                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                      <ChevronDown aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -108,55 +123,55 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                       <>
                         <DropdownMenuItem asChild>
                           <Link href="/admin" className="flex items-center gap-2 cursor-pointer">
-                            <Settings className="w-4 h-4" />
+                            <Settings aria-hidden="true" className="w-4 h-4" />
                             <span>מאמרים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                            <Settings className="w-4 h-4" />
+                            <Settings aria-hidden="true" className="w-4 h-4" />
                             <span>הגדרות</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/books" className="flex items-center gap-2 cursor-pointer">
-                            <BookOpen className="w-4 h-4" />
+                            <BookOpen aria-hidden="true" className="w-4 h-4" />
                             <span>ספרים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/teachers" className="flex items-center gap-2 cursor-pointer">
-                            <Users className="w-4 h-4" />
+                            <Users aria-hidden="true" className="w-4 h-4" />
                             <span>מורים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/events" className="flex items-center gap-2 cursor-pointer">
-                            <CalendarDays className="w-4 h-4" />
+                            <CalendarDays aria-hidden="true" className="w-4 h-4" />
                             <span>אירועים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/newsletter" className="flex items-center gap-2 cursor-pointer">
-                            <Mail className="w-4 h-4" />
+                            <Mail aria-hidden="true" className="w-4 h-4" />
                             <span>ניוזלטר</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/users" className="flex items-center gap-2 cursor-pointer">
-                            <User className="w-4 h-4" />
+                            <User aria-hidden="true" className="w-4 h-4" />
                             <span>ניהול משתמשים</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/iching" className="flex items-center gap-2 cursor-pointer">
-                            <Sparkles className="w-4 h-4" />
+                            <Sparkles aria-hidden="true" className="w-4 h-4" />
                             <span>אִי צִ׳ינְג</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/tarot" className="flex items-center gap-2 cursor-pointer">
-                            <WandSparkles className="w-4 h-4" />
+                            <WandSparkles aria-hidden="true" className="w-4 h-4" />
                             <span>טָארוֹט</span>
                           </Link>
                         </DropdownMenuItem>
@@ -167,13 +182,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                       <>
                         <DropdownMenuItem asChild>
                           <Link href="/my-teacher-profile" className="flex items-center gap-2 cursor-pointer">
-                            <Compass className="w-4 h-4" />
+                            <Compass aria-hidden="true" className="w-4 h-4" />
                             <span>הפרופיל שלי כמורה</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href="/admin/new" className="flex items-center gap-2 cursor-pointer">
-                            <Settings className="w-4 h-4" />
+                            <Settings aria-hidden="true" className="w-4 h-4" />
                             <span>מאמר חדש</span>
                           </Link>
                         </DropdownMenuItem>
@@ -184,7 +199,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                       onClick={() => logout()}
                       className="flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut aria-hidden="true" className="w-4 h-4" />
                       <span>התנתקות</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -203,13 +218,14 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               <Button
                 variant="ghost"
                 size="icon"
+                ref={mobileToggleRef}
                 className="md:hidden"
                 aria-label={mobileOpen ? "סגירת תפריט" : "פתיחת תפריט"}
                 aria-expanded={mobileOpen}
                 aria-controls="mobile-nav"
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
-                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {mobileOpen ? <X aria-hidden="true" className="w-5 h-5" /> : <Menu aria-hidden="true" className="w-5 h-5" />}
               </Button>
             </div>
           </div>
@@ -227,7 +243,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 px-3 py-2 mb-1 rounded-full text-sm font-semibold border border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles aria-hidden="true" className="w-4 h-4" />
               קריאה באי צינג
             </Link>
             <Link
@@ -235,7 +251,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 px-3 py-2 mb-1 rounded-full text-sm font-semibold border border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
             >
-              <WandSparkles className="w-4 h-4" />
+              <WandSparkles aria-hidden="true" className="w-4 h-4" />
               קריאה בטארוט
             </Link>
             <Link

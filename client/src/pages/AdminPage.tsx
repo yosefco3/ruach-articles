@@ -364,6 +364,7 @@ export default function AdminPage() {
                           onClick={() => setFeatured.mutate({ articleId: article.id })}
                           disabled={setFeatured.isPending}
                           title={featuredArticle?.id === article.id ? "מאמר מומלץ" : "הגדר כמומלץ"}
+                          aria-label={featuredArticle?.id === article.id ? "מאמר מומלץ" : "הגדר כמומלץ"}
                         >
                           {featuredArticle?.id === article.id ? "⭐" : "☆"}
                         </Button>
@@ -372,6 +373,7 @@ export default function AdminPage() {
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-blue-400 hover:bg-blue-900/20"
                           title="שלח לניוזלטר"
+                          aria-label="שלח לניוזלטר"
                           disabled={sendNewsletter.isPending}
                           onClick={() =>
                             sendNewsletter.mutate({
@@ -386,7 +388,7 @@ export default function AdminPage() {
                             <Send className="w-3.5 h-3.5" />
                           )}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild aria-label="עריכה">
                           <Link href={`/admin/edit/${article.id}`}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Link>
@@ -397,6 +399,7 @@ export default function AdminPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              aria-label="מחיקה"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>

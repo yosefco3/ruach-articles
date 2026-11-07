@@ -124,7 +124,7 @@ export default function AdminDerech() {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול">
             <Link href="/admin">
               <ArrowRight className="w-5 h-5" />
             </Link>
@@ -209,12 +209,13 @@ export default function AdminDerech() {
               <div className="flex items-center justify-between">
                 <span className="font-display font-bold text-primary">עיקרון {i + 1}</span>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => movePrinciple(i, -1)} disabled={i === 0}>
+                  <Button variant="ghost" size="icon" aria-label="העברת עיקרון למעלה" onClick={() => movePrinciple(i, -1)} disabled={i === 0}>
                     <ArrowUp className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="העברת עיקרון למטה"
                     onClick={() => movePrinciple(i, 1)}
                     disabled={i === content.principles.length - 1}
                   >
@@ -223,6 +224,7 @@ export default function AdminDerech() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="הסרת עיקרון"
                     onClick={() => removePrinciple(i)}
                     disabled={content.principles.length <= 1}
                     className="text-destructive"

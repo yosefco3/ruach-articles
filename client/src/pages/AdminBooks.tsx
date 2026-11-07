@@ -117,7 +117,7 @@ export default function AdminBooks() {
     <div className="container max-w-4xl py-12" dir="rtl">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול">
             <Link href="/admin"><ArrowRight className="w-5 h-5" /></Link>
           </Button>
           <h1 className="font-display font-bold text-3xl text-foreground">ניהול ספרים</h1>

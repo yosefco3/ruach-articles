@@ -85,7 +85,7 @@ export default function AdminTeachers() {
     <div className="container max-w-4xl py-12" dir="rtl">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowRight className="w-5 h-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול"><Link href="/admin"><ArrowRight className="w-5 h-5" /></Link></Button>
           <h1 className="font-display font-bold text-3xl text-foreground">מורים בשיטה</h1>
         </div>
         {editingId === null && <Button onClick={startNew} className="gap-2"><Plus className="w-4 h-4" />מורה חדש</Button>}

@@ -208,7 +208,7 @@ export default function AdminArticleOrder() {
     <div className="container py-10 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} aria-label="חזרה ללוח הניהול">
           <ArrowRight className="w-5 h-5" />
         </Button>
         <div>

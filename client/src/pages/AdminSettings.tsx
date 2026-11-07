@@ -149,7 +149,7 @@ export default function AdminSettings() {
     <div className="container max-w-4xl py-12">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול">
           <Link href="/admin">
             <ArrowRight className="w-5 h-5" />
           </Link>
