@@ -389,6 +389,18 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
               >
                 הצהרת נגישות
               </Link>
+              <Link
+                href="/privacy"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                מדיניות פרטיות
+              </Link>
+              <Link
+                href="/terms"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                תנאי שימוש
+              </Link>
             </nav>
           </div>
 

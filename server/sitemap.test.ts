@@ -118,6 +118,21 @@ describe("Sitemap Generator", () => {
     expect(xml).toContain("<loc>https://ruachwisdom.org/accessibility</loc>");
   });
 
+  it("includes /privacy and /terms but not /unsubscribe", async () => {
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as any;
+
+    await serveSitemap({} as any, res);
+
+    const xml = res.send.mock.calls[0][0] as string;
+    expect(xml).toContain("<loc>https://ruachwisdom.org/privacy</loc>");
+    expect(xml).toContain("<loc>https://ruachwisdom.org/terms</loc>");
+    expect(xml).not.toContain("/unsubscribe");
+  });
+
   it("includes the public static pages (about, contact)", async () => {
     const res = {
       status: vi.fn().mockReturnThis(),

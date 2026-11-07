@@ -327,6 +327,37 @@ describe("static route SEO — /accessibility", () => {
   });
 });
 
+describe("static route SEO — /privacy, /terms, /unsubscribe", () => {
+  const shell = `<!doctype html><html><head><!-- SEO_HEAD_START --><title>x</title><!-- SEO_HEAD_END --></head><body></body></html>`;
+  async function run(path: string) {
+    const { seoMiddleware, applySeoToHtml, pageStatus } = await import("./seo");
+    const req = { method: "GET", path } as any;
+    await seoMiddleware(req, {} as any, () => {});
+    return { status: pageStatus(req), html: applySeoToHtml(shell, req) };
+  }
+
+  it("/privacy has its own head and is not a 404", async () => {
+    const { status, html } = await run("/privacy");
+    expect(status).not.toBe(404);
+    expect(html).toContain("מדיניות פרטיות | דרך הרוח");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/privacy`);
+  });
+
+  it("/terms has its own head and is not a 404", async () => {
+    const { status, html } = await run("/terms");
+    expect(status).not.toBe(404);
+    expect(html).toContain("תנאי שימוש | דרך הרוח");
+    expect(html).toContain(`${SITE_URL_PRODUCTION}/terms`);
+  });
+
+  it("/unsubscribe is noindex but not a 404", async () => {
+    const { status, html } = await run("/unsubscribe");
+    expect(status).not.toBe(404);
+    expect(html).toContain('<meta name="robots" content="noindex" />');
+    expect(html).toContain("הסרה מרשימת הדיוור | דרך הרוח");
+  });
+});
+
 describe("tarot card page SEO — /tarot/card/<slug>", () => {
   it("builds a search-targeted head from the DB summary + card image", async () => {
     const { resolveTarotCardSeo } = await import("./seo");

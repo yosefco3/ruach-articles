@@ -111,6 +111,8 @@ export async function serveSitemap(req: Request, res: Response): Promise<void> {
     changefreq: "yearly",
     priority: 0.3, // accessibility statement
   });
+  entries.push({ loc: `${baseUrl}/privacy`, changefreq: "yearly", priority: 0.3 });
+  entries.push({ loc: `${baseUrl}/terms`, changefreq: "yearly", priority: 0.3 });
 
   entries.push({ loc: `${baseUrl}/books`, changefreq: "weekly", priority: 0.8 });
   entries.push({ loc: `${baseUrl}/teachers`, changefreq: "weekly", priority: 0.7 });
