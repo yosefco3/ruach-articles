@@ -1,22 +1,24 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-10-22 09:01_
+_נוצר אוטומטית ב: 2026-11-07 20:54_
 
 ## סיכום / Summary
 
 | מדד / Metric | ערך / Value |
 |---|---|
-| קבצי קוד / source files | 246 |
-| מכוסים / covered | 67 |
-| ללא טסט / uncovered | 179 |
-| כיסוי / coverage | 27% →0% |
-| טסטים עוברים / passing | 788 ✅ |
+| קבצי קוד / source files | 257 |
+| מכוסים / covered | 76 |
+| ללא טסט / uncovered | 181 |
+| כיסוי / coverage | 29% ↑2% |
+| טסטים עוברים / passing | 838 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
 
 | קובץ קוד / source | קובץ טסט / test |
 |---|---|
+| `(no source found for IChingAiPanel.live.test.tsx)` | `client/src/components/iching/IChingAiPanel.live.test.tsx` |
+| `(no source found for TarotAiPanel.live.test.tsx)` | `client/src/components/tarot/TarotAiPanel.live.test.tsx` |
 | `(no source found for about-image.test.ts)` | `server/about-image.test.ts` |
 | `(no source found for admin-small-routers.test.ts)` | `server/routers/admin-small-routers.test.ts` |
 | `(no source found for article-body-capacity.test.ts)` | `server/article-body-capacity.test.ts` |
@@ -25,6 +27,7 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | `(no source found for attachments.delete.test.ts)` | `server/db/attachments.delete.test.ts` |
 | `(no source found for auth.logout.test.ts)` | `server/auth.logout.test.ts` |
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |
+| `(no source found for commerce-readiness.test.ts)` | `server/commerce-readiness.test.ts` |
 | `(no source found for contact-email.test.ts)` | `server/contact-email.test.ts` |
 | `(no source found for dev-environment-integration.test.ts)` | `server/dev-environment-integration.test.ts` |
 | `(no source found for docker-mysql.test.ts)` | `server/docker-mysql.test.ts` |
@@ -36,8 +39,10 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | `(no source found for ichingUsage.test.ts)` | `server/ichingUsage.test.ts` |
 | `(no source found for imageAlt.test.ts)` | `client/src/components/editor/imageAlt.test.ts` |
 | `(no source found for index-html.test.ts)` | `server/index-html.test.ts` |
+| `(no source found for legal-pages.test.tsx)` | `client/src/pages/legal-pages.test.tsx` |
 | `(no source found for local-storage.test.ts)` | `server/local-storage.test.ts` |
 | `(no source found for newsletter-management.test.ts)` | `server/newsletter-management.test.ts` |
+| `(no source found for newsletter-unsubscribe.test.ts)` | `server/newsletter-unsubscribe.test.ts` |
 | `(no source found for oauth-config.test.ts)` | `server/oauth-config.test.ts` |
 | `(no source found for production-safety.test.ts)` | `server/production-safety.test.ts` |
 | `(no source found for resend-key.test.ts)` | `server/resend-key.test.ts` |
@@ -47,8 +52,12 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | `(no source found for trpc.harness.test.ts)` | `server/test-helpers/trpc.harness.test.ts` |
 | `(no source found for upload.limits.test.ts)` | `server/upload.limits.test.ts` |
 | `client/src/AppTree.tsx` | `client/src/AppTree.test.tsx` |
+| `client/src/components/AiLiveStatus.tsx` | `client/src/components/AiLiveStatus.test.tsx` |
 | `client/src/components/ArticleActionsBar.tsx` | `client/src/components/ArticleActionsBar.test.tsx` |
 | `client/src/components/ArticleAttachments.tsx` | `client/src/components/ArticleAttachments.test.tsx` |
+| `client/src/components/CommentsSection.tsx` | `client/src/components/CommentsSection.test.tsx` |
+| `client/src/components/CommerceReminder.tsx` | `client/src/components/CommerceReminder.test.tsx` |
+| `client/src/components/PrivacyNote.tsx` | `client/src/components/PrivacyNote.test.tsx` |
 | `client/src/components/editor/collapsibleQuote.ts` | `client/src/components/editor/collapsibleQuote.test.ts` |
 | `client/src/components/editor/htmlEmbed.ts` | `client/src/components/editor/htmlEmbed.test.ts` |
 | `client/src/components/iching/IChingAiPanel.tsx` | `client/src/components/iching/IChingAiPanel.test.tsx` |
@@ -63,6 +72,9 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | `client/src/lib/mdLite.tsx` | `client/src/lib/mdLite.test.tsx` |
 | `client/src/lib/pendingReading.ts` | `client/src/lib/pendingReading.test.ts` |
 | `client/src/lib/printReading.ts` | `client/src/lib/printReading.test.ts` |
+| `client/src/pages/IChingReading.tsx` | `client/src/pages/IChingReading.test.tsx` |
+| `client/src/pages/MyTeacherProfile.tsx` | `client/src/pages/MyTeacherProfile.test.tsx` |
+| `client/src/pages/TarotReading.tsx` | `client/src/pages/TarotReading.test.tsx` |
 | `client/src/pages/books/adminForm.ts` | `client/src/pages/books/adminForm.test.ts` |
 | `client/src/pages/books/articleKind.ts` | `client/src/pages/books/articleKind.test.ts` |
 | `client/src/pages/events/format.ts` | `client/src/pages/events/format.test.ts` |
@@ -107,8 +119,10 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | `server/tarotReadingToken.ts` | `server/tarotReadingToken.test.ts` |
 | `shared/articleUrl.ts` | `shared/articleUrl.test.ts` |
 | `shared/books.ts` | `shared/books.test.ts` |
+| `shared/commerceReadiness.ts` | `shared/commerceReadiness.test.ts` |
 | `shared/iching/cast.ts` | `shared/iching/cast.test.ts` |
 | `shared/legacySlugs.ts` | `shared/legacySlugs.test.ts` |
+| `shared/questionHint.ts` | `shared/questionHint.test.ts` |
 | `shared/retiredArticles.ts` | `shared/retiredArticles.test.ts` |
 | `shared/tarot/draw.ts` | `shared/tarot/draw.test.ts` |
 | `shared/tarot/followup.ts` | `shared/tarot/followup.test.ts` |
@@ -135,11 +149,12 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | 🟡 MEDIUM | `client/src/_core/hooks/useAuth.ts` |
 | 🟡 MEDIUM | `client/src/components/ArticleCard.tsx` |
 | 🟡 MEDIUM | `client/src/components/BookPromo.tsx` |
-| 🟡 MEDIUM | `client/src/components/CommentsSection.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayout.tsx` |
 | 🟡 MEDIUM | `client/src/components/DashboardLayoutSkeleton.tsx` |
 | 🟡 MEDIUM | `client/src/components/ErrorBoundary.tsx` |
+| 🟡 MEDIUM | `client/src/components/LegalPage.tsx` |
 | 🟡 MEDIUM | `client/src/components/NextArticleCard.tsx` |
+| 🟡 MEDIUM | `client/src/components/QuestionField.tsx` |
 | 🟡 MEDIUM | `client/src/components/RichTextEditor.tsx` |
 | 🟡 MEDIUM | `client/src/components/ScrollToTop.tsx` |
 | 🟡 MEDIUM | `client/src/components/SiteLayout.tsx` |
@@ -203,6 +218,7 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | 🟡 MEDIUM | `client/src/hooks/useComposition.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useDocumentTitle.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useDynamicCategories.ts` |
+| 🟡 MEDIUM | `client/src/hooks/useFocusOnChange.ts` |
 | 🟡 MEDIUM | `client/src/hooks/useMobile.tsx` |
 | 🟡 MEDIUM | `client/src/hooks/usePersistFn.ts` |
 | 🟡 MEDIUM | `client/src/lib/trpc.ts` |
@@ -231,15 +247,15 @@ _נוצר אוטומטית ב: 2026-10-22 09:01_
 | 🟡 MEDIUM | `client/src/pages/EventPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/EventsIndex.tsx` |
 | 🟡 MEDIUM | `client/src/pages/Home.tsx` |
-| 🟡 MEDIUM | `client/src/pages/IChingReading.tsx` |
-| 🟡 MEDIUM | `client/src/pages/MyTeacherProfile.tsx` |
 | 🟡 MEDIUM | `client/src/pages/NotFound.tsx` |
+| 🟡 MEDIUM | `client/src/pages/Privacy.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotCardPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotDeckGallery.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TarotGuide.tsx` |
-| 🟡 MEDIUM | `client/src/pages/TarotReading.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TeacherPage.tsx` |
 | 🟡 MEDIUM | `client/src/pages/TeachersIndex.tsx` |
+| 🟡 MEDIUM | `client/src/pages/Terms.tsx` |
+| 🟡 MEDIUM | `client/src/pages/Unsubscribe.tsx` |
 | 🟡 MEDIUM | `client/src/pages/UserProfile.tsx` |
 | 🟡 MEDIUM | `server/_core/aiProvider.ts` |
 | 🟡 MEDIUM | `server/_core/auth/session.ts` |

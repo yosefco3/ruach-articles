@@ -220,14 +220,53 @@ const TAROT_DECK_SEO: SeoData = {
 const ACCESSIBILITY_SEO: SeoData = {
   title: "הצהרת נגישות | דרך הרוח",
   description:
-    "הצהרת הנגישות של אתר דרך הרוח: מה נגיש באתר, מה בתהליך הנגשה, ולאן פונים בכל קושי או הצעה.",
+    "הצהרת הנגישות של אתר דרך הרוח: מה הותאם באתר, מה עדיין לא נגיש במלואו ואיך פונים אלינו.",
   ogTitle: "הצהרת נגישות | דרך הרוח",
-  ogDescription: "מה נגיש באתר דרך הרוח, מה בתהליך, ודרכי פנייה.",
+  ogDescription: "מה הותאם באתר דרך הרוח לנגישות ואיך פונים אלינו.",
   ogUrl: `${SITE_URL_PRODUCTION}/accessibility`,
   ogType: "website",
   ogLocale: "he_IL",
   canonicalUrl: `${SITE_URL_PRODUCTION}/accessibility`,
   jsonLd: siteLd(),
+};
+
+const PRIVACY_SEO: SeoData = {
+  title: "מדיניות פרטיות | דרך הרוח",
+  description:
+    "מדיניות הפרטיות של אתר דרך הרוח: איזה מידע נאסף, לשם מה, למי הוא מועבר ואילו זכויות יש לכם.",
+  ogTitle: "מדיניות פרטיות | דרך הרוח",
+  ogDescription: "איזה מידע אתר דרך הרוח אוסף ולמי הוא מועבר.",
+  ogUrl: `${SITE_URL_PRODUCTION}/privacy`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/privacy`,
+  jsonLd: siteLd(),
+};
+
+const TERMS_SEO: SeoData = {
+  title: "תנאי שימוש | דרך הרוח",
+  description:
+    "תנאי השימוש באתר דרך הרוח: התוכן והקריאות, תגובות, זכויות יוצרים ואחריות.",
+  ogTitle: "תנאי שימוש | דרך הרוח",
+  ogDescription: "תנאי השימוש באתר דרך הרוח.",
+  ogUrl: `${SITE_URL_PRODUCTION}/terms`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/terms`,
+  jsonLd: siteLd(),
+};
+
+/** Newsletter unsubscribe landing page — a utility page, kept out of the index. */
+const UNSUBSCRIBE_SEO: SeoData = {
+  title: "הסרה מרשימת הדיוור | דרך הרוח",
+  description: "הסרה מרשימת הדיוור של אתר דרך הרוח.",
+  ogTitle: "הסרה מרשימת הדיוור | דרך הרוח",
+  ogDescription: "הסרה מרשימת הדיוור של אתר דרך הרוח.",
+  ogUrl: `${SITE_URL_PRODUCTION}/unsubscribe`,
+  ogType: "website",
+  ogLocale: "he_IL",
+  canonicalUrl: `${SITE_URL_PRODUCTION}/unsubscribe`,
+  noindex: true,
 };
 
 const TAROT_GUIDE_SEO: SeoData = {
@@ -283,6 +322,9 @@ const STATIC_ROUTE_SEO: Record<string, SeoData> = {
   "/tarot/guide": TAROT_GUIDE_SEO,
   "/derech": DERECH_SEO,
   "/accessibility": ACCESSIBILITY_SEO,
+  "/privacy": PRIVACY_SEO,
+  "/terms": TERMS_SEO,
+  "/unsubscribe": UNSUBSCRIBE_SEO,
 };
 
 // ─── /derech FAQPage (GEO) ──────────────────────────────────────────────────
@@ -417,6 +459,9 @@ const STATIC_PUBLIC_PATHS = new Set([
   "/contact",
   "/derech",
   "/accessibility",
+  "/privacy",
+  "/terms",
+  "/unsubscribe",
   "/iching",
   "/tarot",
   "/tarot/deck",

@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RichTextEditor from "@/components/RichTextEditor";
 import { trpc } from "@/lib/trpc";
+import { CommerceReminder } from "@/components/CommerceReminder";
+import { isPaidPrice } from "@shared/commerceReadiness";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@shared/const";
 import { formatEventWhen, fromLocalInput, toLocalInput } from "./events/format";
 import { slugifyName } from "./teachers/adminForm";
@@ -88,7 +90,7 @@ export default function AdminEvents() {
     <div className="container max-w-4xl py-12" dir="rtl">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowRight className="w-5 h-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול"><Link href="/admin"><ArrowRight className="w-5 h-5" /></Link></Button>
           <h1 className="font-display font-bold text-3xl text-foreground">אירועים</h1>
         </div>
         {editingId === null && <Button onClick={startNew} className="gap-2"><Plus className="w-4 h-4" />אירוע חדש</Button>}
@@ -113,7 +115,7 @@ export default function AdminEvents() {
                 <label className="flex items-center gap-2"><Switch checked={form.published} onCheckedChange={(v) => set("published", v)} /><span>מפורסם</span></label>
               </div>
               <F label="קישור להרשמה"><Input dir="ltr" value={form.registrationUrl} onChange={(e) => set("registrationUrl", e.target.value)} placeholder="https://" /></F>
-              <F label="מחיר"><Input value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="חינם / 120 ₪" /></F>
+              <F label="מחיר"><Input value={form.price} onChange={(e) => set("price", e.target.value)} placeholder="חינם / 120 ₪" />{isPaidPrice(form.price) && <CommerceReminder trigger="paid-event" variant="inline" />}</F>
               <F label="מנחה">
                 <Select value={form.teacherId || "none"} onValueChange={(v) => set("teacherId", v === "none" ? "" : v)}>
                   <SelectTrigger dir="rtl"><SelectValue /></SelectTrigger>

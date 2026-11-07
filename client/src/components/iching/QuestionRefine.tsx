@@ -4,6 +4,8 @@
  * רכיב תצוגה בלבד — אין רשת, רק callbacks.
  */
 
+import { useEffect, useRef } from "react";
+
 interface Props {
   original: string;
   suggestions: string[];
@@ -27,6 +29,11 @@ const BADGE_LETTERS = ["א׳", "ב׳"];
 
 export function QuestionRefine({ original, suggestions, onPick }: Props) {
   const picks = suggestions.slice(0, 2);
+  // הכרטיס מופיע אחרי לחיצה על "הטל" — מעבירים אליו פוקוס כדי שמקורא מסך ישמע אותו.
+  const titleRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true });
+  }, [suggestions]);
   return (
     <div
       dir="rtl"
@@ -41,6 +48,11 @@ export function QuestionRefine({ original, suggestions, onPick }: Props) {
       }}
     >
       <div
+        ref={titleRef}
+        tabIndex={-1}
+        role="heading"
+        aria-level={3}
+        className="outline-none"
         style={{
           fontFamily: "'Frank Ruhl Libre',serif",
           fontWeight: 700,

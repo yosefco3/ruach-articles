@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RichTextEditor from "@/components/RichTextEditor";
 import { trpc } from "@/lib/trpc";
+import { CommerceReminder } from "@/components/CommerceReminder";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@shared/const";
 import {
   BOOK_STATUSES, BOOK_STATUS_LABELS, PURCHASE_KINDS, PURCHASE_KIND_LABELS, type PurchaseKind,
@@ -117,7 +118,7 @@ export default function AdminBooks() {
     <div className="container max-w-4xl py-12" dir="rtl">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול">
             <Link href="/admin"><ArrowRight className="w-5 h-5" /></Link>
           </Button>
           <h1 className="font-display font-bold text-3xl text-foreground">ניהול ספרים</h1>
@@ -209,6 +210,9 @@ export default function AdminBooks() {
                 <Plus className="w-4 h-4" />קישור
               </Button>
             </div>
+            {(form.status === "available" || form.purchaseLinks.length > 0) && (
+              <CommerceReminder trigger="external-store" variant="inline" />
+            )}
             <p className="text-sm text-muted-foreground">מוצגים רק כשהסטטוס "זמין לרכישה". הוצאה, בוקפוד, "עברית"…</p>
             {form.purchaseLinks.map((l, i) => (
               <div key={i} className="grid md:grid-cols-[1fr_2fr_auto_auto] gap-2 items-center">

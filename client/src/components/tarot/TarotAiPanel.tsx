@@ -5,6 +5,7 @@
  * `interpretResult` כל 3 שניות עד done/error — כך בקשת HTTP לא נשארת פתוחה 1–2 דקות
  * (Cloudflare מנתק אחרי ~100ש'). שיקוף של IChingAiPanel מול tarot.interpret.
  */
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useEffect, useRef } from "react";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
@@ -12,6 +13,8 @@ import { getLoginUrl } from "@/const";
 import type { TarotAiCardContext } from "@/pages/tarot/model";
 import { THREE_SPREAD, type SpreadChoice } from "@shared/tarot";
 import { useTarotJob } from "./useTarotJob";
+import { useFocusOnChange } from "@/hooks/useFocusOnChange";
+import { AiLiveStatus, type AiStatusState } from "@/components/AiLiveStatus";
 
 const LOADING_MESSAGE = "ה-AI מכין את הפירוש לפריסה שלך — ההכנה יכולה לקחת דקה או שתיים, אנא המתן…";
 
@@ -82,24 +85,28 @@ function remainingLabel(remaining: number): string {
     : `נותרו לך ${remaining} קריאות AI חינמיות החודש`;
 }
 
-function PanelHeader() {
+function PanelHeader({ titleRef }: { titleRef?: React.Ref<HTMLHeadingElement> }) {
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-        <span style={{ fontSize: 26, lineHeight: 1 }}>✨</span>
-        <div
+        <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1 }}>✨</span>
+        <h3
+          ref={titleRef}
+          tabIndex={-1}
+          className="outline-none"
           style={{
             fontFamily: "'Frank Ruhl Libre',serif",
             fontWeight: 900,
             fontSize: 23,
             color: "oklch(0.24 0.03 55)",
+            margin: 0,
           }}
         >
           פֵּרוּשׁ AI לַפְּרִיסָה
-        </div>
+        </h3>
         <span
           style={{
-            fontSize: 11,
+            fontSize: 12,
             letterSpacing: "0.08em",
             color: "oklch(0.46 0.09 58)",
             background: "oklch(0.95 0.03 82)",
@@ -161,6 +168,12 @@ export function TarotAiPanel({
   const { result, pending, failures } = job;
   const runInterpret = () => job.run({ question, cards, spread });
   const failed = !!job.error;
+  const statusState: AiStatusState = result ? "done" : pending ? "loading" : failed ? "error" : "idle";
+
+  // אחרי לחיצה על הכפתור הוא נעלם מה-DOM — הפוקוס עובר לכותרת התיבה ולא נופל ל-body.
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  useFocusOnChange(titleRef, statusState, rootRef);
 
   const reduced = useRef(false);
   useEffect(() => {
@@ -178,6 +191,7 @@ export function TarotAiPanel({
         <a
           href={getLoginUrl(typeof window !== "undefined" ? window.location.pathname : "/tarot")}
           onClick={onBeforeLogin}
+          className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           style={{
             display: "inline-block",
             padding: "12px 30px",
@@ -194,6 +208,7 @@ export function TarotAiPanel({
         >
           התחבר עם גוגל
         </a>
+        <PrivacyNote className="mt-3">בכניסה עם Google האתר מקבל את שמכם, כתובת הדוא"ל ותמונת הפרופיל.</PrivacyNote>
       </div>
     );
   }
@@ -205,8 +220,9 @@ export function TarotAiPanel({
   const exhausted = !!usage && !usage.unlimited && usage.remaining <= 0;
 
   return (
-    <div dir="rtl" style={cardStyle}>
-      <PanelHeader />
+    <div ref={rootRef} dir="rtl" style={cardStyle}>
+      <PanelHeader titleRef={titleRef} />
+      <AiLiveStatus state={statusState} />
 
       {result ? (
         <>
@@ -215,7 +231,7 @@ export function TarotAiPanel({
             style={{ fontSize: 17.5, lineHeight: 1.95, color: "oklch(0.30 0.025 55)" }}
             dangerouslySetInnerHTML={{ __html: marked.parse(result.interpretation) as string }}
           />
-          <div style={{ marginTop: 16, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>
+          <div style={{ marginTop: 16, fontSize: 12.5, color: "oklch(0.50 0.03 60)" }}>
             נותרו {result.usage.remaining} קריאות החודש
           </div>
         </>
@@ -248,6 +264,7 @@ export function TarotAiPanel({
           ומכסת השאלות שלך <strong>לא נפגעה</strong>.{" "}
           <button
             onClick={runInterpret}
+            className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             style={{
               background: "none",
               border: "none",
@@ -267,7 +284,7 @@ export function TarotAiPanel({
           <p style={{ ...errorTextStyle, marginBottom: 16 }}>
             אירעה שגיאה בקבלת הפירוש. נסה שוב בעוד רגע.
           </p>
-          <button onClick={runInterpret} style={actionButtonStyle}>
+          <button onClick={runInterpret} className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" style={actionButtonStyle}>
             נסה שוב
           </button>
         </div>
@@ -284,7 +301,7 @@ export function TarotAiPanel({
         </div>
       ) : (
         <div>
-          <button onClick={runInterpret} style={actionButtonStyle}>
+          <button onClick={runInterpret} className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" style={actionButtonStyle}>
             קבל פירוש AI לפריסה כולה
           </button>
           {usage && !usage.unlimited && (
@@ -292,7 +309,7 @@ export function TarotAiPanel({
               {remainingLabel(usage.remaining)}
             </div>
           )}
-          <div style={{ marginTop: 10, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>
+          <div style={{ marginTop: 10, fontSize: 12.5, color: "oklch(0.50 0.03 60)" }}>
             השאלה והקלפים נשלחים לפירוש בלחיצה זו בלבד — ואינם נשמרים.
           </div>
         </div>

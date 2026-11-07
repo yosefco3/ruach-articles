@@ -200,7 +200,7 @@ export default function AdminIChing() {
   return (
     <div className="container max-w-5xl py-12">
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" asChild aria-label="חזרה ללוח הניהול">
           <Link href="/admin">
             <ArrowRight className="w-5 h-5" />
           </Link>

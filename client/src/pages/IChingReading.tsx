@@ -4,7 +4,8 @@
  * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה ב-state; היא נשלחת לשרת רק לבדיקת
  * הניסוח לפני ההטלה (כשהפיצר דלוק) ולפירוש ה-AI (`IChingAiPanel`) — ואינה נשמרת בשרת.
  */
-import { useEffect, useRef, useState } from "react";
+import { PrivacyNote } from "@/components/PrivacyNote";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import BookPromo from "@/components/BookPromo";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
@@ -34,6 +35,10 @@ import { runReveal } from "@/pages/iching/reveal";
 import { IChingAiPanel } from "@/components/iching/IChingAiPanel";
 import { QuestionRefine } from "@/components/iching/QuestionRefine";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { QuestionField } from "@/components/QuestionField";
+import { useFocusOnChange } from "@/hooks/useFocusOnChange";
+
+const FOCUS_RING = "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -52,6 +57,8 @@ const BETWEEN_MS = 1250;
 function hexBoxStyle(selected: boolean): React.CSSProperties {
   return {
     display: "inline-block",
+    font: "inherit",
+    color: "inherit",
     padding: "20px 28px",
     borderRadius: 16,
     cursor: "pointer",
@@ -77,7 +84,7 @@ function triChipStyle(selected: boolean): React.CSSProperties {
   };
 }
 
-function TrigramChips({
+export function TrigramChips({
   values,
   trigrams,
   selTri,
@@ -93,10 +100,18 @@ function TrigramChips({
       {values.map((v) => {
         const t = effectiveTrigram(v, trigrams);
         return (
-          <div key={v} onClick={() => onSelect(v)} style={triChipStyle(selTri === v)}>
-            <span style={{ fontSize: 21, lineHeight: 1, fontFamily: "serif" }}>{t.symbol}</span>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</span>
-          </div>
+          <button
+            key={v}
+            type="button"
+            onClick={() => onSelect(v)}
+            aria-pressed={selTri === v}
+            aria-label={`טריגרמה ${t.name}`}
+            className={FOCUS_RING}
+            style={triChipStyle(selTri === v)}
+          >
+            <span aria-hidden="true" style={{ fontSize: 21, lineHeight: 1, fontFamily: "serif" }}>{t.symbol}</span>
+            <span aria-hidden="true" style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</span>
+          </button>
         );
       })}
     </div>
@@ -123,6 +138,10 @@ export default function IChingReading() {
   const [checking, setChecking] = useState(false);
   const [refine, setRefine] = useState<{ original: string; suggestions: string[] } | null>(null);
   const refineMut = trpc.iching.refineQuestion.useMutation();
+
+  // פוקוס לכותרת הצעד החדש כשהצעד הקודם (והפקד שהיה ממוקד בו) מוחלף.
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  useFocusOnChange(headingRef, phase);
 
   const cancelReveal = useRef<() => void>(() => {});
   useEffect(() => () => cancelReveal.current(), []);
@@ -251,6 +270,9 @@ export default function IChingReading() {
       }}
     >
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "72px 24px 96px" }}>
+        <p role="status" aria-live="polite" className="sr-only">
+          {phase === "casting" ? "מטילים את המטבעות…" : phase === "result" ? "הקריאה מוכנה" : ""}
+        </p>
         {/* ── כותרת אתר ── */}
         <div style={{ textAlign: "center", marginBottom: 8 }}>
           <div
@@ -280,6 +302,9 @@ export default function IChingReading() {
         {phase === "intro" && (
           <div style={{ animation: "fadeUp 0.6s ease both" }}>
             <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="outline-none"
               style={{
                 fontFamily: "'Frank Ruhl Libre',serif",
                 fontWeight: 900,
@@ -337,15 +362,19 @@ export default function IChingReading() {
                     color: "oklch(0.36 0.05 55)",
                   }}
                 >
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
+                  <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
                   <span>
                     חדש באתר: <strong>פירוש AI מותאם אישית לקריאה</strong> — הטילו את המטבעות
                     וקבלו פירוש המחבר את ההקסגרמות לשאלתכם (חינם, למשתמשים מחוברים).
                   </span>
                 </div>
               )}
-              <label
-                style={{
+              <QuestionField
+                prompt={content.intro.questionPrompt}
+                value={question}
+                onChange={setQuestion}
+                placeholder="כתוב כאן את שאלתך, והַחזק אותה במחשבתך בזמן ההטלה…"
+                labelStyle={{
                   display: "block",
                   fontFamily: "'Frank Ruhl Libre',serif",
                   fontWeight: 700,
@@ -353,14 +382,7 @@ export default function IChingReading() {
                   marginBottom: 14,
                   color: "oklch(0.26 0.03 55)",
                 }}
-              >
-                {content.intro.questionPrompt}
-              </label>
-              <textarea
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="כתוב כאן את שאלתך, והַחזק אותה במחשבתך בזמן ההטלה…"
-                style={{
+                textareaStyle={{
                   width: "100%",
                   minHeight: 96,
                   resize: "vertical",
@@ -372,7 +394,6 @@ export default function IChingReading() {
                   background: "oklch(0.985 0.012 84)",
                   border: "1px solid oklch(0.86 0.024 75)",
                   borderRadius: 10,
-                  outline: "none",
                 }}
               />
               <div
@@ -385,12 +406,14 @@ export default function IChingReading() {
                   fontSize: 13.5,
                 }}
               >
-                <span style={{ fontSize: 13 }}>🔒</span>
-                <span>{content.intro.questionHint}</span>
+                <span aria-hidden="true" style={{ fontSize: 13 }}>🔒</span>
+                <PrivacyNote className="text-[length:13.5px] text-[color:oklch(0.50_0.03_60)]">{content.intro.questionHint}</PrivacyNote>
               </div>
               <button
                 onClick={onCast}
                 disabled={checking}
+                aria-busy={checking}
+                className={FOCUS_RING}
                 style={{
                   marginTop: 24,
                   width: "100%",
@@ -410,6 +433,10 @@ export default function IChingReading() {
               >
                 {checking ? "בּוֹדֵק אֶת הַשְּׁאֵלָה…" : content.intro.buttonLabel}
               </button>
+
+              <p role="status" aria-live="polite" className="sr-only">
+                {checking ? "בודק את הניסוח…" : ""}
+              </p>
 
               {refine && (
                 <QuestionRefine
@@ -436,6 +463,9 @@ export default function IChingReading() {
               animation: "softIn 0.5s ease both",
             }}
           >
+            <h2 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+              הטלת המטבעות
+            </h2>
             <div
               style={{
                 textAlign: "center",
@@ -451,6 +481,7 @@ export default function IChingReading() {
               <Coins faces={coins.faces} flipping={coins.flipping} />
             </div>
             <div
+              aria-hidden="true"
               style={{
                 textAlign: "center",
                 minHeight: 30,
@@ -478,6 +509,7 @@ export default function IChingReading() {
             <div style={{ textAlign: "center", marginTop: 34 }}>
               <button
                 onClick={onSkip}
+                className={FOCUS_RING}
                 style={{
                   background: "transparent",
                   border: "1px solid oklch(0.55 0.04 70 / 0.5)",
@@ -503,6 +535,7 @@ export default function IChingReading() {
             sel={sel}
             setSel={setSel}
             onReset={onReset}
+            headingRef={headingRef}
           />
         )}
       </div>
@@ -511,13 +544,14 @@ export default function IChingReading() {
   );
 }
 
-function ResultView({
+export function ResultView({
   reading,
   qSaved,
   content,
   sel,
   setSel,
   onReset,
+  headingRef,
 }: {
   reading: Reading;
   qSaved: string;
@@ -525,6 +559,7 @@ function ResultView({
   sel: Sel;
   setSel: (s: Sel) => void;
   onReset: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 }) {
   const hasChanging = reading.changing.length > 0 && !!reading.resulting;
   const selTri = sel.kind === "tri" ? sel.tri : null;
@@ -560,9 +595,12 @@ function ResultView({
 
   return (
     <div style={{ marginTop: 40 }}>
+      <h2 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+        תוצאת הקריאה
+      </h2>
       {qSaved.trim() && (
         <div style={{ textAlign: "center", marginBottom: 36, animation: "fadeUp 0.5s ease both" }}>
-          <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.55 0.03 60)", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.50 0.03 60)", marginBottom: 8 }}>
             שְׁאֵלָתְךָ
           </div>
           <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontStyle: "italic", fontSize: 21, color: "oklch(0.34 0.04 55)" }}>
@@ -583,14 +621,21 @@ function ResultView({
       >
         {/* ── הקסגרמה ראשית ── */}
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 16 }}>
+          <div style={{ fontSize: 12, letterSpacing: "0.24em", color: "oklch(0.50 0.03 60)", marginBottom: 16 }}>
             הַהֶקְסַגְרַמָה הָרָאשִׁית
           </div>
-          <div onClick={() => setSel({ kind: "hex", which: "primary" })} style={hexBoxStyle(sel.kind === "hex" && sel.which === "primary")}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+          <button
+            type="button"
+            onClick={() => setSel({ kind: "hex", which: "primary" })}
+            aria-pressed={sel.kind === "hex" && sel.which === "primary"}
+            aria-label={`הקסגרמה ראשית: ${effectiveHexName(reading.primary.number, content.hexagrams)}`}
+            className={FOCUS_RING}
+            style={hexBoxStyle(sel.kind === "hex" && sel.which === "primary")}
+          >
+            <span style={{ display: "flex", justifyContent: "center" }}>
               <Hexagram lines={reading.lines} slots={6} big color="oklch(0.34 0.05 55)" mark="oklch(0.55 0.16 38)" stagger />
-            </div>
-          </div>
+            </span>
+          </button>
           <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontWeight: 900, fontSize: 25, color: "oklch(0.24 0.03 55)", marginTop: 16 }}>
             {effectiveHexName(reading.primary.number, content.hexagrams)}
           </div>
@@ -602,18 +647,25 @@ function ResultView({
         {hasChanging && reading.resulting && reading.resultLines && (
           <>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 9, alignSelf: "center", paddingTop: 42 }}>
-              <div style={{ fontSize: 30, color: "oklch(0.70 0.12 76)", transform: "scaleX(-1)" }}>→</div>
-              <div style={{ fontSize: 11, letterSpacing: "0.16em", color: "oklch(0.55 0.03 60)", whiteSpace: "nowrap" }}>נֶעֱנוּ אֶל</div>
+              <div aria-hidden="true" style={{ fontSize: 30, color: "oklch(0.70 0.12 76)", transform: "scaleX(-1)" }}>→</div>
+              <div style={{ fontSize: 12, letterSpacing: "0.16em", color: "oklch(0.50 0.03 60)", whiteSpace: "nowrap" }}>נֶעֱנוּ אֶל</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 16 }}>
+              <div style={{ fontSize: 12, letterSpacing: "0.24em", color: "oklch(0.50 0.03 60)", marginBottom: 16 }}>
                 הַהֶקְסַגְרַמָה הַנִּגְזֶרֶת
               </div>
-              <div onClick={() => setSel({ kind: "hex", which: "derived" })} style={hexBoxStyle(sel.kind === "hex" && sel.which === "derived")}>
-                <div style={{ display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => setSel({ kind: "hex", which: "derived" })}
+                aria-pressed={sel.kind === "hex" && sel.which === "derived"}
+                aria-label={`הקסגרמה נגזרת: ${effectiveHexName(reading.resulting.number, content.hexagrams)}`}
+                className={FOCUS_RING}
+                style={hexBoxStyle(sel.kind === "hex" && sel.which === "derived")}
+              >
+                <span style={{ display: "flex", justifyContent: "center" }}>
                   <Hexagram lines={reading.resultLines} slots={6} big color="oklch(0.50 0.05 58)" mark="transparent" stagger />
-                </div>
-              </div>
+                </span>
+              </button>
               <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontWeight: 900, fontSize: 25, color: "oklch(0.32 0.03 55)", marginTop: 16 }}>
                 {effectiveHexName(reading.resulting.number, content.hexagrams)}
               </div>
@@ -661,7 +713,7 @@ function ResultView({
         />
       )}
 
-      <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
+      <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.50 0.03 60)" }}>
         בחרו הקסגרמה או טריגרמה כדי לקרוא את פירושה בחלון שלמטה
       </div>
 
@@ -677,11 +729,11 @@ function ResultView({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
-          <div style={{ fontSize: 52, lineHeight: 1, color: "oklch(0.44 0.09 58)", fontFamily: "serif", minWidth: 52, textAlign: "center" }}>
+          <div aria-hidden="true" style={{ fontSize: 52, lineHeight: 1, color: "oklch(0.44 0.09 58)", fontFamily: "serif", minWidth: 52, textAlign: "center" }}>
             {panel.symbol}
           </div>
           <div>
-            <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "oklch(0.58 0.06 66)", marginBottom: 5 }}>{panel.kicker}</div>
+            <div style={{ fontSize: 12, letterSpacing: "0.18em", color: "oklch(0.50 0.06 66)", marginBottom: 5 }}>{panel.kicker}</div>
             <div style={{ fontFamily: "'Frank Ruhl Libre',serif", fontWeight: 900, fontSize: 25, color: "oklch(0.24 0.03 55)" }}>{panel.title}</div>
             <div style={{ fontSize: 14, color: "oklch(0.52 0.03 60)", marginTop: 2 }}>{panel.sub}</div>
           </div>
@@ -695,7 +747,7 @@ function ResultView({
               style={{ fontSize: 17.5, lineHeight: 1.95, color: "oklch(0.30 0.025 55)" }}
               dangerouslySetInnerHTML={{ __html: panel.html }}
             />
-            <div style={{ marginTop: 12, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>נכתב על ידי עורך האתר</div>
+            <div style={{ marginTop: 12, fontSize: 12.5, color: "oklch(0.50 0.03 60)" }}>נכתב על ידי עורך האתר</div>
           </>
         ) : (
           <p style={{ fontSize: 16, fontStyle: "italic", color: "oklch(0.52 0.04 58)", margin: 0 }}>
@@ -707,6 +759,7 @@ function ResultView({
       <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", marginTop: 40 }}>
         <button
           onClick={onReset}
+          className={FOCUS_RING}
           style={{
             padding: "14px 38px",
             fontFamily: "'Frank Ruhl Libre',serif",
@@ -723,6 +776,7 @@ function ResultView({
         </button>
         <button
           onClick={onPrint}
+          className={FOCUS_RING}
           title={aiMd ? "הדפסת הקריאה כולל פירוש ה-AI" : "הדפסת הקריאה"}
           style={{
             padding: "14px 30px",
@@ -736,7 +790,7 @@ function ResultView({
             cursor: "pointer",
           }}
         >
-          🖨️ הַדְפָּסַת הַקְּרִיאָה
+          <span aria-hidden="true">🖨️</span> הַדְפָּסַת הַקְּרִיאָה
         </button>
       </div>
     </div>

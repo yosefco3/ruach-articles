@@ -35,7 +35,7 @@ const INTRO_PARAGRAPHS = [
 const INTRO = {
   articleHtml: INTRO_PARAGRAPHS.map((p) => `<p>${p}</p>`).join(""),
   questionPrompt: "מה ברצונך לשאול?",
-  questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
+  questionHint: "השאלה נשלחת לספק בינה מלאכותית חיצוני לכתיבת הפירוש ואינה נשמרת באתר. אל תכתבו בה פרטים מזהים.",
   buttonLabel: "הַטֵּל אֶת הַמַּטְבְּעוֹת",
 };
 

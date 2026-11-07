@@ -1,3 +1,4 @@
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -109,6 +110,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
               שלח תגובה
             </Button>
           </div>
+          <PrivacyNote>התגובה תתפרסם עם שמכם ותהיה גלויה לכל הגולשים.</PrivacyNote>
         </form>
       ) : (
         <div className="bg-accent/20 border border-accent/30 rounded-xl p-6 text-center">
@@ -116,6 +118,7 @@ export default function CommentsSection({ articleId }: { articleId: number }) {
           <Button asChild>
             <a href={getLoginUrl()}>התחברות</a>
           </Button>
+          <PrivacyNote className="mt-3">בכניסה עם Google האתר מקבל את שמכם, כתובת הדוא"ל ותמונת הפרופיל.</PrivacyNote>
         </div>
       )}
 

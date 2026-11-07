@@ -28,6 +28,8 @@ import {
 import { TarotCard } from "./TarotCard";
 import { actionButtonStyle, cardStyle, disabledButtonStyle, errorTextStyle } from "./TarotAiPanel";
 import { useTarotJob } from "./useTarotJob";
+import { AiLiveStatus, type AiStatusState } from "@/components/AiLiveStatus";
+import { useFocusOnChange } from "@/hooks/useFocusOnChange";
 
 const SERIF = "'Frank Ruhl Libre',serif";
 const LOADING_MESSAGE = "ה-AI קורא את הקלף המבהיר מול הקריאה שלך — זה יכול לקחת עד דקה…";
@@ -59,7 +61,7 @@ const chipStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const mutedStyle: React.CSSProperties = { fontSize: 12.5, color: "oklch(0.55 0.03 60)" };
+const mutedStyle: React.CSSProperties = { fontSize: 12.5, color: "oklch(0.50 0.03 60)" };
 
 function Header() {
   return (
@@ -106,7 +108,7 @@ function ClarifierCard({
         <TarotCard view={view} faceUp selected={selected} onClick={onSelect ? () => onSelect(view) : undefined} />
       </div>
       <div>
-        <div style={{ fontSize: 11, letterSpacing: "0.2em", color: "oklch(0.55 0.03 60)", marginBottom: 6 }}>
+        <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.50 0.03 60)", marginBottom: 6 }}>
           הַקְּלָף הַמַּבְהִיר
         </div>
         <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 20, color: "oklch(0.24 0.03 55)" }}>
@@ -146,7 +148,7 @@ function ClarifierCard({
 function QuestionLine({ index, text }: { index: number; text: string }) {
   return (
     <div style={{ marginBottom: 4 }}>
-      <div style={{ fontSize: 11, letterSpacing: "0.2em", color: "oklch(0.55 0.03 60)", marginBottom: 6 }}>
+      <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.50 0.03 60)", marginBottom: 6 }}>
         שְׁאֵלַת הֶמְשֵׁךְ {index}
       </div>
       <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 19, color: "oklch(0.34 0.04 55)" }}>
@@ -257,18 +259,34 @@ export function TarotFollowUp({
   const exhausted = left <= 0 || errorMessage === "FOLLOWUP_LIMIT";
   const failed = !!job.error && !job.error.business;
 
+  const statusState: AiStatusState =
+    job.pending && draft ? "loading" : (failed || rateLimited) && draft ? "error" : turns.length > 0 ? "done" : "idle";
+  // הכפתור "שאל" נעלם בזמן ההמתנה — הפוקוס עובר לאזור התשובה ולא נופל ל-body.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const lastTurnRef = useRef<HTMLDivElement | null>(null);
+  const blockRef = useRef<HTMLDivElement | null>(null);
+  useFocusOnChange(blockRef, statusState === "loading" || statusState === "error" ? statusState : "other", rootRef);
+  useFocusOnChange(lastTurnRef, turns.length, rootRef);
+
   const base = suggestions && suggestions.length >= 2 ? suggestions : followUpSuggestions(spread.kind);
   const chips = unusedSuggestions(base, turns);
 
   return (
-    <div dir="rtl" style={cardStyle} data-testid="tarot-followup">
+    <div ref={rootRef} dir="rtl" style={cardStyle} data-testid="tarot-followup">
       <Header />
+      <AiLiveStatus
+        state={statusState}
+        errorText={rateLimited ? "שאלת הרבה שאלות בשעה האחרונה. נסה שוב מאוחר יותר" : undefined}
+      />
 
       {/* ── השרשור: מה שכבר נשאל ונענה ── */}
       {turns.map((turn, i) => (
         <div
           key={`${turn.card.id}-${i}`}
           data-testid="followup-turn"
+          ref={i === turns.length - 1 ? lastTurnRef : undefined}
+          tabIndex={i === turns.length - 1 ? -1 : undefined}
+          className="outline-none"
           style={{ marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid oklch(0.90 0.02 75)" }}
         >
           <QuestionLine index={i + 1} text={turn.question} />
@@ -288,7 +306,7 @@ export function TarotFollowUp({
 
       {job.pending && draft ? (
         // ── ממתין: הקלף שנשלף גלוי, התשובה בדרך ──
-        <div>
+        <div ref={blockRef} tabIndex={-1} className="outline-none">
           <QuestionLine index={turns.length + 1} text={draft.question} />
           <ClarifierCard
             view={draft.card}
@@ -322,7 +340,7 @@ export function TarotFollowUp({
         </p>
       ) : (failed || rateLimited) && draft ? (
         // ── תקלה או עומס: השאלה והקלף נשמרים, ניסיון חוזר עם אותו קלף ──
-        <div>
+        <div ref={blockRef} tabIndex={-1} className="outline-none">
           <QuestionLine index={turns.length + 1} text={draft.question} />
           <ClarifierCard
             view={draft.card}
@@ -337,7 +355,7 @@ export function TarotFollowUp({
                 ? "לא הצלחנו להפיק תשובה גם לאחר מספר ניסיונות — נראה ששירות ה-AI עמוס. שאלת ההמשך לא נספרה."
                 : "אירעה שגיאה בקבלת התשובה. נסה שוב בעוד רגע — הקלף שנשלף נשמר."}
           </p>
-          <button onClick={onRetry} style={actionButtonStyle}>
+          <button onClick={onRetry} className="focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" style={actionButtonStyle}>
             נסה שוב
           </button>
         </div>

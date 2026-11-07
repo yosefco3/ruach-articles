@@ -1,3 +1,4 @@
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -161,7 +162,7 @@ export default function Home() {
                 {subscribe.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}הרשמה
               </Button>
             </form>
-            <p className="text-xs text-muted-foreground mt-4">ניתן לבטל את המנוי בכל עת. אנו מכבדים את הפרטיות שלכם.</p>
+            <PrivacyNote className="mt-4">נשלח לכתובת הזו עדכונים על תכנים חדשים באתר. בכל דוא"ל יש קישור להסרה.</PrivacyNote>
           </div>
         </div>
       </section>

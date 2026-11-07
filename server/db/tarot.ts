@@ -7,10 +7,12 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "./connection";
 
+import { DEFAULT_QUESTION_HINT, normalizeQuestionHint } from "../../shared/questionHint";
+
 export const DEFAULT_TAROT_INTRO = {
   articleHtml: "",
   questionPrompt: "מה השאלה שמעסיקה אותך?",
-  questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
+  questionHint: DEFAULT_QUESTION_HINT,
   buttonLabel: "עַרְבְּבוּ וְשִׁלְפוּ קְלָפִים",
   aiEnabled: false,
 };
@@ -48,7 +50,7 @@ export async function getTarotIntro() {
   const db = await getDb();
   if (!db) return DEFAULT_TAROT_INTRO;
   const rows = await db.select().from(tarotIntro).limit(1);
-  return rows[0] ?? DEFAULT_TAROT_INTRO;
+  return rows[0] ? normalizeQuestionHint(rows[0]) : DEFAULT_TAROT_INTRO;
 }
 export async function updateTarotIntro(data: Partial<InsertTarotIntro>) {
   const db = await getDb();

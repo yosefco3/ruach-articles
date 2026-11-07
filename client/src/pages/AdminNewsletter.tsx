@@ -83,7 +83,7 @@ export default function AdminNewsletter() {
     <div className="container py-10 max-w-3xl mx-auto" dir="rtl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} aria-label="חזרה ללוח הניהול">
           <ArrowRight className="w-5 h-5" />
         </Button>
         <div>
@@ -203,6 +203,7 @@ export default function AdminNewsletter() {
                             variant="ghost"
                             size="icon"
                             className="text-muted-foreground hover:text-destructive"
+                            aria-label="מחיקת מנוי"
                             disabled={deletingId === sub.id}
                           >
                             {deletingId === sub.id ? (

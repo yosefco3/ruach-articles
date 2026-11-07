@@ -1,3 +1,4 @@
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -97,6 +98,7 @@ export default function TeacherPage() {
                 </div>
                 <Textarea required rows={5} placeholder="ההודעה" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} aria-label="הודעה" />
                 <Button type="submit" disabled={send.isPending} className="gap-2">{send.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}שליחה</Button>
+                <PrivacyNote>ההודעה וכתובת הדוא"ל שלכם נשלחות למורה ואינן נשמרות באתר.</PrivacyNote>
               </form>
             )}
           </section>

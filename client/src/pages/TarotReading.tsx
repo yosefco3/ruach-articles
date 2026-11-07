@@ -4,7 +4,8 @@
  * הטקסטים מה-DB (`trpc.tarot.getContent`). השאלה חיה ב-state; היא תישלח לשרת
  * רק לפירוש ה-AI בלחיצה מפורשת (צעד 11) — ואינה נשמרת בשרת.
  */
-import { useEffect, useRef, useState } from "react";
+import { PrivacyNote } from "@/components/PrivacyNote";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import BookPromo from "@/components/BookPromo";
 import { Link } from "wouter";
 import { marked } from "marked";
@@ -42,6 +43,10 @@ import { CardBack, CardFace, TarotCard } from "@/components/tarot/TarotCard";
 import { TarotAiPanel, type TarotAiResult } from "@/components/tarot/TarotAiPanel";
 import { TarotFollowUp } from "@/components/tarot/TarotFollowUp";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { QuestionField } from "@/components/QuestionField";
+import { useFocusOnChange } from "@/hooks/useFocusOnChange";
+
+const FOCUS_RING = "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 type Phase = "intro" | "drawing" | "result";
 
@@ -83,6 +88,10 @@ export default function TarotReading() {
   // מצב אנימציית השליפה: כמה קלפים נפרסו / נחשפו
   const [dealtCount, setDealtCount] = useState(0);
   const [flippedCount, setFlippedCount] = useState(0);
+
+  // פוקוס לכותרת הצעד החדש כשהצעד הקודם (והפקד שהיה ממוקד בו) מוחלף.
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  useFocusOnChange(headingRef, phase);
 
   const cancelDeal = useRef<() => void>(() => {});
   useEffect(() => () => cancelDeal.current(), []);
@@ -191,6 +200,9 @@ export default function TarotReading() {
       }}
     >
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "72px 24px 96px" }}>
+        <p role="status" aria-live="polite" className="sr-only">
+          {phase === "drawing" ? "הקלפים מעורבבים…" : phase === "result" ? "הקריאה מוכנה" : ""}
+        </p>
         {/* ── כותרת אתר ── */}
         <div style={{ textAlign: "center", marginBottom: 8 }}>
           <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 30, letterSpacing: "0.04em", color: "oklch(0.42 0.09 55)" }}>
@@ -212,6 +224,9 @@ export default function TarotReading() {
         {phase === "intro" && (
           <div style={{ animation: "fadeUp 0.6s ease both" }}>
             <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="outline-none"
               style={{
                 fontFamily: SERIF,
                 fontWeight: 900,
@@ -269,7 +284,7 @@ export default function TarotReading() {
                     color: "oklch(0.36 0.05 55)",
                   }}
                 >
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
+                  <span aria-hidden="true" style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
                   <span>
                     חדש באתר: <strong>פירוש AI אישי לפריסה</strong> — שלפו קלפים וקבלו פירוש
                     המחבר את הקלפים לשאלתכם; ה-AI גם בוחר את הפריסה המתאימה לשאלה (למשל
@@ -277,16 +292,13 @@ export default function TarotReading() {
                   </span>
                 </div>
               )}
-              <label
-                style={{ display: "block", fontFamily: SERIF, fontWeight: 700, fontSize: 22, marginBottom: 14, color: "oklch(0.26 0.03 55)" }}
-              >
-                {content.intro.questionPrompt}
-              </label>
-              <textarea
+              <QuestionField
+                prompt={content.intro.questionPrompt}
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
+                onChange={setQuestion}
                 placeholder="אפשר גם לשלוף בלי שאלה — קריאה כללית ליום הזה…"
-                style={{
+                labelStyle={{ display: "block", fontFamily: SERIF, fontWeight: 700, fontSize: 22, marginBottom: 14, color: "oklch(0.26 0.03 55)" }}
+                textareaStyle={{
                   width: "100%",
                   minHeight: 96,
                   resize: "vertical",
@@ -298,17 +310,17 @@ export default function TarotReading() {
                   background: "oklch(0.985 0.012 84)",
                   border: "1px solid oklch(0.86 0.024 75)",
                   borderRadius: 10,
-                  outline: "none",
                 }}
               />
               <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, color: "oklch(0.54 0.03 60)", fontSize: 13.5 }}>
-                <span style={{ fontSize: 13 }}>🔒</span>
-                <span>{content.intro.questionHint}</span>
+                <span aria-hidden="true" style={{ fontSize: 13 }}>🔒</span>
+                <PrivacyNote className="text-[length:13.5px] text-[color:oklch(0.50_0.03_60)]">{content.intro.questionHint}</PrivacyNote>
               </div>
               <button
                 onClick={onDraw}
                 disabled={choosing}
                 aria-busy={choosing}
+                className={FOCUS_RING}
                 style={{
                   marginTop: 24,
                   width: "100%",
@@ -329,6 +341,9 @@ export default function TarotReading() {
               >
                 {choosing ? "פורס קלפים…" : content.intro.buttonLabel}
               </button>
+              <p role="status" aria-live="polite" className="sr-only">
+                {choosing ? "בוחר פריסה…" : ""}
+              </p>
             </div>
           </div>
         )}
@@ -340,6 +355,7 @@ export default function TarotReading() {
             dealtCount={dealtCount}
             flippedCount={flippedCount}
             onSkip={onSkip}
+            headingRef={headingRef}
           />
         )}
 
@@ -352,6 +368,7 @@ export default function TarotReading() {
             selected={selected}
             setSelected={setSelected}
             onReset={onReset}
+            headingRef={headingRef}
           />
         )}
 
@@ -431,12 +448,14 @@ function DrawingView({
   dealtCount,
   flippedCount,
   onSkip,
+  headingRef,
 }: {
   reading: Reading;
   content: TarotContent;
   dealtCount: number;
   flippedCount: number;
   onSkip: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 }) {
   const views = toCardViews(reading, content);
   const shuffling = dealtCount === 0;
@@ -452,7 +471,12 @@ function DrawingView({
         animation: "softIn 0.5s ease both",
       }}
     >
-      <div style={{ textAlign: "center", color: "oklch(0.80 0.06 82)", fontSize: 14, letterSpacing: "0.22em", marginBottom: 34 }}>
+      <h2 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+        שליפת הקלפים
+      </h2>
+      <div
+        style={{ textAlign: "center", color: "oklch(0.80 0.06 82)", fontSize: 14, letterSpacing: "0.22em", marginBottom: 34 }}
+      >
         {shuffling ? "מְעַרְבְּבִים אֶת הַחֲפִיסָה…" : "הַקְּלָפִים נִפְרָסִים"}
       </div>
 
@@ -489,6 +513,7 @@ function DrawingView({
       <div style={{ textAlign: "center", marginTop: 34 }}>
         <button
           onClick={onSkip}
+          className={FOCUS_RING}
           style={{
             background: "transparent",
             border: "1px solid oklch(0.55 0.04 70 / 0.5)",
@@ -523,7 +548,7 @@ function CardSlot({
 }) {
   return (
     <div style={{ textAlign: "center", width }}>
-      <div style={{ fontSize: 11, letterSpacing: "0.24em", color: "oklch(0.55 0.03 60)", marginBottom: 12 }}>
+      <div style={{ fontSize: 12, letterSpacing: "0.24em", color: "oklch(0.50 0.03 60)", marginBottom: 12 }}>
         {label}
       </div>
       <TarotCard view={view} faceUp selected={selected} onClick={onSelect} />
@@ -543,6 +568,7 @@ function ResultView({
   selected,
   setSelected,
   onReset,
+  headingRef,
 }: {
   reading: Reading;
   spread: SpreadChoice;
@@ -551,6 +577,7 @@ function ResultView({
   selected: number | null;
   setSelected: (i: number | null) => void;
   onReset: () => void;
+  headingRef: RefObject<HTMLHeadingElement | null>;
 }) {
   const views = toCardViews(reading, content);
   // קלף מבהיר (משאלת המשך) שנבחר לחלון הפירוט — במקום קלף מהפריסה. בחירה של אחד מאפסת את השני.
@@ -599,9 +626,12 @@ function ResultView({
 
   return (
     <div style={{ marginTop: 40 }}>
+      <h2 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
+        תוצאת הקריאה
+      </h2>
       {qSaved.trim() && (
         <div style={{ textAlign: "center", marginBottom: 36, animation: "fadeUp 0.5s ease both" }}>
-          <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.55 0.03 60)", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, letterSpacing: "0.2em", color: "oklch(0.50 0.03 60)", marginBottom: 8 }}>
             שְׁאֵלָתְךָ
           </div>
           <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 21, color: "oklch(0.34 0.04 55)" }}>
@@ -757,7 +787,7 @@ function ResultView({
         />
       )}
 
-      <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.55 0.03 60)" }}>
+      <div style={{ textAlign: "center", marginTop: 32, fontSize: 13.5, color: "oklch(0.50 0.03 60)" }}>
         בחרו קלף כדי לקרוא את פירושו בחלון שלמטה
       </div>
 
@@ -779,7 +809,7 @@ function ResultView({
               <CardFace view={panel} />
             </div>
             <div>
-              <div style={{ fontSize: 11, letterSpacing: "0.18em", color: "oklch(0.58 0.06 66)", marginBottom: 5 }}>
+              <div style={{ fontSize: 12, letterSpacing: "0.18em", color: "oklch(0.50 0.06 66)", marginBottom: 5 }}>
                 פֵּרוּשׁ הַקְּלָף
               </div>
               <div style={{ fontFamily: SERIF, fontWeight: 900, fontSize: 25, color: "oklch(0.24 0.03 55)" }}>
@@ -800,13 +830,13 @@ function ResultView({
                 style={{ fontSize: 17.5, lineHeight: 1.95, color: "oklch(0.30 0.025 55)" }}
                 dangerouslySetInnerHTML={{ __html: panel.interpretationHtml }}
               />
-              <div style={{ marginTop: 12, fontSize: 12.5, color: "oklch(0.55 0.03 60)" }}>נכתב על ידי עורך האתר</div>
+              <div style={{ marginTop: 12, fontSize: 12.5, color: "oklch(0.50 0.03 60)" }}>נכתב על ידי עורך האתר</div>
               <div style={{ marginTop: 10 }}>
                 <Link
                   href={`/tarot/card/${cardSlug(cardById(panel.id)!)}`}
                   style={{ fontSize: 14.5, color: "oklch(0.45 0.10 55)", fontWeight: 600 }}
                 >
-                  לדף הקלף המלא ←
+                  לדף הקלף המלא <span aria-hidden="true">←</span>
                 </Link>
               </div>
             </>
@@ -823,6 +853,7 @@ function ResultView({
       <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", marginTop: 40 }}>
         <button
           onClick={onReset}
+          className={FOCUS_RING}
           style={{
             padding: "14px 38px",
             fontFamily: SERIF,
@@ -839,6 +870,7 @@ function ResultView({
         </button>
         <button
           onClick={onPrint}
+          className={FOCUS_RING}
           title={aiMd ? "הדפסת הפריסה כולל פירוש ה-AI" : "הדפסת הפריסה"}
           style={{
             padding: "14px 30px",
@@ -852,7 +884,7 @@ function ResultView({
             cursor: "pointer",
           }}
         >
-          🖨️ הַדְפָּסַת הַפְּרִיסָה
+          <span aria-hidden="true">🖨️</span> הַדְפָּסַת הַפְּרִיסָה
         </button>
       </div>
     </div>

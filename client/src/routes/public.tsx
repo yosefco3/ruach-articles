@@ -18,6 +18,9 @@ import {
   LazyTarotCard,
   LazyTarotDeck,
   LazyTarotGuide,
+  LazyPrivacy,
+  LazyTerms,
+  LazyUnsubscribe,
   LazyUserProfile,
 } from "./lazy";
 
@@ -39,6 +42,9 @@ export const publicRoutes = [
   <Route key="about" path="/about" component={LazyAbout} />,
   <Route key="contact" path="/contact" component={LazyContact} />,
   <Route key="accessibility" path="/accessibility" component={LazyAccessibility} />,
+  <Route key="privacy" path="/privacy" component={LazyPrivacy} />,
+  <Route key="terms" path="/terms" component={LazyTerms} />,
+  <Route key="unsubscribe" path="/unsubscribe" component={LazyUnsubscribe} />,
   <Route key="profile" path="/profile/:id" component={LazyUserProfile} />,
   <Route key="iching" path="/iching" component={LazyIChing} />,
   <Route key="tarot" path="/tarot" component={LazyTarot} />,

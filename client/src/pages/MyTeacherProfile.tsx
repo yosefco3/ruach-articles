@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import { ArrowRight, Loader2, Save, ExternalLink } from "lucide-react";
@@ -55,7 +55,7 @@ export default function MyTeacherProfile() {
     <div className="container max-w-3xl py-12" dir="rtl">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link href="/"><ArrowRight className="w-5 h-5" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label="חזרה לדף הבית"><Link href="/"><ArrowRight className="w-5 h-5" aria-hidden="true" /></Link></Button>
           <h1 className="font-display font-bold text-3xl text-foreground">הפרופיל שלי כמורה</h1>
         </div>
         <Button variant="outline" size="sm" asChild><a href={`/teacher/${encodeURIComponent(me.slug)}`} target="_blank" rel="noreferrer" className="gap-1"><ExternalLink className="w-4 h-4" />הדף שלי</a></Button>
@@ -76,7 +76,7 @@ export default function MyTeacherProfile() {
         <div className={sectionCls}>
           <h2 className="font-display font-bold text-lg text-foreground">תמונה</h2>
           <div className="flex items-center gap-4">
-            {form.photo ? <img src={form.photo} alt="" className="w-24 h-24 rounded-full object-cover" /> : <div className="w-24 h-24 rounded-full bg-secondary" />}
+            {form.photo ? <img src={form.photo} alt="תמונת הפרופיל" className="w-24 h-24 rounded-full object-cover" /> : <div className="w-24 h-24 rounded-full bg-secondary" />}
             <Button type="button" variant="outline" size="sm" onClick={() => photoRef.current?.click()} disabled={uploading}>{uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "העלאת תמונה"}</Button>
             {form.photo && <Button type="button" variant="ghost" size="sm" onClick={() => set("photo", "")}>הסרה</Button>}
             <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={uploadPhoto} />
@@ -92,6 +92,11 @@ export default function MyTeacherProfile() {
     </div>
   );
 }
-function F({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="space-y-1.5"><Label className="text-sm font-medium text-muted-foreground">{label}</Label>{children}</div>;
+/** שדה טופס: ה-Label מקושר לשדה הפנימי (htmlFor = id שמוזרק לילד). F מצפה לרכיב יחיד מסוג input/textarea/select. */
+export function F({ label, children }: { label: string; children: React.ReactNode }) {
+  const generatedId = useId();
+  const childId = isValidElement<{ id?: string }>(children) ? children.props.id : undefined;
+  const id = childId ?? generatedId;
+  const control = isValidElement<{ id?: string }>(children) ? cloneElement(children, { id }) : children;
+  return <div className="space-y-1.5"><Label htmlFor={id} className="text-sm font-medium text-muted-foreground">{label}</Label>{control}</div>;
 }
