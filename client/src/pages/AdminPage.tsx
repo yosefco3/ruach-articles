@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { CommerceReminder } from "@/components/CommerceReminder";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,6 +133,7 @@ export default function AdminPage() {
       </div>
 
        <div className="divider-gold mb-8" />
+      <CommerceReminder trigger="all" variant="card" />
       {/* Quick links */}
       <div className="flex flex-wrap gap-3 mb-6">
         <Button variant="outline" size="sm" asChild>

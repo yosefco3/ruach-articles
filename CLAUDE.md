@@ -25,6 +25,17 @@ Pillars:
    `python3 scripts/test_graph.py`, and update `APP_OVERVIEW.md` if features/models/
    endpoints/workflow/architecture changed.
 
+## Legal pages and charging money
+- `/privacy`, `/terms` and `/accessibility` are static pages (`client/src/pages/Privacy.tsx`,
+  `Terms.tsx`, `Accessibility.tsx`) that describe what the code really does. Any change to a data
+  flow (a new third party, a stored field, analytics, cookies, email) updates the matching text
+  and its `*_LAST_UPDATED` date in the same commit. The texts name the pen name only.
+- **Before any payment work** (checkout, a payment SDK, an orders table, a paid reading, a paid
+  event through the site, selling a PDF): stop and go through `shared/commerceReadiness.ts` with
+  the user first. `server/commerce-readiness.test.ts` fails on payment code while
+  `COMMERCE_LEGAL_READY` is false; never flip the flag or weaken the test without the user's
+  explicit OK.
+
 ## Writing articles
 - Before writing/editing site articles: read `docs/GEO-WRITING.md` (structure &
   citation rules that make AI engines cite us) alongside `knowledge/INDEX.md`
