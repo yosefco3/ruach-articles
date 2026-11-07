@@ -1,6 +1,6 @@
 # Test Coverage Graph
 
-_נוצר אוטומטית ב: 2026-11-07 20:54_
+_נוצר אוטומטית ב: 2026-11-07 22:14_
 
 ## סיכום / Summary
 
@@ -9,8 +9,8 @@ _נוצר אוטומטית ב: 2026-11-07 20:54_
 | קבצי קוד / source files | 257 |
 | מכוסים / covered | 76 |
 | ללא טסט / uncovered | 181 |
-| כיסוי / coverage | 29% ↑2% |
-| טסטים עוברים / passing | 838 ✅ |
+| כיסוי / coverage | 29% →0% |
+| טסטים עוברים / passing | 841 ✅ |
 | טסטים נכשלים / failing | 0 ❌ |
 
 ## מיפוי קוד → טסטים / Source → Tests
@@ -29,6 +29,7 @@ _נוצר אוטומטית ב: 2026-11-07 20:54_
 | `(no source found for categories-newsletter.test.ts)` | `server/categories-newsletter.test.ts` |
 | `(no source found for commerce-readiness.test.ts)` | `server/commerce-readiness.test.ts` |
 | `(no source found for contact-email.test.ts)` | `server/contact-email.test.ts` |
+| `(no source found for contact-escape.test.ts)` | `server/contact-escape.test.ts` |
 | `(no source found for dev-environment-integration.test.ts)` | `server/dev-environment-integration.test.ts` |
 | `(no source found for docker-mysql.test.ts)` | `server/docker-mysql.test.ts` |
 | `(no source found for env-files.test.ts)` | `server/env-files.test.ts` |
