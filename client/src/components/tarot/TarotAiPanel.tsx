@@ -5,6 +5,7 @@
  * `interpretResult` כל 3 שניות עד done/error — כך בקשת HTTP לא נשארת פתוחה 1–2 דקות
  * (Cloudflare מנתק אחרי ~100ש'). שיקוף של IChingAiPanel מול tarot.interpret.
  */
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useEffect, useRef } from "react";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
@@ -207,6 +208,7 @@ export function TarotAiPanel({
         >
           התחבר עם גוגל
         </a>
+        <PrivacyNote className="mt-3">בכניסה עם Google האתר מקבל את שמכם, כתובת הדוא"ל ותמונת הפרופיל.</PrivacyNote>
       </div>
     );
   }

@@ -9,10 +9,12 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "./connection";
 
+import { DEFAULT_QUESTION_HINT, normalizeQuestionHint } from "../../shared/questionHint";
+
 const DEFAULT_INTRO = {
   articleHtml: "",
   questionPrompt: "מה ברצונך לשאול?",
-  questionHint: "השאלה אישית ואינה נשמרת בשום מקום.",
+  questionHint: DEFAULT_QUESTION_HINT,
   buttonLabel: "הַטֵּל אֶת הַמַּטְבְּעוֹת",
   refineEnabled: true,
   aiEnabled: false,
@@ -78,7 +80,7 @@ export async function getIchingIntro() {
   const db = await getDb();
   if (!db) return DEFAULT_INTRO;
   const rows = await db.select().from(ichingIntro).limit(1);
-  return rows[0] ?? DEFAULT_INTRO;
+  return rows[0] ? normalizeQuestionHint(rows[0]) : DEFAULT_INTRO;
 }
 export async function updateIchingIntro(data: Partial<InsertIchingIntro>) {
   const db = await getDb();

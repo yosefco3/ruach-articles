@@ -4,6 +4,7 @@
  * הטקסטים מה-DB (`trpc.iching.getContent`). השאלה חיה ב-state; היא נשלחת לשרת רק לבדיקת
  * הניסוח לפני ההטלה (כשהפיצר דלוק) ולפירוש ה-AI (`IChingAiPanel`) — ואינה נשמרת בשרת.
  */
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import BookPromo from "@/components/BookPromo";
 import { marked } from "marked";
@@ -406,7 +407,7 @@ export default function IChingReading() {
                 }}
               >
                 <span aria-hidden="true" style={{ fontSize: 13 }}>🔒</span>
-                <span>{content.intro.questionHint}</span>
+                <PrivacyNote className="text-[length:13.5px] text-[color:oklch(0.50_0.03_60)]">{content.intro.questionHint}</PrivacyNote>
               </div>
               <button
                 onClick={onCast}

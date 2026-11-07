@@ -2,6 +2,7 @@
  * תיבת "פֵּרוּשׁ AI מותאם אישית" — מוצגת מעל חלון הפירוש הסטטי בדף הקריאה.
  * השאלה נשלחת לשרת אך ורק בלחיצה מפורשת על הכפתור, ולעולם אינה נשמרת ב-DB.
  */
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import { trpc } from "@/lib/trpc";
@@ -184,6 +185,7 @@ export function IChingAiPanel({
         >
           התחבר עם גוגל
         </a>
+        <PrivacyNote className="mt-3">בכניסה עם Google האתר מקבל את שמכם, כתובת הדוא"ל ותמונת הפרופיל.</PrivacyNote>
       </div>
     );
   }

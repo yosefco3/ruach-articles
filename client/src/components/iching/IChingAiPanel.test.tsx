@@ -1,3 +1,4 @@
+import { Router } from "wouter";
 import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -19,7 +20,7 @@ function renderPanel(props: Partial<Parameters<typeof IChingAiPanel>[0]> = {}, u
     links: [httpBatchLink({ url: "http://localhost:0/api/trpc", transformer: superjson })],
   });
   return renderToString(
-    <trpc.Provider client={client} queryClient={queryClient}>
+    <Router ssrPath="/"><trpc.Provider client={client} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <IChingAiPanel
           question="מה נכון להבין?"
@@ -35,7 +36,7 @@ function renderPanel(props: Partial<Parameters<typeof IChingAiPanel>[0]> = {}, u
           {...props}
         />
       </QueryClientProvider>
-    </trpc.Provider>,
+    </trpc.Provider></Router>,
   );
 }
 

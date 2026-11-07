@@ -1,3 +1,4 @@
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -246,6 +247,7 @@ export default function Contact() {
                     </>
                   )}
                 </Button>
+                <PrivacyNote>הפרטים נשלחים בדוא"ל למפעיל האתר ואינם נשמרים באתר.</PrivacyNote>
               </form>
             )}
           </div>

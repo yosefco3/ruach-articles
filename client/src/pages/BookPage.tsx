@@ -1,3 +1,4 @@
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useState } from "react";
 import { Link, useParams, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -180,6 +181,9 @@ export default function BookPage() {
                 <Input type="email" required dir="ltr" aria-label="כתובת דוא״ל" placeholder="כתובת דוא״ל" value={email} onChange={(e) => setEmail(e.target.value)} className="flex-1" />
                 <Button type="submit" disabled={notify.isPending} className="gap-2">{notify.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}עדכנו אותי</Button>
               </form>
+            )}
+            {!done && (
+              <PrivacyNote className="mt-3">נשלח לכתובת הזו עדכונים על תכנים חדשים באתר. בכל דוא"ל יש קישור להסרה.</PrivacyNote>
             )}
           </section>
         )}

@@ -4,6 +4,7 @@
  * הטקסטים מה-DB (`trpc.tarot.getContent`). השאלה חיה ב-state; היא תישלח לשרת
  * רק לפירוש ה-AI בלחיצה מפורשת (צעד 11) — ואינה נשמרת בשרת.
  */
+import { PrivacyNote } from "@/components/PrivacyNote";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import BookPromo from "@/components/BookPromo";
 import { Link } from "wouter";
@@ -313,7 +314,7 @@ export default function TarotReading() {
               />
               <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, color: "oklch(0.54 0.03 60)", fontSize: 13.5 }}>
                 <span aria-hidden="true" style={{ fontSize: 13 }}>🔒</span>
-                <span>{content.intro.questionHint}</span>
+                <PrivacyNote className="text-[length:13.5px] text-[color:oklch(0.50_0.03_60)]">{content.intro.questionHint}</PrivacyNote>
               </div>
               <button
                 onClick={onDraw}
