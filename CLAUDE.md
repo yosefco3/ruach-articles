@@ -43,6 +43,6 @@ Pillars:
 
 ## Notes
 - The test graph uses **colocated** mapping by default. Many tests here are behavioural
-  (e.g. `articles.test.ts` exercises `server/routers/articles.ts`), so they show as
+  (e.g. `articles.router.test.ts` exercises `server/routers/articles.router.ts`), so they show as
   "no source found". To get a precise map, switch `CONFIG["mapping"]` to `"manual"` in
   `scripts/test_graph.py` and fill `MANUAL_MAP`.
