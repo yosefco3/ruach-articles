@@ -40,6 +40,7 @@ Pillars:
 - Before writing/editing site articles: read `docs/GEO-WRITING.md` (structure &
   citation rules that make AI engines cite us) alongside `knowledge/INDEX.md`
   (existing articles) and `docs/STYLE-HE.md` (language style sheet).
+- SEO work: `docs/SEO-NOTES.md` — SEO working notes: what to do with pages that already rank, a new-page checklist, index checks for AI answers; read with the OpenSEO skills.
 
 ## Notes
 - The test graph uses **colocated** mapping by default. Many tests here are behavioural
